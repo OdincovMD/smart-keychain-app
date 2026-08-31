@@ -1,0 +1,42 @@
+name: smart_keychain_app
+description: Offline-first companion app for a playful smart keychain display.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.2
+  go_router: ^18.0.0
+  intl: ^0.20.3
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/scenes/
+  fonts:
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka.ttf
+          weight: 600
+    - family: NunitoSans
+      fonts:
+        - asset: assets/fonts/NunitoSans.ttf
+          weight: 400
+        - asset: assets/fonts/NunitoSans.ttf
+          weight: 600
+        - asset: assets/fonts/NunitoSans.ttf
+          weight: 700
