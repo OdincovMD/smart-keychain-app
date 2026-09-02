@@ -149,6 +149,8 @@ class DeviceSnapshot {
 
   final String? activeSceneId;
 
+  final DisplayProfile displayProfile;
+
   final String? firmwareVersion;
 
   final String? protocolVersion;
@@ -160,6 +162,10 @@ class DeviceSnapshot {
   final DeviceCapabilities capabilities;
 }
 ```
+
+`DeviceSnapshot` является единым read model для Home screen. Экран не получает
+`DisplayProfile` или capabilities из конкретной реализации устройства: virtual и
+будущая BLE-реализация публикуют их через один и тот же repository stream.
 
 В simulator все значения генерируются локально.
 
@@ -280,40 +286,66 @@ My Photo
 
 ## Scene Model
 
-Предварительная модель:
+Текущая модель хранит только стабильную метаинформацию, источник и
+типизированный контент:
 
 ```dart
 class Scene {
   final String id;
-
   final String name;
-
-  final SceneType type;
-
+  final String? description;
+  final SceneContent content;
   final SceneSource source;
-
-  final String previewAssetId;
-
-  final bool animated;
-
   final Set<String> tags;
+
+  SceneType get type => content.type;
+  bool get animated => content.animated;
 }
 ```
 
+`type` и `animated` вычисляются из `SceneContent`, а не хранятся второй копией.
+Это исключает противоречивые состояния наподобие статичного контента с
+`animated == true`.
+
 ---
 
-## Scene Types
+## Scene Content
+
+Сцена содержит типизированный контент, поэтому невозможна комбинация вроде
+procedural scene с обязательным фиктивным asset id.
+
+```dart
+sealed class SceneContent {}
+
+final class StaticImageContent extends SceneContent {
+  final String previewAssetPath;
+}
+
+final class ProceduralEyesContent extends SceneContent {
+  final EyeEmotion defaultEmotion;
+}
+
+final class UserImageContent extends SceneContent {
+  final String assetId;
+  final String previewStorageKey;
+}
+```
+
+`StaticImageContent.previewAssetPath` создаёт infrastructure-реализация
+`SceneRepository`; Home screen и gallery не знают конкретные asset paths.
+
+Новые форматы добавляются отдельными вариантами `SceneContent` и обрабатываются
+exhaustive switch в единственной границе `SceneRenderer`.
+
+Минимальные типы:
 
 ```dart
 enum SceneType {
   proceduralEyes,
   staticImage,
-  frameAnimation,
-  animalFace,
+  userImage,
 }
 ```
-
-Это позволяет не привязывать всё к одному формату.
 
 ---
 
@@ -323,11 +355,32 @@ enum SceneType {
 enum SceneSource {
   builtIn,
   userGenerated,
-  downloaded,
 }
 ```
 
-`downloaded` понадобится в будущем, если будет серверный каталог.
+`userGenerated` используется локальными пользовательскими изображениями.
+Передача этого контента на физическое устройство пока не реализована.
+
+---
+
+## Scene Repository
+
+Единственный источник каталога сцен для application- и presentation-слоёв:
+
+```dart
+abstract interface class SceneRepository {
+  Future<List<Scene>> getAll();
+  Future<Scene?> getById(String id);
+}
+```
+
+`CompositeSceneRepository` объединяет `BuiltInSceneRepository` и
+`UserImageSceneRepository`. Композиция внедряется в composition root через
+Riverpod. `VirtualDeviceEngine` использует тот же контракт, чтобы принимать
+только существующие `sceneId`.
+
+Подробный поток выбора и рендеринга описан в
+[SCENE_SYSTEM.md](SCENE_SYSTEM.md).
 
 ---
 
@@ -418,5 +471,48 @@ class DeviceAsset {
 На текущем этапе реальная encoding implementation отсутствует.
 
 Для simulator допускается использование PNG.
+
+---
+
+## App Settings
+
+Стабильные локальные preferences представлены Flutter-независимой моделью:
+
+```dart
+class AppSettings {
+  final String? activeSceneId;
+  final double brightness;
+}
+```
+
+`AppSettingsRepository` является domain boundary над persistence. Текущая
+Drift-реализация хранит scene id и brightness, но не хранит connection state.
+При startup scene id обязательно проверяется через `SceneRepository`; неизвестное
+значение заменяется default built-in scene.
+
+Подробности схемы, lifecycle и migrations описаны в
+[PERSISTENCE.md](PERSISTENCE.md).
+
+---
+
+## User Image Asset
+
+Локальное изображение пользователя представлено Flutter-независимой моделью:
+
+```dart
+class UserImageAsset {
+  final String id;
+  final String originalStorageKey;
+  final String previewStorageKey;
+  final CropSpec cropSpec;
+  final DateTime createdAt;
+}
+```
+
+`CropSpec` хранит нормализованный центр `0…1`, масштаб и rotation. Модель не
+содержит `File`, `XFile`, `ImageProvider` или абсолютные пути. Metadata живёт в
+Drift, original и подготовленный PNG preview — в `LocalFileStorage`.
+
+Полный lifecycle описан в [IMAGE_PIPELINE.md](IMAGE_PIPELINE.md).
 
 ---

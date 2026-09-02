@@ -20,6 +20,24 @@ Virtual Device Simulator является полноценной частью а
 - демонстрация продукта;
 - debugging.
 
+### Реализованный VIRTUAL DEVICE CORE
+
+Текущая реализация проходит единый путь:
+
+```text
+UI intent
+  → DeviceController
+  → DeviceRepository
+  → VirtualDeviceRepository
+  → VirtualDeviceEngine / VirtualDeviceState
+  → DeviceSnapshot stream
+  → UI
+```
+
+Поддерживаются connect/disconnect, батарея 78%, brightness, active scene,
+`DisplayProfile`, `DeviceCapabilities` и настраиваемая искусственная задержка.
+Presentation не читает и не изменяет `VirtualDeviceState` напрямую.
+
 ---
 
 ## Virtual Device Components
@@ -57,13 +75,17 @@ VirtualConnection
 
 ```dart
 class VirtualDeviceState {
-  final bool connected;
+  final DeviceConnectionStatus connectionStatus;
 
   final int batteryPercent;
 
   final double brightness;
 
   final String? activeSceneId;
+
+  final DisplayProfile displayProfile;
+
+  final DeviceCapabilities capabilities;
 
   final List<String> installedAssets;
 

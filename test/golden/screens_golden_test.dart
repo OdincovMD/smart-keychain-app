@@ -1,8 +1,14 @@
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
+import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_repository.dart';
 
@@ -28,9 +34,7 @@ void main() {
   });
 
   testWidgets('Device Discovery 390x844', (tester) async {
-    final repository = VirtualDeviceRepository(
-      engine: VirtualDeviceEngine(latency: Duration.zero),
-    );
+    final repository = VirtualDeviceRepository(engine: _createEngine());
     addTearDown(repository.dispose);
     await _pumpApp(tester, repository);
 
@@ -41,17 +45,42 @@ void main() {
   });
 
   testWidgets('Device Home 390x844', (tester) async {
-    final repository = VirtualDeviceRepository(
-      engine: VirtualDeviceEngine(latency: Duration.zero),
-    );
+    final repository = VirtualDeviceRepository(engine: _createEngine());
     addTearDown(repository.dispose);
     await _pumpApp(tester, repository);
     await tester.tap(find.byKey(const Key('connect_button')));
-    await tester.pumpAndSettle();
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 1));
+    }
 
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('baselines/device_home_390x844.png'),
+    );
+  });
+
+  testWidgets('Living Eyes neutral 240x240', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Center(
+          child: RepaintBoundary(
+            key: Key('living_eyes_golden'),
+            child: SizedBox.square(
+              dimension: 240,
+              child: ProceduralEyesView(
+                initialEmotion: EyeEmotion.neutral,
+                animate: false,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await expectLater(
+      find.byKey(const Key('living_eyes_golden')),
+      matchesGoldenFile('baselines/living_eyes_neutral_240x240.png'),
     );
   });
 }
@@ -63,9 +92,15 @@ Future<void> _pumpApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        virtualDeviceRepositoryProvider.overrideWithValue(repository),
+        sceneRepositoryProvider.overrideWithValue(_sceneRepository),
+        deviceRepositoryProvider.overrideWithValue(repository),
       ],
-      child: const SmartKeychainApp(),
+      child: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          child: const SmartKeychainApp(),
+        ),
+      ),
     ),
   );
   await tester.pump();
@@ -83,4 +118,14 @@ Future<void> _pumpApp(
     ]);
   });
   await tester.pump();
+}
+
+final _sceneRepository = BuiltInSceneRepository();
+
+VirtualDeviceEngine _createEngine() {
+  return VirtualDeviceEngine(
+    sceneRepository: _sceneRepository,
+    initialSceneId: BuiltInSceneRepository.livingEyesId,
+    latency: Duration.zero,
+  );
 }

@@ -12,25 +12,29 @@ final class DeviceController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  Future<void> connect(String deviceId) async {
-    await _run(() => ref.read(deviceRepositoryProvider).connect(deviceId));
-  }
+  void connect(String deviceId) =>
+      _run(() => ref.read(deviceRepositoryProvider).connect(deviceId));
 
-  Future<void> disconnect() async {
-    await _run(ref.read(deviceRepositoryProvider).disconnect);
-  }
+  void disconnect() => _run(ref.read(deviceRepositoryProvider).disconnect);
 
-  Future<void> setScene(String sceneId) async {
-    await _run(() => ref.read(deviceRepositoryProvider).setScene(sceneId));
-  }
+  void setScene(String sceneId) => _run(() async {
+    await ref.read(deviceRepositoryProvider).setScene(sceneId);
+    await ref.read(appSettingsRepositoryProvider).saveActiveSceneId(sceneId);
+  });
 
-  Future<void> setBrightness(double value) async {
-    await _run(() => ref.read(deviceRepositoryProvider).setBrightness(value));
-  }
+  void setBrightness(double value) => _run(() async {
+    await ref.read(deviceRepositoryProvider).setBrightness(value);
+    await ref.read(appSettingsRepositoryProvider).saveBrightness(value);
+  });
 
-  Future<void> _run(Future<void> Function() command) async {
+  void _run(Future<void> Function() command) {
     if (state.isLoading) return;
+    unawaited(_runCommand(command));
+  }
+
+  Future<void> _runCommand(Future<void> Function() command) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(command);
+    final nextState = await AsyncValue.guard(command);
+    if (ref.mounted) state = nextState;
   }
 }

@@ -1,6 +1,9 @@
 # Code intelligence
 .gitnexus/
 
+# Locally installed agent skill packages; skills-lock.json is committed.
+.agents/
+
 # FVM keeps the selected SDK outside version control.
 .fvm/
 
@@ -54,3 +57,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+*.apk

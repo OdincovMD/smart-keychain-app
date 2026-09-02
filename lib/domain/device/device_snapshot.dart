@@ -1,5 +1,6 @@
 import 'device_capabilities.dart';
 import 'device_connection_status.dart';
+import 'display_profile.dart';
 
 final class DeviceSnapshot {
   const DeviceSnapshot({
@@ -8,6 +9,7 @@ final class DeviceSnapshot {
     required this.batteryPercent,
     required this.brightness,
     required this.activeSceneId,
+    required this.displayProfile,
     required this.capabilities,
   });
 
@@ -16,6 +18,7 @@ final class DeviceSnapshot {
   final int batteryPercent;
   final double brightness;
   final String activeSceneId;
+  final DisplayProfile displayProfile;
   final DeviceCapabilities capabilities;
 
   DeviceSnapshot copyWith({
@@ -24,6 +27,7 @@ final class DeviceSnapshot {
     int? batteryPercent,
     double? brightness,
     String? activeSceneId,
+    DisplayProfile? displayProfile,
     DeviceCapabilities? capabilities,
   }) {
     return DeviceSnapshot(
@@ -32,6 +36,7 @@ final class DeviceSnapshot {
       batteryPercent: batteryPercent ?? this.batteryPercent,
       brightness: brightness ?? this.brightness,
       activeSceneId: activeSceneId ?? this.activeSceneId,
+      displayProfile: displayProfile ?? this.displayProfile,
       capabilities: capabilities ?? this.capabilities,
     );
   }
@@ -45,6 +50,7 @@ final class DeviceSnapshot {
           batteryPercent == other.batteryPercent &&
           brightness == other.brightness &&
           activeSceneId == other.activeSceneId &&
+          displayProfile == other.displayProfile &&
           capabilities == other.capabilities;
 
   @override
@@ -54,6 +60,7 @@ final class DeviceSnapshot {
     batteryPercent,
     brightness,
     activeSceneId,
+    displayProfile,
     capabilities,
   );
 }

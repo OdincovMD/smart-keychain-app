@@ -86,11 +86,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get brightnessHint => 'Команда отправится после отпускания ползунка.';
 
   @override
-  String get simulatorSettings => 'Задержка симулятора';
+  String get simulatorSettings => 'Настройки симулятора';
 
   @override
   String get simulatorSettingsHint =>
-      'Проверьте, как интерфейс ведёт себя при медленном устройстве.';
+      'Проверьте задержку команд и поведение живого экрана.';
 
   @override
   String get latency => 'Задержка';
@@ -102,6 +102,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get close => 'Закрыть';
+
+  @override
+  String get sceneLivingEyes => 'Живой взгляд';
+
+  @override
+  String get sceneLivingEyesDescription =>
+      'Сам моргает, наблюдает и меняет настроение.';
 
   @override
   String get sceneMintEyes => 'Мятный взгляд';
@@ -126,7 +133,81 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devicePreviewLabel => 'Виртуальный экран брелока';
 
   @override
-  String get openSimulatorSettings => 'Открыть настройки задержки';
+  String get openSimulatorSettings => 'Открыть настройки симулятора';
+
+  @override
+  String get eyeEngine => 'Живой взгляд';
+
+  @override
+  String get eyeEngineHint => 'Debug-управление эмоцией процедурных глаз.';
+
+  @override
+  String get eyeEmotionNeutral => 'Спокойный';
+
+  @override
+  String get eyeEmotionHappy => 'Радостный';
+
+  @override
+  String get eyeEmotionSleepy => 'Сонный';
+
+  @override
+  String get eyeEmotionSurprised => 'Удивлённый';
+
+  @override
+  String get blinkNow => 'Моргнуть';
+
+  @override
+  String get addImage => 'Добавить фото';
+
+  @override
+  String get processingImage => 'Обрабатываем…';
+
+  @override
+  String get imageEditorTitle => 'Кадр для брелока';
+
+  @override
+  String get imageEditorHint =>
+      'Перемещайте изображение и сведите пальцы, чтобы настроить круглый кадр.';
+
+  @override
+  String get imageCropPreview => 'Предпросмотр круглого кадра';
+
+  @override
+  String get rotate => 'Повернуть';
+
+  @override
+  String get reset => 'Сбросить';
+
+  @override
+  String get cancel => 'Отмена';
+
+  @override
+  String get save => 'Сохранить';
+
+  @override
+  String get imageSaved => 'Фото сохранено в библиотеке.';
+
+  @override
+  String get imageUnsupported =>
+      'Файл повреждён или этот формат изображения не поддерживается.';
+
+  @override
+  String get imageReadFailed => 'Не удалось прочитать выбранное изображение.';
+
+  @override
+  String get imageProcessingFailed => 'Не удалось обработать изображение.';
+
+  @override
+  String get imageStorageFailed =>
+      'Не удалось сохранить изображение на устройстве.';
+
+  @override
+  String get imagePersistenceFailed =>
+      'Не удалось сохранить данные изображения.';
+
+  @override
+  String get imageDeviceFallbackFailed =>
+      'Не удалось безопасно сменить активную сцену.';
 
   @override
   String get statusReady => 'НА СВЯЗИ';

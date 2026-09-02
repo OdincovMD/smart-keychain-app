@@ -241,13 +241,13 @@ abstract class AppLocalizations {
   /// No description provided for @simulatorSettings.
   ///
   /// In ru, this message translates to:
-  /// **'Задержка симулятора'**
+  /// **'Настройки симулятора'**
   String get simulatorSettings;
 
   /// No description provided for @simulatorSettingsHint.
   ///
   /// In ru, this message translates to:
-  /// **'Проверьте, как интерфейс ведёт себя при медленном устройстве.'**
+  /// **'Проверьте задержку команд и поведение живого экрана.'**
   String get simulatorSettingsHint;
 
   /// No description provided for @latency.
@@ -267,6 +267,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Закрыть'**
   String get close;
+
+  /// No description provided for @sceneLivingEyes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Живой взгляд'**
+  String get sceneLivingEyes;
+
+  /// No description provided for @sceneLivingEyesDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сам моргает, наблюдает и меняет настроение.'**
+  String get sceneLivingEyesDescription;
 
   /// No description provided for @sceneMintEyes.
   ///
@@ -313,8 +325,146 @@ abstract class AppLocalizations {
   /// No description provided for @openSimulatorSettings.
   ///
   /// In ru, this message translates to:
-  /// **'Открыть настройки задержки'**
+  /// **'Открыть настройки симулятора'**
   String get openSimulatorSettings;
+
+  /// No description provided for @eyeEngine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Живой взгляд'**
+  String get eyeEngine;
+
+  /// No description provided for @eyeEngineHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Debug-управление эмоцией процедурных глаз.'**
+  String get eyeEngineHint;
+
+  /// No description provided for @eyeEmotionNeutral.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спокойный'**
+  String get eyeEmotionNeutral;
+
+  /// No description provided for @eyeEmotionHappy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Радостный'**
+  String get eyeEmotionHappy;
+
+  /// No description provided for @eyeEmotionSleepy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сонный'**
+  String get eyeEmotionSleepy;
+
+  /// No description provided for @eyeEmotionSurprised.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удивлённый'**
+  String get eyeEmotionSurprised;
+
+  /// No description provided for @blinkNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Моргнуть'**
+  String get blinkNow;
+
+  /// No description provided for @addImage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить фото'**
+  String get addImage;
+
+  /// No description provided for @processingImage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обрабатываем…'**
+  String get processingImage;
+
+  /// No description provided for @imageEditorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кадр для брелока'**
+  String get imageEditorTitle;
+
+  /// No description provided for @imageEditorHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перемещайте изображение и сведите пальцы, чтобы настроить круглый кадр.'**
+  String get imageEditorHint;
+
+  /// No description provided for @imageCropPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предпросмотр круглого кадра'**
+  String get imageCropPreview;
+
+  /// No description provided for @rotate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повернуть'**
+  String get rotate;
+
+  /// No description provided for @reset.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбросить'**
+  String get reset;
+
+  /// No description provided for @cancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get cancel;
+
+  /// No description provided for @save.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get save;
+
+  /// No description provided for @imageSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото сохранено в библиотеке.'**
+  String get imageSaved;
+
+  /// No description provided for @imageUnsupported.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл повреждён или этот формат изображения не поддерживается.'**
+  String get imageUnsupported;
+
+  /// No description provided for @imageReadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось прочитать выбранное изображение.'**
+  String get imageReadFailed;
+
+  /// No description provided for @imageProcessingFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось обработать изображение.'**
+  String get imageProcessingFailed;
+
+  /// No description provided for @imageStorageFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить изображение на устройстве.'**
+  String get imageStorageFailed;
+
+  /// No description provided for @imagePersistenceFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить данные изображения.'**
+  String get imagePersistenceFailed;
+
+  /// No description provided for @imageDeviceFallbackFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось безопасно сменить активную сцену.'**
+  String get imageDeviceFallbackFailed;
 
   /// No description provided for @statusReady.
   ///

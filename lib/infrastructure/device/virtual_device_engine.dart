@@ -1,19 +1,38 @@
 import 'dart:async';
 
+import '../../domain/content/scene_repository.dart';
 import '../../domain/device/device_capabilities.dart';
 import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_failure.dart';
 import '../../domain/device/device_info.dart';
 import '../../domain/device/device_snapshot.dart';
 import '../../domain/device/display_profile.dart';
-import '../content/built_in_scene_catalog.dart';
 import 'virtual_device_state.dart';
 
 final class VirtualDeviceEngine {
   // The public parameter intentionally differs from the private mutable field.
-  VirtualDeviceEngine({Duration latency = const Duration(milliseconds: 300)})
-    // ignore: prefer_initializing_formals
-    : _latency = latency;
+  VirtualDeviceEngine({
+    required SceneRepository sceneRepository,
+    required String initialSceneId,
+    double initialBrightness = 0.8,
+    Duration latency = const Duration(milliseconds: 300),
+  }) : assert(
+         initialBrightness >= 0 && initialBrightness <= 1,
+         'Initial brightness must be between 0 and 1.',
+       ),
+       // ignore: prefer_initializing_formals
+       _sceneRepository = sceneRepository,
+       // ignore: prefer_initializing_formals
+       _latency = latency,
+       _state = VirtualDeviceState(
+         deviceId: deviceId,
+         connectionStatus: DeviceConnectionStatus.disconnected,
+         batteryPercent: 78,
+         brightness: initialBrightness,
+         activeSceneId: initialSceneId,
+         displayProfile: displayProfile,
+         capabilities: capabilities,
+       );
 
   static const deviceId = 'demo-keychain-v1';
   static const displayProfile = DisplayProfile(
@@ -26,7 +45,7 @@ final class VirtualDeviceEngine {
     supportsBrightness: true,
     reportsBattery: true,
     supportsStaticScenes: true,
-    supportsAnimatedScenes: false,
+    supportsAnimatedScenes: true,
   );
   static const deviceInfo = DeviceInfo(
     id: deviceId,
@@ -46,28 +65,16 @@ final class VirtualDeviceEngine {
     sync: true,
   );
   final _latencyController = StreamController<Duration>.broadcast(sync: true);
+  final SceneRepository _sceneRepository;
 
-  VirtualDeviceState _state = const VirtualDeviceState(
-    deviceId: deviceId,
-    connectionStatus: DeviceConnectionStatus.disconnected,
-    batteryPercent: 78,
-    brightness: 0.8,
-    activeSceneId: BuiltInSceneCatalog.mintEyesId,
-  );
+  VirtualDeviceState _state;
   Duration _latency;
   Future<void> _commandQueue = Future<void>.value();
 
   VirtualDeviceState get state => _state;
   Duration get latency => _latency;
 
-  DeviceSnapshot get snapshot => DeviceSnapshot(
-    deviceId: _state.deviceId,
-    connectionStatus: _state.connectionStatus,
-    batteryPercent: _state.batteryPercent,
-    brightness: _state.brightness,
-    activeSceneId: _state.activeSceneId,
-    capabilities: capabilities,
-  );
+  DeviceSnapshot get snapshot => _state.toSnapshot();
 
   Stream<VirtualDeviceState> watchState() async* {
     yield _state;
@@ -114,11 +121,11 @@ final class VirtualDeviceEngine {
   }
 
   Future<void> setScene(String sceneId) async {
-    _requireReady();
-    if (BuiltInSceneCatalog.byId(sceneId) == null) {
-      throw const UnsupportedFeatureFailure('Unknown scene.');
-    }
     await _serialize(() async {
+      _requireReady();
+      if (await _sceneRepository.getById(sceneId) == null) {
+        throw const UnsupportedFeatureFailure('Unknown scene.');
+      }
       if (_state.activeSceneId == sceneId) return;
       await _wait();
       _emit(_state.copyWith(activeSceneId: sceneId));
@@ -131,8 +138,8 @@ final class VirtualDeviceEngine {
         'Brightness must be between 0.0 and 1.0.',
       );
     }
-    _requireReady();
     await _serialize(() async {
+      _requireReady();
       if (_state.brightness == value) return;
       await _wait();
       _emit(_state.copyWith(brightness: value));

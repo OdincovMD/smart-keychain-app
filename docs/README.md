@@ -23,6 +23,9 @@ Smart Keychain App — мобильное приложение-компаньо�
 | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) | `DeviceRepository`, состояние и возможности устройства, `DisplayProfile`, сцены и device assets |
 | [DEVICE_SIMULATOR.md](DEVICE_SIMULATOR.md) | Устройство симулятора, virtual screen, latency и моделирование ошибок |
 | [EYE_ANIMATION_ENGINE.md](EYE_ANIMATION_ENGINE.md) | Процедурный renderer глаз, эмоции и runtime-поведение |
+| [SCENE_SYSTEM.md](SCENE_SYSTEM.md) | Домен сцен, repository, выбор сцены и data-driven rendering |
+| [PERSISTENCE.md](PERSISTENCE.md) | Drift schema, settings restoration, filesystem boundary и migrations |
+| [IMAGE_PIPELINE.md](IMAGE_PIPELINE.md) | Реализованный импорт, crop, processing, controlled storage и user-generated scenes |
 | [CONTENT_AND_IMAGE_PIPELINE.md](CONTENT_AND_IMAGE_PIPELINE.md) | Библиотека сцен, изображения пользователя, crop, форматы и локальное хранение |
 | [FUNCTIONAL_REQUIREMENTS.md](FUNCTIONAL_REQUIREMENTS.md) | Экраны приложения и их функциональная ответственность |
 | [AUTOMATIONS.md](AUTOMATIONS.md) | Правила автоматизаций, триггеры, действия, погода и background-ограничения |

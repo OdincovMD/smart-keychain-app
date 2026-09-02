@@ -215,14 +215,16 @@ StaticImageRenderer
 
 ### Phase 5 — Eye Engine
 
-Создать:
+Статус: **Living Eyes v0.1 реализован для Virtual Device Simulator.**
+
+Реализовано:
 
 ```text
-ProceduralEyeRenderer
+ProceduralEyePainter
 EyeRuntimeState
 EyeEmotion
-BlinkController
-GazeController
+EyeBehaviourEngine
+debug emotion/blink controls
 ```
 
 ---

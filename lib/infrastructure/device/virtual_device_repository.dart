@@ -7,13 +7,17 @@ import 'virtual_device_engine.dart';
 
 final class VirtualDeviceRepository
     implements DeviceRepository, SimulatorControls {
-  VirtualDeviceRepository({VirtualDeviceEngine? engine})
-    : _engine = engine ?? VirtualDeviceEngine();
+  VirtualDeviceRepository({required VirtualDeviceEngine engine})
+    // ignore: prefer_initializing_formals
+    : _engine = engine;
 
   final VirtualDeviceEngine _engine;
 
   @override
   Duration get latency => _engine.latency;
+
+  @override
+  List<Duration> get latencyPresets => VirtualDeviceEngine.allowedLatencies;
 
   @override
   Future<List<DeviceInfo>> discoverDevices() async {
@@ -33,7 +37,7 @@ final class VirtualDeviceRepository
 
   @override
   Stream<DeviceSnapshot> watchDeviceState() {
-    return _engine.watchState().map((_) => _engine.snapshot);
+    return _engine.watchState().map((state) => state.toSnapshot());
   }
 
   @override

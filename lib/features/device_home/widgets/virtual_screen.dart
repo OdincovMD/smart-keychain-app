@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/content/scene.dart';
 import '../../../domain/device/device_snapshot.dart';
 import '../../../domain/device/display_profile.dart';
-import '../../../infrastructure/content/built_in_scene_catalog.dart';
+import 'scene_renderer.dart';
 
 final class VirtualScreen extends StatelessWidget {
   const VirtualScreen({
@@ -36,11 +36,13 @@ final class VirtualScreen extends StatelessWidget {
                 duration: duration,
                 switchInCurve: Curves.easeOut,
                 switchOutCurve: Curves.easeIn,
-                child: Image.asset(
-                  SceneAssetResolver.resolve(scene.previewAssetId),
+                child: KeyedSubtree(
                   key: ValueKey(scene.id),
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.high,
+                  child: SceneRenderer(
+                    scene: scene,
+                    animate: true,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
               ),
               IgnorePointer(

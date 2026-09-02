@@ -2,7 +2,18 @@
 
 > Процедурный рендеринг глаз, runtime-состояние и поведение анимации.
 
-> Источник: исходная спецификация версии 0.1 (Draft / Initial Architecture).
+> Статус: Living Eyes v0.1 реализован в виртуальном устройстве.
+
+## Реализованная граница v0.1
+
+- одна built-in сцена `living_eyes_v1`, активная по умолчанию;
+- собственный процедурный образ на поле 240×240;
+- эмоции `neutral`, `happy`, `sleepy`, `surprised`;
+- автономные gaze, blink и double blink;
+- debug-переключение эмоции и ручное моргание;
+- статичная neutral-поза при отключённых анимациях;
+- Flutter renderer существует только для app preview и не определяет формат
+  будущего физического устройства.
 
 ## Подход к рендерингу
 
@@ -30,17 +41,14 @@ Flutter CustomPainter
 
 ## Eye Runtime State
 
-Пример состояния:
+Runtime-состояние:
 
 ```dart
 class EyeRuntimeState {
-  final double pupilX;
-  final double pupilY;
-
+  final double gazeX;
+  final double gazeY;
   final double eyelidOpen;
-
   final double pupilScale;
-
   final EyeEmotion emotion;
 }
 ```
@@ -54,10 +62,7 @@ enum EyeEmotion {
   neutral,
   happy,
   sleepy,
-  angry,
-  sad,
   surprised,
-  love,
 }
 ```
 
@@ -83,48 +88,46 @@ IDLE
  └── special animation
 ```
 
-Например:
+В v0.1 используется один последовательный scheduler:
 
 ```text
-idle
+wait random 1.2–3.6 sec
 
-wait random 2–7 sec
+55% gaze / 35% blink / 10% double blink
 
-blink
+force blink after 6.5 sec without a blink
 
-wait random 1–5 sec
-
-look left
-
-wait
-
-look center
+gaze target → hold → return center
 ```
 
 За счёт этого персонаж визуально выглядит живым.
 
+Случайность внедряется в `EyeBehaviourEngine`, поэтому одинаковый seed даёт
+одинаковую последовательность в тестах.
+
 ---
 
-## Scene Renderer
+## Runtime и renderer
 
-Создаётся abstraction:
-
-```dart
-abstract interface class SceneRenderer {
-  Widget buildPreview(
-    Scene scene,
-    DisplayProfile display,
-  );
-}
-```
-
-Реализации могут быть:
+Фактический поток v0.1:
 
 ```text
-ProceduralEyeRenderer
-StaticImageRenderer
-FrameAnimationRenderer
-AnimalFaceRenderer
+Scene
+  → EyeBehaviourEngine
+  → EyeRuntimeState
+  → ProceduralEyesView
+  → EyePaintScene
+  → ProceduralEyePainter
 ```
+
+- `ProceduralEyesView` владеет единственным `AnimationController` и таймерами;
+- `EyeBehaviourEngine` не импортирует Flutter;
+- `EyePaintScene` — immutable input painter-а;
+- `ProceduralEyePainter` не читает Riverpod, `BuildContext` и wall clock;
+- кадры идут через `CustomPainter.repaint`, без rebuild дерева;
+- карточка сцены использует тот же painter в замороженной позе.
+
+Riverpod хранит только debug-намерения: выбранную эмоцию и revision ручного
+моргания. Per-frame состояние через Riverpod не проходит.
 
 ---

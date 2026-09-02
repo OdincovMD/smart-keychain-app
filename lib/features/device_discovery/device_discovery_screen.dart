@@ -7,7 +7,6 @@ import '../../app/providers.dart';
 import '../../application/device_controller.dart';
 import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_info.dart';
-import '../../infrastructure/device/virtual_device_engine.dart';
 import '../../l10n/app_localizations.dart';
 import '../shared/playful_background.dart';
 
@@ -28,11 +27,13 @@ final class _DeviceDiscoveryScreenState
     final l10n = AppLocalizations.of(context);
     final devices = ref.watch(discoveredDevicesProvider);
     final connection = ref.watch(connectionStateProvider).value;
+    final snapshot = ref.watch(deviceSnapshotProvider).value;
     final command = ref.watch(deviceControllerProvider);
 
-    ref.listen(connectionStateProvider, (previous, next) {
-      if (next.value == DeviceConnectionStatus.ready && mounted) {
-        context.go('/device/${VirtualDeviceEngine.deviceId}');
+    ref.listen(deviceSnapshotProvider, (previous, next) {
+      final value = next.value;
+      if (value?.connectionStatus == DeviceConnectionStatus.ready && mounted) {
+        context.go('/device/${value!.deviceId}');
       }
     });
     ref.listen(deviceControllerProvider, (previous, next) {
@@ -69,6 +70,7 @@ final class _DeviceDiscoveryScreenState
                     devices.when(
                       data: (items) => _DeviceCard(
                         device: items.single,
+                        batteryPercent: snapshot?.batteryPercent,
                         connectionStatus: connection,
                         isBusy: command.isLoading,
                         onConnect: () => ref
@@ -127,12 +129,14 @@ final class _Eyebrow extends StatelessWidget {
 final class _DeviceCard extends StatelessWidget {
   const _DeviceCard({
     required this.device,
+    required this.batteryPercent,
     required this.connectionStatus,
     required this.isBusy,
     required this.onConnect,
   });
 
   final DeviceInfo device;
+  final int? batteryPercent;
   final DeviceConnectionStatus? connectionStatus;
   final bool isBusy;
   final VoidCallback onConnect;
@@ -150,7 +154,7 @@ final class _DeviceCard extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: l10n.demoKeychain,
+      label: device.name,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -178,14 +182,15 @@ final class _DeviceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l10n.demoKeychain,
+                        device.name,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        l10n.batteryPercent(78),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                      if (batteryPercent case final value?)
+                        Text(
+                          l10n.batteryPercent(value),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                     ],
                   ),
                 ),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_colors.dart';
 import '../../../domain/content/scene.dart';
-import '../../../infrastructure/content/built_in_scene_catalog.dart';
 import '../../../l10n/app_localizations.dart';
+import 'scene_renderer.dart';
 
 final class SceneCard extends StatelessWidget {
   const SceneCard({
@@ -53,10 +53,7 @@ final class SceneCard extends StatelessWidget {
                     aspectRatio: 1,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        SceneAssetResolver.resolve(scene.previewAssetId),
-                        fit: BoxFit.cover,
-                      ),
+                      child: SceneRenderer(scene: scene, animate: false),
                     ),
                   ),
                   if (isActive)
@@ -86,37 +83,25 @@ final class SceneCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                _sceneTitle(l10n, scene.titleKey),
+                scene.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge
                     ?.copyWith(fontSize: 17),
               ),
-              const SizedBox(height: 4),
-              Text(
-                _sceneDescription(l10n, scene.descriptionKey),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              if (scene.description case final description?) ...[
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
-}
-
-String _sceneTitle(AppLocalizations l10n, String key) {
-  return switch (key) {
-    'sceneSunnyFriend' => l10n.sceneSunnyFriend,
-    _ => l10n.sceneMintEyes,
-  };
-}
-
-String _sceneDescription(AppLocalizations l10n, String key) {
-  return switch (key) {
-    'sceneSunnyFriendDescription' => l10n.sceneSunnyFriendDescription,
-    _ => l10n.sceneMintEyesDescription,
-  };
 }
