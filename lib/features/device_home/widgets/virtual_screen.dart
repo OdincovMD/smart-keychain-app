@@ -41,6 +41,7 @@ final class VirtualScreen extends StatelessWidget {
                   child: SceneRenderer(
                     scene: scene,
                     animate: true,
+                    displayProfile: displayProfile,
                     filterQuality: FilterQuality.high,
                   ),
                 ),

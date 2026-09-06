@@ -14,12 +14,13 @@ import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_snapshot.dart';
 import '../../domain/eyes/eye_emotion.dart';
 import '../../domain/image/crop_spec.dart';
-import '../../domain/image/user_image_failure.dart';
 import '../../l10n/app_localizations.dart';
 import '../device_discovery/device_discovery_screen.dart';
 import '../image_editor/image_editor_screen.dart';
 import '../image_import/user_image_controller.dart';
+import '../shared/image_failure_label.dart';
 import '../shared/playful_background.dart';
+import '../user_content/user_content_screen.dart';
 import 'eye_preview_controller.dart';
 import 'widgets/brightness_control.dart';
 import 'widgets/keychain_preview.dart';
@@ -74,7 +75,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
         case UserImageFailed(:final failure):
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(_imageFailureLabel(l10n, failure))),
+              SnackBar(content: Text(imageFailureLabel(l10n, failure))),
             );
           }
           ref.read(userImageControllerProvider.notifier).acknowledge();
@@ -115,6 +116,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
                             onAddImage: () => ref
                                 .read(userImageControllerProvider.notifier)
                                 .startImport(),
+                            onOpenMyContent: () => unawaited(_openMyContent()),
                             onDisconnect: () => ref
                                 .read(deviceControllerProvider.notifier)
                                 .disconnect(),
@@ -145,7 +147,12 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
 
   Future<void> _openImageEditor(PendingUserImage draft) async {
     final cropSpec = await Navigator.of(context).push<CropSpec>(
-      MaterialPageRoute(builder: (context) => ImageEditorScreen(draft: draft)),
+      MaterialPageRoute(
+        builder: (context) => ImageEditorScreen(
+          assetId: draft.id,
+          originalBytes: draft.originalBytes,
+        ),
+      ),
     );
     if (!mounted) return;
     if (cropSpec == null) {
@@ -158,6 +165,14 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
       return;
     }
     ref.read(userImageControllerProvider.notifier).save(cropSpec, profile);
+  }
+
+  Future<void> _openMyContent() async {
+    final result = await Navigator.of(context).push<UserContentScreenResult>(
+      MaterialPageRoute(builder: (context) => const UserContentScreen()),
+    );
+    if (!mounted || result != UserContentScreenResult.addImage) return;
+    ref.read(userImageControllerProvider.notifier).startImport();
   }
 
   void _retrySceneLibrary() {
@@ -187,6 +202,7 @@ final class _DeviceHomeContent extends StatelessWidget {
     required this.onInstallScene,
     required this.onBrightnessChanged,
     required this.onAddImage,
+    required this.onOpenMyContent,
     required this.onDisconnect,
     required this.onOpenSimulatorSettings,
   });
@@ -201,6 +217,7 @@ final class _DeviceHomeContent extends StatelessWidget {
   final VoidCallback onInstallScene;
   final ValueChanged<double> onBrightnessChanged;
   final VoidCallback onAddImage;
+  final VoidCallback onOpenMyContent;
   final VoidCallback onDisconnect;
   final VoidCallback onOpenSimulatorSettings;
 
@@ -307,6 +324,16 @@ final class _DeviceHomeContent extends StatelessWidget {
               Text(
                 l10n.sceneLibrarySubtitle,
                 style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  key: const Key('open_my_content_button'),
+                  onPressed: isBusy ? null : onOpenMyContent,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(l10n.myContent),
+                ),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -543,13 +570,69 @@ final class _SimulatorSettingsSheet extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                OutlinedButton.icon(
-                  key: const Key('eye_blink_button'),
-                  onPressed: () => ref
-                      .read(eyePreviewControllerProvider.notifier)
-                      .requestBlink(),
-                  icon: const Icon(Icons.visibility_rounded),
-                  label: Text(l10n.blinkNow),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      key: const Key('eye_blink_button'),
+                      onPressed: () => ref
+                          .read(eyePreviewControllerProvider.notifier)
+                          .requestBlink(),
+                      icon: const Icon(Icons.visibility_rounded),
+                      label: Text(l10n.blinkNow),
+                    ),
+                    OutlinedButton(
+                      key: const Key('eye_double_blink_button'),
+                      onPressed: () => ref
+                          .read(eyePreviewControllerProvider.notifier)
+                          .requestDoubleBlink(),
+                      child: const Text('Двойное моргание'),
+                    ),
+                    OutlinedButton(
+                      key: const Key('eye_look_left_button'),
+                      onPressed: () => ref
+                          .read(eyePreviewControllerProvider.notifier)
+                          .requestLookLeft(),
+                      child: const Text('Взгляд влево'),
+                    ),
+                    OutlinedButton(
+                      key: const Key('eye_look_right_button'),
+                      onPressed: () => ref
+                          .read(eyePreviewControllerProvider.notifier)
+                          .requestLookRight(),
+                      child: const Text('Взгляд вправо'),
+                    ),
+                    OutlinedButton.icon(
+                      key: const Key('eye_special_action_button'),
+                      onPressed: () => ref
+                          .read(eyePreviewControllerProvider.notifier)
+                          .requestSpecialAction(),
+                      icon: const Icon(Icons.auto_awesome_rounded),
+                      label: const Text('Поймать огонёк'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Источник случайности',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final seed in <int?>[null, 7, 42])
+                      ChoiceChip(
+                        key: Key('eye_seed_${seed ?? 'natural'}'),
+                        label: Text(seed == null ? 'Natural' : 'Seed $seed'),
+                        selected: eyeState.randomSeed == seed,
+                        onSelected: (_) => ref
+                            .read(eyePreviewControllerProvider.notifier)
+                            .setRandomSeed(seed),
+                      ),
+                  ],
                 ),
               ],
               const SizedBox(height: 22),
@@ -570,17 +653,8 @@ String _emotionLabel(AppLocalizations l10n, EyeEmotion emotion) {
     EyeEmotion.neutral => l10n.eyeEmotionNeutral,
     EyeEmotion.happy => l10n.eyeEmotionHappy,
     EyeEmotion.sleepy => l10n.eyeEmotionSleepy,
+    EyeEmotion.curious => 'Любопытный',
+    EyeEmotion.annoyed => 'Недовольный',
     EyeEmotion.surprised => l10n.eyeEmotionSurprised,
-  };
-}
-
-String _imageFailureLabel(AppLocalizations l10n, UserImageFailure failure) {
-  return switch (failure) {
-    UnsupportedImageFailure() => l10n.imageUnsupported,
-    ImageReadFailure() => l10n.imageReadFailed,
-    ImageProcessingFailure() => l10n.imageProcessingFailed,
-    ImageStorageFailure() => l10n.imageStorageFailed,
-    ImagePersistenceFailure() => l10n.imagePersistenceFailed,
-    ImageDeviceFallbackFailure() => l10n.imageDeviceFallbackFailed,
   };
 }

@@ -376,6 +376,78 @@ abstract class AppLocalizations {
   /// **'Добавить фото'**
   String get addImage;
 
+  /// No description provided for @myContent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мои фото'**
+  String get myContent;
+
+  /// No description provided for @myContentEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь появятся ваши фото'**
+  String get myContentEmptyTitle;
+
+  /// No description provided for @myContentEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте изображение и настройте кадр для круглого экрана брелока.'**
+  String get myContentEmptyMessage;
+
+  /// No description provided for @userImage.
+  ///
+  /// In ru, this message translates to:
+  /// **'ВАШЕ ФОТО'**
+  String get userImage;
+
+  /// No description provided for @setAsCurrent.
+  ///
+  /// In ru, this message translates to:
+  /// **'На экран'**
+  String get setAsCurrent;
+
+  /// No description provided for @editCrop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить кадр'**
+  String get editCrop;
+
+  /// No description provided for @delete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get delete;
+
+  /// No description provided for @deleteImageTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить фото?'**
+  String get deleteImageTitle;
+
+  /// No description provided for @deleteImageMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оригинал, настроенный кадр и сцена будут удалены с этого устройства.'**
+  String get deleteImageMessage;
+
+  /// No description provided for @imageChangesSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменения кадра сохранены.'**
+  String get imageChangesSaved;
+
+  /// No description provided for @imageDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото удалено.'**
+  String get imageDeleted;
+
+  /// No description provided for @imageSetAsCurrent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото установлено на экран брелока.'**
+  String get imageSetAsCurrent;
+
   /// No description provided for @processingImage.
   ///
   /// In ru, this message translates to:

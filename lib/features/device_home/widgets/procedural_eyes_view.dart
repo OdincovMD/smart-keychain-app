@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../domain/device/display_profile.dart';
 import '../../../domain/eyes/eye_behaviour_engine.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
@@ -14,11 +15,13 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
   const ProceduralEyesView({
     required this.initialEmotion,
     this.animate = true,
+    this.displayProfile,
     super.key,
   });
 
   final EyeEmotion initialEmotion;
   final bool animate;
+  final DisplayProfile? displayProfile;
 
   @override
   ConsumerState<ProceduralEyesView> createState() => _ProceduralEyesViewState();
@@ -31,6 +34,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   late EyeRuntimeState _fromState;
   late EyeRuntimeState _toState;
   late EyeRuntimeState _settledState;
+  Curve _motionCurve = Curves.easeInOutCubic;
 
   Timer? _timer;
   Completer<bool>? _waitCompleter;
@@ -45,12 +49,17 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
       vsync: this,
       duration: const Duration(milliseconds: 1),
     );
-    if (widget.animate) {
-      _engine = EyeBehaviourEngine(ref.read(eyeRandomProvider));
-    }
     _settledState = EyeRuntimeState.resting(widget.initialEmotion);
     _fromState = _settledState;
     _toState = _settledState;
+    if (widget.animate) _createEngine();
+  }
+
+  void _createEngine({int? seed}) {
+    final random = seed == null
+        ? ref.read(eyeRandomProvider)
+        : math.Random(seed);
+    _engine = EyeBehaviourEngine(random, initialMood: _settledState.mood);
   }
 
   @override
@@ -71,7 +80,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     } else {
       _motionStarted = false;
       _cancelSequence();
-      _snapTo(EyeRuntimeState.resting(_settledState.emotion));
+      _snapTo(EyeRuntimeState.resting(_settledState.mood));
     }
   }
 
@@ -86,21 +95,32 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   @override
   Widget build(BuildContext context) {
     if (widget.animate) {
-      ref.listen(
-        eyePreviewControllerProvider.select((state) => state.emotion),
-        (previous, next) => _changeEmotion(next),
-      );
-      ref.listen(
-        eyePreviewControllerProvider.select((state) => state.blinkRevision),
-        (previous, next) {
-          if (previous != null && next > previous) _requestBlink();
-        },
-      );
+      ref
+        ..listen(
+          eyePreviewControllerProvider.select((state) => state.emotion),
+          (previous, next) => _changeEmotion(next),
+        )
+        ..listen(
+          eyePreviewControllerProvider.select(
+            (state) => (state.commandRevision, state.command),
+          ),
+          (previous, next) {
+            if (previous != null && next.$1 > previous.$1 && next.$2 != null) {
+              _requestCommand(next.$2!);
+            }
+          },
+        )
+        ..listen(
+          eyePreviewControllerProvider.select((state) => state.randomSeed),
+          (previous, next) => _changeRandomSeed(next),
+        );
     }
 
     final scene = EyePaintScene(
       fromState: _fromState,
       toState: _toState,
+      motionCurve: _motionCurve,
+      displayShape: widget.displayProfile?.shape ?? DisplayShape.circle,
       eyeColor: AppColors.mint,
       pupilColor: AppColors.background,
       glintColor: AppColors.amber,
@@ -135,57 +155,195 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
 
   Future<void> _runAction(EyeBehaviourAction action, int revision) async {
     final completed = switch (action) {
+      IdleEyeAction() => true,
       GazeEyeAction() => await _runGaze(action, revision),
       BlinkEyeAction() => await _runBlink(action, revision),
+      SpecialEyeAction() => await _runSpecialAction(action, revision),
     };
     if (completed && revision == _sequenceRevision) _scheduleNext();
   }
 
   Future<bool> _runGaze(GazeEyeAction action, int revision) async {
-    final target = EyeRuntimeState.resting(_settledState.emotion)
-        .copyWith(gazeX: action.targetX, gazeY: action.targetY);
-    if (!await _animateTo(target, action.moveDuration, revision)) return false;
+    final resting = EyeRuntimeState.resting(_settledState.mood);
+    if (!await _animateTo(
+      resting.copyWith(
+        gazeX: action.anticipationX,
+        gazeY: action.anticipationY,
+        velocityX: -action.targetX,
+        velocityY: -action.targetY,
+        motionPhase: EyeMotionPhase.anticipation,
+      ),
+      action.anticipationDuration,
+      revision,
+      curve: Curves.easeInCubic,
+    )) {
+      return false;
+    }
+    if (!await _animateTo(
+      resting.copyWith(
+        gazeX: action.targetX,
+        gazeY: action.targetY,
+        velocityX: action.targetX,
+        velocityY: action.targetY,
+        motionPhase: EyeMotionPhase.moving,
+      ),
+      action.moveDuration,
+      revision,
+      curve: Curves.easeOutCubic,
+    )) {
+      return false;
+    }
+    if (!await _animateTo(
+      resting.copyWith(
+        gazeX: action.overshootX,
+        gazeY: action.overshootY,
+        motionPhase: EyeMotionPhase.overshoot,
+      ),
+      action.overshootDuration,
+      revision,
+      curve: Curves.easeOutCubic,
+    )) {
+      return false;
+    }
+    if (!await _animateTo(
+      resting.copyWith(
+        gazeX: action.targetX,
+        gazeY: action.targetY,
+        motionPhase: EyeMotionPhase.settling,
+      ),
+      action.settleDuration,
+      revision,
+      curve: Curves.easeOutBack,
+    )) {
+      return false;
+    }
     if (!await _wait(action.holdDuration, revision)) return false;
+    if (!action.returnsToCenter) {
+      return _animateTo(resting, action.settleDuration, revision);
+    }
     return _animateTo(
-      EyeRuntimeState.resting(_settledState.emotion),
+      resting,
       action.returnDuration,
       revision,
+      curve: Curves.easeInOutCubicEmphasized,
     );
   }
 
   Future<bool> _runBlink(BlinkEyeAction action, int revision) async {
-    final count = action.isDouble ? 2 : 1;
-    for (var index = 0; index < count; index++) {
-      final closed = _settledState.copyWith(eyelidOpen: 0.04);
-      if (!await _animateTo(closed, BlinkEyeAction.closeDuration, revision)) {
-        return false;
-      }
-      if (!await _wait(BlinkEyeAction.closedDuration, revision)) return false;
+    final resting = EyeRuntimeState.resting(_settledState.mood);
+    for (var index = 0; index < action.count; index++) {
+      final leadState = action.leftLeads
+          ? resting.copyWith(
+              leftEyelidOpen: 0.06,
+              motionPhase: EyeMotionPhase.closing,
+            )
+          : resting.copyWith(
+              rightEyelidOpen: 0.06,
+              motionPhase: EyeMotionPhase.closing,
+            );
       if (!await _animateTo(
-        EyeRuntimeState.resting(_settledState.emotion),
-        BlinkEyeAction.openDuration,
+        leadState,
+        action.asymmetryDelay,
         revision,
+        curve: Curves.easeIn,
       )) {
         return false;
       }
-      if (index + 1 < count &&
+      final closed = resting.copyWith(
+        leftEyelidOpen: 0.035,
+        rightEyelidOpen: 0.045,
+        motionPhase: EyeMotionPhase.closed,
+      );
+      if (!await _animateTo(
+        closed,
+        action.effectiveCloseDuration,
+        revision,
+        curve: Curves.easeInCubic,
+      )) {
+        return false;
+      }
+      if (!await _wait(action.effectiveClosedDuration, revision)) return false;
+      if (!await _animateTo(
+        resting.copyWith(motionPhase: EyeMotionPhase.opening),
+        action.effectiveOpenDuration,
+        revision,
+        curve: Curves.easeOutCubic,
+      )) {
+        return false;
+      }
+      if (index + 1 < action.count &&
           !await _wait(BlinkEyeAction.doubleBlinkGap, revision)) {
         return false;
       }
     }
-    return true;
+    return _animateTo(resting, const Duration(milliseconds: 28), revision);
+  }
+
+  Future<bool> _runSpecialAction(SpecialEyeAction action, int revision) async {
+    final resting = EyeRuntimeState.resting(_settledState.mood);
+    final lifted = resting.copyWith(
+      gazeX: 0.28,
+      gazeY: -0.42,
+      pupilScale: resting.pupilScale * 0.84,
+      eyeScaleX: resting.eyeScaleX * 1.045,
+      eyeScaleY: resting.eyeScaleY * 1.06,
+      leftEyelidOpen: (resting.leftEyelidOpen + 0.035).clamp(0, 1),
+      motionPhase: EyeMotionPhase.special,
+    );
+    if (!await _animateTo(
+      lifted,
+      const Duration(milliseconds: 210),
+      revision,
+      curve: Curves.easeOutBack,
+    )) {
+      return false;
+    }
+    if (!await _wait(const Duration(milliseconds: 130), revision)) return false;
+    if (!await _animateTo(
+      lifted.copyWith(
+        gazeX: -0.52,
+        gazeY: -0.12,
+        pupilScale: resting.pupilScale * 1.1,
+        rightEyelidOpen: (resting.rightEyelidOpen - 0.06).clamp(0.08, 1),
+      ),
+      const Duration(milliseconds: 270),
+      revision,
+      curve: Curves.easeInOutCubicEmphasized,
+    )) {
+      return false;
+    }
+    if (!await _animateTo(
+      resting.copyWith(
+        gazeX: 0.12,
+        gazeY: 0.12,
+        motionPhase: EyeMotionPhase.settling,
+      ),
+      const Duration(milliseconds: 180),
+      revision,
+      curve: Curves.easeOutCubic,
+    )) {
+      return false;
+    }
+    return _animateTo(
+      resting,
+      const Duration(milliseconds: 290),
+      revision,
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   Future<bool> _animateTo(
     EyeRuntimeState target,
     Duration duration,
-    int revision,
-  ) async {
+    int revision, {
+    Curve curve = Curves.easeInOutCubic,
+  }) async {
     if (!_motionEnabled || revision != _sequenceRevision) return false;
     _settledState = _currentState;
     setState(() {
       _fromState = _settledState;
       _toState = target;
+      _motionCurve = curve;
     });
     _controller.duration = duration;
     try {
@@ -212,7 +370,8 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   }
 
   void _changeEmotion(EyeEmotion emotion) {
-    if (_settledState.emotion == emotion && _toState.emotion == emotion) return;
+    if (_settledState.mood == emotion && _toState.mood == emotion) return;
+    _engine?.setMood(emotion);
     _cancelSequence();
     final target = EyeRuntimeState.resting(emotion);
     if (!_motionEnabled) {
@@ -226,26 +385,40 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   Future<void> _transitionEmotion(EyeRuntimeState target, int revision) async {
     final completed = await _animateTo(
       target,
-      const Duration(milliseconds: 180),
+      const Duration(milliseconds: 220),
       revision,
+      curve: Curves.easeInOutCubic,
     );
     if (completed && revision == _sequenceRevision) _scheduleNext();
   }
 
-  void _requestBlink() {
-    if (!_motionEnabled) return;
+  void _changeRandomSeed(int? seed) {
+    if (!widget.animate) return;
     _cancelSequence();
-    final revision = _sequenceRevision;
-    unawaited(_runManualBlink(revision));
+    _createEngine(seed: seed);
+    if (_motionEnabled) _scheduleNext();
   }
 
-  Future<void> _runManualBlink(int revision) async {
-    final completed = await _runBlink(_engine!.forceBlink(), revision);
-    if (completed && revision == _sequenceRevision) _scheduleNext();
+  void _requestCommand(EyeDebugCommand command) {
+    if (!_motionEnabled) return;
+    _cancelSequence();
+    final action = switch (command) {
+      EyeDebugCommand.blink => _engine!.forceBlink(),
+      EyeDebugCommand.doubleBlink => _engine!.forceBlink(
+        variant: EyeBlinkVariant.doubleBlink,
+      ),
+      EyeDebugCommand.lookLeft => _engine!.look(EyeLookDirection.left),
+      EyeDebugCommand.lookRight => _engine!.look(EyeLookDirection.right),
+      EyeDebugCommand.specialAction => _engine!.playSpecialAction(
+        EyeSpecialAction.fireflySearch,
+      ),
+    };
+    final revision = _sequenceRevision;
+    unawaited(_runAction(action, revision));
   }
 
   EyeRuntimeState get _currentState {
-    final progress = Curves.easeInOutCubic.transform(_controller.value);
+    final progress = _motionCurve.transform(_controller.value);
     return EyeRuntimeState.lerp(_fromState, _toState, progress);
   }
 
@@ -271,6 +444,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     setState(() {
       _fromState = state;
       _toState = state;
+      _motionCurve = Curves.linear;
     });
   }
 
@@ -290,6 +464,8 @@ final class EyePaintScene {
   const EyePaintScene({
     required this.fromState,
     required this.toState,
+    required this.motionCurve,
+    required this.displayShape,
     required this.eyeColor,
     required this.pupilColor,
     required this.glintColor,
@@ -298,6 +474,8 @@ final class EyePaintScene {
 
   final EyeRuntimeState fromState;
   final EyeRuntimeState toState;
+  final Curve motionCurve;
+  final DisplayShape displayShape;
   final Color eyeColor;
   final Color pupilColor;
   final Color glintColor;
@@ -309,6 +487,8 @@ final class EyePaintScene {
       other is EyePaintScene &&
           fromState == other.fromState &&
           toState == other.toState &&
+          motionCurve == other.motionCurve &&
+          displayShape == other.displayShape &&
           eyeColor == other.eyeColor &&
           pupilColor == other.pupilColor &&
           glintColor == other.glintColor &&
@@ -318,6 +498,8 @@ final class EyePaintScene {
   int get hashCode => Object.hash(
     fromState,
     toState,
+    motionCurve,
+    displayShape,
     eyeColor,
     pupilColor,
     glintColor,
@@ -334,12 +516,12 @@ final class ProceduralEyePainter extends CustomPainter {
       super(repaint: progress);
 
   static final RRect _eyeShape = RRect.fromRectAndRadius(
-    const Rect.fromLTWH(-26, -34, 52, 68),
-    const Radius.circular(24),
+    const Rect.fromLTWH(-0.1313, -0.1717, 0.2626, 0.3434),
+    const Radius.circular(0.1212),
   );
   static final RRect _pupilShape = RRect.fromRectAndRadius(
-    const Rect.fromLTWH(-8, -14, 16, 28),
-    const Radius.circular(8),
+    const Rect.fromLTWH(-0.0404, -0.0707, 0.0808, 0.1414),
+    const Radius.circular(0.0404),
   );
 
   final EyePaintScene scene;
@@ -351,15 +533,21 @@ final class ProceduralEyePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scale = math.min(size.width, size.height) / 240;
-    final originX = (size.width - 240 * scale) / 2;
-    final originY = (size.height - 240 * scale) / 2;
-    final t = Curves.easeInOutCubic.transform(progress.value);
+    final availableDiameter = math.min(size.width, size.height);
+    final safeScale = switch (scene.displayShape) {
+      DisplayShape.circle => 0.825,
+    };
+    final t = scene.motionCurve.transform(progress.value);
     final gazeX = _lerp(scene.fromState.gazeX, scene.toState.gazeX, t);
     final gazeY = _lerp(scene.fromState.gazeY, scene.toState.gazeY, t);
-    final eyelidOpen = _lerp(
-      scene.fromState.eyelidOpen,
-      scene.toState.eyelidOpen,
+    final leftOpen = _lerp(
+      scene.fromState.leftEyelidOpen,
+      scene.toState.leftEyelidOpen,
+      t,
+    );
+    final rightOpen = _lerp(
+      scene.fromState.rightEyelidOpen,
+      scene.toState.rightEyelidOpen,
       t,
     );
     final pupilScale = _lerp(
@@ -367,19 +555,24 @@ final class ProceduralEyePainter extends CustomPainter {
       scene.toState.pupilScale,
       t,
     );
-    final cornerLift = _lerp(
-      _cornerLift(scene.fromState.emotion),
-      _cornerLift(scene.toState.emotion),
+    final eyeScaleX = _lerp(
+      scene.fromState.eyeScaleX,
+      scene.toState.eyeScaleX,
       t,
     );
-    final eyeScale = _lerp(
-      _eyeScale(scene.fromState.emotion),
-      _eyeScale(scene.toState.emotion),
+    final eyeScaleY = _lerp(
+      scene.fromState.eyeScaleY,
+      scene.toState.eyeScaleY,
+      t,
+    );
+    final cornerLift = _lerp(
+      scene.fromState.expressionTilt,
+      scene.toState.expressionTilt,
       t,
     );
     final verticalShift = _lerp(
-      _verticalShift(scene.fromState.emotion),
-      _verticalShift(scene.toState.emotion),
+      scene.fromState.verticalOffset,
+      scene.toState.verticalOffset,
       t,
     );
 
@@ -390,31 +583,33 @@ final class ProceduralEyePainter extends CustomPainter {
 
     canvas
       ..save()
-      ..translate(originX, originY)
-      ..scale(scale);
+      ..translate(size.width / 2, size.height / 2)
+      ..scale(availableDiameter * safeScale);
     _paintEye(
       canvas,
-      centerX: 78,
-      centerY: 118 + verticalShift,
+      centerX: -0.2121,
+      centerY: -0.0101 + verticalShift,
       isLeft: true,
       gazeX: gazeX,
       gazeY: gazeY,
-      eyelidOpen: eyelidOpen,
+      eyelidOpen: leftOpen,
       pupilScale: pupilScale,
       cornerLift: cornerLift,
-      eyeScale: eyeScale,
+      eyeScaleX: eyeScaleX * 0.992,
+      eyeScaleY: eyeScaleY * 1.006,
     );
     _paintEye(
       canvas,
-      centerX: 162,
-      centerY: 118 + verticalShift,
+      centerX: 0.2121,
+      centerY: -0.0101 + verticalShift,
       isLeft: false,
       gazeX: gazeX,
       gazeY: gazeY,
-      eyelidOpen: eyelidOpen,
+      eyelidOpen: rightOpen,
       pupilScale: pupilScale,
       cornerLift: cornerLift,
-      eyeScale: eyeScale,
+      eyeScaleX: eyeScaleX * 1.008,
+      eyeScaleY: eyeScaleY * 0.994,
     );
     canvas.restore();
   }
@@ -429,51 +624,32 @@ final class ProceduralEyePainter extends CustomPainter {
     required double eyelidOpen,
     required double pupilScale,
     required double cornerLift,
-    required double eyeScale,
+    required double eyeScaleX,
+    required double eyeScaleY,
   }) {
     final eyeRotation = cornerLift * (isLeft ? -1 : 1);
-    final openScale = math.max(0.04, eyelidOpen);
+    final openScale = math.max(0.035, eyelidOpen);
 
     canvas
       ..save()
       ..translate(centerX, centerY)
       ..rotate(eyeRotation)
-      ..scale(eyeScale * 1.1, openScale * 1.1)
+      ..scale(eyeScaleX * 1.1, eyeScaleY * openScale * 1.1)
       ..drawRRect(_eyeShape, _haloPaint)
       ..restore()
       ..save()
       ..translate(centerX, centerY)
       ..rotate(eyeRotation)
-      ..scale(eyeScale, openScale)
+      ..scale(eyeScaleX, eyeScaleY * openScale)
       ..drawRRect(_eyeShape, _eyePaint)
       ..restore()
       ..save()
-      ..translate(centerX + gazeX * 10, centerY + gazeY * 8)
+      ..translate(centerX + gazeX * 0.0505, centerY + gazeY * 0.0404)
       ..scale(pupilScale, pupilScale * openScale)
       ..drawRRect(_pupilShape, _pupilPaint)
-      ..translate(3, -6)
-      ..drawCircle(Offset.zero, 3, _glintPaint)
+      ..translate(isLeft ? 0.0152 : -0.0152, -0.0303)
+      ..drawCircle(Offset.zero, 0.0152, _glintPaint)
       ..restore();
-  }
-
-  static double _cornerLift(EyeEmotion emotion) {
-    return switch (emotion) {
-      EyeEmotion.happy => 0.11,
-      EyeEmotion.sleepy => -0.035,
-      _ => 0,
-    };
-  }
-
-  static double _eyeScale(EyeEmotion emotion) {
-    return emotion == EyeEmotion.surprised ? 1.08 : 1;
-  }
-
-  static double _verticalShift(EyeEmotion emotion) {
-    return switch (emotion) {
-      EyeEmotion.happy => -2,
-      EyeEmotion.sleepy => 4,
-      _ => 0,
-    };
   }
 
   @override

@@ -108,6 +108,54 @@ preview восстанавливается.
 
 После успешного удаления `UserImageSceneRepository` больше не возвращает сцену.
 
+## User Content Lifecycle
+
+### Create
+
+`DeviceHomeScreen` запускает существующий import flow. После выбора файла
+`UserImageWorkflow` копирует original в controlled storage, editor возвращает
+нормализованный `CropSpec`, preview и metadata сохраняются в безопасном порядке.
+Новая пользовательская сцена появляется в общем `SceneRepository`; отдельного
+presentation-каталога изображений нет.
+
+### View и select
+
+Экран `My Content` является отфильтрованной проекцией `sceneLibraryProvider` и
+показывает только `SceneSource.userGenerated` с `UserImageContent`. Действие
+«На экран» проходит через `DeviceController` и общий `DeviceRepository`, поэтому
+виртуальный экран реагирует тем же способом, что и на встроенную сцену.
+
+### Edit
+
+```text
+user Scene
+  ↓ assetId
+UserImageWorkflow.loadForEdit()
+  ↓ original bytes + persisted CropSpec
+ImageEditorScreen
+  ↓ updated CropSpec
+UserImageWorkflow.updateCrop()
+  ↓ replace preview + persist metadata
+same asset id → same scene id
+```
+
+Редактор восстанавливает `centerX`, `centerY`, `scale` и `rotation`. Обычное
+редактирование не создаёт новый asset. Metadata публикуется только после
+успешной генерации preview; если её сохранение не удалось, старый preview
+восстанавливается и предыдущая корректная сцена остаётся доступной.
+
+### Delete
+
+Удаление доступно только на `My Content` и требует подтверждения. UI передаёт
+стабильный scene id в `DeleteUserImageScene`; application operation выполняет
+fallback активной сцены на Living Eyes, удаляет metadata, original и preview и
+пытается восстановить asset при частичной файловой ошибке. После успеха
+репозиторные Riverpod-проекции инвалидируются, и сцена исчезает из обоих
+каталогов.
+
+После edit/delete данные проверяются повторным созданием repository graph над
+тем же persistent store: controller state не считается durable state.
+
 ## Rendering
 
 `CompositeSceneRepository` объединяет built-in и user-generated источники.

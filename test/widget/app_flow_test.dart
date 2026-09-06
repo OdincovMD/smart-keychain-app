@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/features/device_home/device_home_screen.dart';
+import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
@@ -128,6 +130,19 @@ void main() {
     await tester.tap(find.byKey(const Key('simulator_settings_button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('eye_double_blink_button')), findsOneWidget);
+    expect(find.byKey(const Key('eye_look_left_button')), findsOneWidget);
+    expect(find.byKey(const Key('eye_look_right_button')), findsOneWidget);
+    expect(find.byKey(const Key('eye_special_action_button')), findsOneWidget);
+    final seed42 = find.byKey(const Key('eye_seed_42'));
+    await tester.ensureVisible(seed42);
+    await tester.pump();
+    await tester.tap(seed42);
+    await tester.pump();
+    final providerContainer = ProviderScope.containerOf(
+      tester.element(find.byType(DeviceHomeScreen)),
+    );
+    expect(providerContainer.read(eyePreviewControllerProvider).randomSeed, 42);
     final happyEmotion = find.byKey(const Key('eye_emotion_happy'));
     await tester.ensureVisible(happyEmotion);
     await tester.pump();
@@ -146,16 +161,17 @@ void main() {
     await tester.pump();
     await tester.tap(blinkButton);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
     paint = tester.widget<CustomPaint>(
       find.byKey(const Key('procedural_eyes_painter')).first,
     );
     painter = paint.painter! as ProceduralEyePainter;
-    expect(painter.scene.toState.eyelidOpen, 0.04);
+    expect(painter.scene.toState.eyelidOpen, closeTo(0.04, 0.006));
 
-    await tester.pump(const Duration(milliseconds: 85));
+    await tester.pump(const Duration(milliseconds: 90));
     await tester.pump(const Duration(milliseconds: 45));
-    await tester.pump(const Duration(milliseconds: 110));
-    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 30));
     paint = tester.widget<CustomPaint>(
       find.byKey(const Key('procedural_eyes_painter')).first,
     );

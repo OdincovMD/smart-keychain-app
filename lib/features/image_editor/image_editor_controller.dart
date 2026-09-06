@@ -5,15 +5,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/image/crop_spec.dart';
 
 final imageEditorControllerProvider = NotifierProvider.autoDispose
-    .family<ImageEditorController, CropSpec, String>(ImageEditorController.new);
+    .family<ImageEditorController, CropSpec, ImageEditorSession>(
+      ImageEditorController.new,
+    );
 
-final class ImageEditorController extends Notifier<CropSpec> {
-  ImageEditorController(this.assetId);
+final class ImageEditorSession {
+  const ImageEditorSession({
+    required this.assetId,
+    required this.initialCropSpec,
+  });
 
   final String assetId;
+  final CropSpec initialCropSpec;
 
   @override
-  CropSpec build() => CropSpec.centered;
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ImageEditorSession &&
+          assetId == other.assetId &&
+          initialCropSpec == other.initialCropSpec;
+
+  @override
+  int get hashCode => Object.hash(assetId, initialCropSpec);
+}
+
+final class ImageEditorController extends Notifier<CropSpec> {
+  ImageEditorController(this.session);
+
+  final ImageEditorSession session;
+
+  @override
+  CropSpec build() => session.initialCropSpec;
 
   void applyGesture({
     required CropSpec start,

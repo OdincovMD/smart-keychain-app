@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app_theme.dart';
 import 'package:smart_keychain_app/app/providers.dart';
-import 'package:smart_keychain_app/application/user_image_workflow.dart';
 import 'package:smart_keychain_app/domain/content/scene.dart';
 import 'package:smart_keychain_app/domain/storage/local_file_storage.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
@@ -28,14 +28,10 @@ void main() {
     final bytes = (await tester.runAsync(
       () => File('assets/scenes/eyes_mint_static_v1.png').readAsBytes(),
     ))!;
-    final draft = PendingUserImage(
-      id: 'editor-asset',
-      originalStorageKey: 'user-content/originals/editor-asset.png',
-      originalBytes: bytes,
-      createdAt: DateTime.utc(2026, 9, 2),
-    );
 
-    await tester.pumpWidget(ProviderScope(child: _localizedEditor(draft)));
+    await tester.pumpWidget(
+      ProviderScope(child: _localizedEditor('editor-asset', bytes)),
+    );
     await tester.pump();
 
     expect(find.byType(ImageEditorScreen), findsOneWidget);
@@ -89,7 +85,7 @@ void main() {
   });
 }
 
-Widget _localizedEditor(PendingUserImage draft) => MaterialApp(
+Widget _localizedEditor(String assetId, Uint8List originalBytes) => MaterialApp(
   theme: buildAppTheme(),
   locale: const Locale('ru'),
   supportedLocales: AppLocalizations.supportedLocales,
@@ -99,5 +95,5 @@ Widget _localizedEditor(PendingUserImage draft) => MaterialApp(
     GlobalWidgetsLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
   ],
-  home: ImageEditorScreen(draft: draft),
+  home: ImageEditorScreen(assetId: assetId, originalBytes: originalBytes),
 );

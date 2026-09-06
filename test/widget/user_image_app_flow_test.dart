@@ -80,7 +80,17 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('add_user_image_button')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('add_user_image_button')));
+    final myContent = find.byKey(const Key('open_my_content_button'));
+    await tester.ensureVisible(myContent);
+    await tester.pump();
+    await tester.tap(myContent);
+    await tester.pump();
+    await tester.pump();
+    expect(
+      find.byKey(const Key('my_content_empty_add_button')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('my_content_empty_add_button')));
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));

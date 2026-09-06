@@ -160,6 +160,44 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addImage => 'Добавить фото';
 
   @override
+  String get myContent => 'Мои фото';
+
+  @override
+  String get myContentEmptyTitle => 'Здесь появятся ваши фото';
+
+  @override
+  String get myContentEmptyMessage =>
+      'Добавьте изображение и настройте кадр для круглого экрана брелока.';
+
+  @override
+  String get userImage => 'ВАШЕ ФОТО';
+
+  @override
+  String get setAsCurrent => 'На экран';
+
+  @override
+  String get editCrop => 'Изменить кадр';
+
+  @override
+  String get delete => 'Удалить';
+
+  @override
+  String get deleteImageTitle => 'Удалить фото?';
+
+  @override
+  String get deleteImageMessage =>
+      'Оригинал, настроенный кадр и сцена будут удалены с этого устройства.';
+
+  @override
+  String get imageChangesSaved => 'Изменения кадра сохранены.';
+
+  @override
+  String get imageDeleted => 'Фото удалено.';
+
+  @override
+  String get imageSetAsCurrent => 'Фото установлено на экран брелока.';
+
+  @override
   String get processingImage => 'Обрабатываем…';
 
   @override

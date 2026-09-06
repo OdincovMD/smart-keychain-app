@@ -6,7 +6,10 @@ import 'package:smart_keychain_app/features/image_editor/image_editor_controller
 void main() {
   test('pan, zoom, rotate, and reset stay normalized', () {
     final container = ProviderContainer.test();
-    final provider = imageEditorControllerProvider('asset-1');
+    const initial = CropSpec.centered;
+    final provider = imageEditorControllerProvider(
+      const ImageEditorSession(assetId: 'asset-1', initialCropSpec: initial),
+    );
     final subscription = container.listen(provider, (previous, next) {});
     addTearDown(subscription.close);
     final controller = container.read(provider.notifier);
@@ -28,5 +31,22 @@ void main() {
 
     controller.reset();
     expect(container.read(provider), CropSpec.centered);
+  });
+
+  test('restores the persisted crop when opening an edit session', () {
+    final container = ProviderContainer.test();
+    final initial = CropSpec(
+      centerX: 0.28,
+      centerY: 0.71,
+      scale: 2.4,
+      rotation: 0.5,
+    );
+    final provider = imageEditorControllerProvider(
+      ImageEditorSession(assetId: 'asset-1', initialCropSpec: initial),
+    );
+    final subscription = container.listen(provider, (previous, next) {});
+    addTearDown(subscription.close);
+
+    expect(container.read(provider), initial);
   });
 }

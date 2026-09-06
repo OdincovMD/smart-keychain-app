@@ -1,16 +1,24 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_colors.dart';
-import '../../application/user_image_workflow.dart';
 import '../../domain/image/crop_spec.dart';
 import '../../l10n/app_localizations.dart';
 import 'image_editor_controller.dart';
 
 final class ImageEditorScreen extends ConsumerStatefulWidget {
-  const ImageEditorScreen({required this.draft, super.key});
+  const ImageEditorScreen({
+    required this.assetId,
+    required this.originalBytes,
+    this.initialCropSpec = CropSpec.centered,
+    super.key,
+  });
 
-  final PendingUserImage draft;
+  final String assetId;
+  final Uint8List originalBytes;
+  final CropSpec initialCropSpec;
 
   @override
   ConsumerState<ImageEditorScreen> createState() => _ImageEditorScreenState();
@@ -19,11 +27,21 @@ final class ImageEditorScreen extends ConsumerStatefulWidget {
 final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
   CropSpec _gestureStart = CropSpec.centered;
   Offset _gestureFocalStart = Offset.zero;
+  late final ImageEditorSession _session;
+
+  @override
+  void initState() {
+    super.initState();
+    _session = ImageEditorSession(
+      assetId: widget.assetId,
+      initialCropSpec: widget.initialCropSpec,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final crop = ref.watch(imageEditorControllerProvider(widget.draft.id));
+    final crop = ref.watch(imageEditorControllerProvider(_session));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -72,9 +90,8 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
                                   details.localFocalPoint - _gestureFocalStart;
                               ref
                                   .read(
-                                    imageEditorControllerProvider(
-                                      widget.draft.id,
-                                    ).notifier,
+                                    imageEditorControllerProvider(_session)
+                                        .notifier,
                                   )
                                   .applyGesture(
                                     start: _gestureStart,
@@ -96,7 +113,7 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
                                         (0.5 - crop.centerY) * 2,
                                       ),
                                       child: Image.memory(
-                                        widget.draft.originalBytes,
+                                        widget.originalBytes,
                                         fit: BoxFit.cover,
                                         filterQuality: FilterQuality.medium,
                                         gaplessPlayback: true,
@@ -121,8 +138,7 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
                       key: const Key('image_editor_rotate'),
                       onPressed: () => ref
                           .read(
-                            imageEditorControllerProvider(widget.draft.id)
-                                .notifier,
+                            imageEditorControllerProvider(_session).notifier,
                           )
                           .rotateQuarterTurn(),
                       icon: const Icon(Icons.rotate_90_degrees_ccw_rounded),
@@ -135,8 +151,7 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
                       key: const Key('image_editor_reset'),
                       onPressed: () => ref
                           .read(
-                            imageEditorControllerProvider(widget.draft.id)
-                                .notifier,
+                            imageEditorControllerProvider(_session).notifier,
                           )
                           .reset(),
                       icon: const Icon(Icons.restart_alt_rounded),

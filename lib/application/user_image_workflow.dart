@@ -29,6 +29,29 @@ final class PendingUserImage {
   final DateTime createdAt;
 }
 
+final class UserImageEditDraft {
+  const UserImageEditDraft({
+    required this.assetId,
+    required this.originalBytes,
+    required this.cropSpec,
+  });
+
+  final String assetId;
+  final Uint8List originalBytes;
+  final CropSpec cropSpec;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserImageEditDraft &&
+          assetId == other.assetId &&
+          originalBytes == other.originalBytes &&
+          cropSpec == other.cropSpec;
+
+  @override
+  int get hashCode => Object.hash(assetId, originalBytes, cropSpec);
+}
+
 sealed class BeginUserImageImportOutcome {
   const BeginUserImageImportOutcome();
 }
@@ -169,6 +192,33 @@ final class UserImageWorkflow {
     return switch (await _storage.delete(draft.originalStorageKey)) {
       Ok() => const Ok(null),
       Err() => const Err(ImageStorageFailure('discard_original')),
+    };
+  }
+
+  Future<Result<UserImageEditDraft, UserImageFailure>> loadForEdit(
+    String assetId,
+  ) async {
+    final lookup = await _assets.getById(assetId);
+    final UserImageAsset? asset;
+    switch (lookup) {
+      case Ok(:final value):
+        asset = value;
+      case Err(:final failure):
+        return Err(failure);
+    }
+    if (asset == null) {
+      return const Err(ImagePersistenceFailure('not_found'));
+    }
+
+    return switch (await _storage.read(asset.originalStorageKey)) {
+      Ok(:final value) => Ok(
+        UserImageEditDraft(
+          assetId: asset.id,
+          originalBytes: value,
+          cropSpec: asset.cropSpec,
+        ),
+      ),
+      Err() => const Err(ImageStorageFailure('read_for_edit')),
     };
   }
 

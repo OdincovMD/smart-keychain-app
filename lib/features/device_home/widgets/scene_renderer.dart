@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../domain/content/scene.dart';
+import '../../../domain/device/display_profile.dart';
 import 'procedural_eyes_view.dart';
 
 final class SceneRenderer extends ConsumerWidget {
@@ -11,6 +12,7 @@ final class SceneRenderer extends ConsumerWidget {
     required this.animate,
     this.fit = BoxFit.cover,
     this.filterQuality = FilterQuality.medium,
+    this.displayProfile,
     super.key,
   });
 
@@ -18,6 +20,7 @@ final class SceneRenderer extends ConsumerWidget {
   final bool animate;
   final BoxFit fit;
   final FilterQuality filterQuality;
+  final DisplayProfile? displayProfile;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,6 +33,7 @@ final class SceneRenderer extends ConsumerWidget {
       final ProceduralEyesContent content => ProceduralEyesSceneRenderer(
         content: content,
         animate: animate,
+        displayProfile: displayProfile,
       ),
       final UserImageContent content => UserImageSceneRenderer(
         content: content,
@@ -111,17 +115,20 @@ final class ProceduralEyesSceneRenderer extends StatelessWidget {
   const ProceduralEyesSceneRenderer({
     required this.content,
     required this.animate,
+    this.displayProfile,
     super.key,
   });
 
   final ProceduralEyesContent content;
   final bool animate;
+  final DisplayProfile? displayProfile;
 
   @override
   Widget build(BuildContext context) {
     return ProceduralEyesView(
       initialEmotion: content.defaultEmotion,
       animate: animate,
+      displayProfile: displayProfile,
     );
   }
 }
