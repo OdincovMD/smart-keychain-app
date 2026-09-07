@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/domain/settings/app_appearance.dart';
+import 'package:smart_keychain_app/features/appearance/appearance_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
@@ -36,7 +38,7 @@ void main() {
   testWidgets('Device Discovery 390x844', (tester) async {
     final repository = VirtualDeviceRepository(engine: _createEngine());
     addTearDown(repository.dispose);
-    await _pumpApp(tester, repository);
+    await _pumpApp(tester, repository, appearance: AppAppearance.obsidian);
 
     await expectLater(
       find.byType(MaterialApp),
@@ -44,18 +46,35 @@ void main() {
     );
   });
 
-  testWidgets('Device Home 390x844', (tester) async {
+  testWidgets('Companion Home Obsidian 390x844', (tester) async {
     final repository = VirtualDeviceRepository(engine: _createEngine());
     addTearDown(repository.dispose);
-    await _pumpApp(tester, repository);
+    await _pumpApp(tester, repository, appearance: AppAppearance.obsidian);
     await tester.tap(find.byKey(const Key('connect_button')));
     for (var frame = 0; frame < 6; frame++) {
       await tester.pump(const Duration(milliseconds: 1));
     }
+    await tester.pump(const Duration(milliseconds: 300));
 
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('baselines/device_home_390x844.png'),
+      matchesGoldenFile('baselines/companion_home_obsidian_390x844.png'),
+    );
+  });
+
+  testWidgets('Companion Home Pearl 390x844', (tester) async {
+    final repository = VirtualDeviceRepository(engine: _createEngine());
+    addTearDown(repository.dispose);
+    await _pumpApp(tester, repository, appearance: AppAppearance.pearl);
+    await tester.tap(find.byKey(const Key('connect_button')));
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 1));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/companion_home_pearl_390x844.png'),
     );
   });
 
@@ -87,13 +106,15 @@ void main() {
 
 Future<void> _pumpApp(
   WidgetTester tester,
-  VirtualDeviceRepository repository,
-) async {
+  VirtualDeviceRepository repository, {
+  required AppAppearance appearance,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         sceneRepositoryProvider.overrideWithValue(_sceneRepository),
         deviceRepositoryProvider.overrideWithValue(repository),
+        initialAppAppearanceProvider.overrideWithValue(appearance),
       ],
       child: Builder(
         builder: (context) => MediaQuery(

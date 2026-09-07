@@ -36,6 +36,24 @@ flutter:
   assets:
     - assets/scenes/
   fonts:
+    - family: Unbounded
+      fonts:
+        - asset: assets/fonts/Unbounded.ttf
+          weight: 500
+        - asset: assets/fonts/Unbounded.ttf
+          weight: 600
+        - asset: assets/fonts/Unbounded.ttf
+          weight: 700
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope.ttf
+          weight: 700
     - family: Fredoka
       fonts:
         - asset: assets/fonts/Fredoka.ttf

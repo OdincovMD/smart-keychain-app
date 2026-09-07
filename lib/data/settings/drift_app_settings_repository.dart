@@ -1,5 +1,6 @@
 import '../../domain/settings/app_settings.dart';
 import '../../domain/settings/app_settings_repository.dart';
+import '../../domain/settings/app_appearance.dart';
 import '../database/app_database.dart';
 
 final class DriftAppSettingsRepository implements AppSettingsRepository {
@@ -38,6 +39,16 @@ final class DriftAppSettingsRepository implements AppSettingsRepository {
       final current = await load();
       await _database.appSettingsDao.save(
         current.copyWith(brightness: brightness),
+      );
+    });
+  }
+
+  @override
+  Future<void> saveAppearance(AppAppearance appearance) {
+    return _database.transaction(() async {
+      final current = await load();
+      await _database.appSettingsDao.save(
+        current.copyWith(appearance: appearance),
       );
     });
   }

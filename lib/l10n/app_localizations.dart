@@ -202,6 +202,48 @@ abstract class AppLocalizations {
   /// **'Выберите образ, который появится на брелоке.'**
   String get sceneLibrarySubtitle;
 
+  /// No description provided for @wardrobe.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гардероб'**
+  String get wardrobe;
+
+  /// No description provided for @allLooks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get allLooks;
+
+  /// No description provided for @allLooksTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все образы'**
+  String get allLooksTitle;
+
+  /// No description provided for @moodNeutral.
+  ///
+  /// In ru, this message translates to:
+  /// **'СПОКОЙНАЯ'**
+  String get moodNeutral;
+
+  /// No description provided for @presenceNeutral.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня просто рядом.'**
+  String get presenceNeutral;
+
+  /// No description provided for @changeLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить образ'**
+  String get changeLook;
+
+  /// No description provided for @tryingOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Примеряем…'**
+  String get tryingOn;
+
   /// No description provided for @activeScene.
   ///
   /// In ru, this message translates to:
@@ -249,6 +291,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проверьте задержку команд и поведение живого экрана.'**
   String get simulatorSettingsHint;
+
+  /// No description provided for @appearance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформление'**
+  String get appearance;
+
+  /// No description provided for @appearanceHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Одна система Chrome Kiss в тёмной или светлой подаче.'**
+  String get appearanceHint;
+
+  /// No description provided for @appearanceObsidian.
+  ///
+  /// In ru, this message translates to:
+  /// **'Obsidian'**
+  String get appearanceObsidian;
+
+  /// No description provided for @appearancePearl.
+  ///
+  /// In ru, this message translates to:
+  /// **'Pearl'**
+  String get appearancePearl;
+
+  /// No description provided for @appearanceSystem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как в системе'**
+  String get appearanceSystem;
 
   /// No description provided for @latency.
   ///

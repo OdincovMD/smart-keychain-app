@@ -6,6 +6,7 @@ import 'app/app_lifecycle_host.dart';
 import 'app/bootstrap.dart';
 import 'app/error_handlers.dart';
 import 'app/providers.dart';
+import 'features/appearance/appearance_controller.dart';
 import 'infrastructure/logging/crash_log.dart';
 
 Future<void> main() async {
@@ -41,6 +42,9 @@ Future<void> main() async {
           dependencies.userImageIdGenerator,
         ),
         failureLoggerProvider.overrideWithValue(failureLogger),
+        initialAppAppearanceProvider.overrideWithValue(
+          dependencies.initialAppearance,
+        ),
       ],
       child: AppLifecycleHost(
         onDispose: dependencies.close,

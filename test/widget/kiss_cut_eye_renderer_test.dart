@@ -1,0 +1,226 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_keychain_app/app/app_theme.dart';
+import 'package:smart_keychain_app/domain/device/display_profile.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
+import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/character_study_screen.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
+
+void main() {
+  test('all visual moods keep pupils and silhouettes in the safe region', () {
+    for (final mood in KissCutVisualMood.values) {
+      final geometry = KissCutGeometrySnapshot.fromState(
+        KissCutStudyPose.forMood(mood),
+        visualMoodOverride: mood,
+      );
+
+      expect(geometry.left.pupilInsideEye, isTrue, reason: mood.name);
+      expect(geometry.right.pupilInsideEye, isTrue, reason: mood.name);
+      expect(
+        geometry.contentRadiusFraction,
+        lessThanOrEqualTo(0.36),
+        reason: mood.name,
+      );
+    }
+  });
+
+  test('extreme deterministic inputs keep each pupil inside its eye', () {
+    final random = Random(2917);
+    for (var sample = 0; sample < 300; sample++) {
+      final mood = KissCutVisualMood
+          .values[random.nextInt(KissCutVisualMood.values.length)];
+      final base = KissCutStudyPose.forMood(mood);
+      final state = base.copyWith(
+        gazeX: random.nextDouble() * 2 - 1,
+        gazeY: random.nextDouble() * 2 - 1,
+        pupilScale: 0.7 + random.nextDouble() * 0.5,
+        leftEyelidOpen: 0.35 + random.nextDouble() * 0.65,
+        rightEyelidOpen: 0.35 + random.nextDouble() * 0.65,
+      );
+      final geometry = KissCutGeometrySnapshot.fromState(
+        state,
+        visualMoodOverride: mood,
+      );
+
+      expect(geometry.left.pupilInsideEye, isTrue, reason: 'left $sample');
+      expect(geometry.right.pupilInsideEye, isTrue, reason: 'right $sample');
+      expect(geometry.contentRadiusFraction, lessThanOrEqualTo(0.36));
+    }
+  });
+
+  test('identical renderer inputs produce equal immutable paint scenes', () {
+    final state = KissCutStudyPose.forMood(KissCutVisualMood.curious);
+    final first = KissCutPaintScene(
+      fromState: state,
+      toState: state,
+      motionCurve: Curves.easeInOutCubic,
+      displayShape: DisplayShape.circle,
+      visualMoodOverride: KissCutVisualMood.curious,
+    );
+    final second = KissCutPaintScene(
+      fromState: state,
+      toState: state,
+      motionCurve: Curves.easeInOutCubic,
+      displayShape: DisplayShape.circle,
+      visualMoodOverride: KissCutVisualMood.curious,
+    );
+
+    expect(first, second);
+    expect(first.hashCode, second.hashCode);
+  });
+
+  for (final size in [64.0, 240.0]) {
+    testWidgets('all moods paint without errors at ${size.toInt()} px', (
+      tester,
+    ) async {
+      for (final mood in KissCutVisualMood.values) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: SizedBox.square(
+                dimension: size,
+                child: KissCutEyesView(
+                  state: KissCutStudyPose.forMood(mood),
+                  visualMoodOverride: mood,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
+        expect(tester.takeException(), isNull, reason: mood.name);
+      }
+    });
+  }
+
+  testWidgets('reduced motion freezes the Kiss Cut renderer', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: const MaterialApp(
+              home: SizedBox.square(
+                dimension: 240,
+                child: ProceduralEyesView(
+                  initialEmotion: EyeEmotion.neutral,
+                  rendererVariant: EyeRendererVariant.kissCutV2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ProceduralEyesView)),
+    );
+    container
+        .read(eyePreviewControllerProvider.notifier)
+        .setEmotion(EyeEmotion.sleepy);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 8));
+
+    final painter = _kissCutPainter(tester);
+    expect(painter.scene.fromState, painter.scene.toState);
+    expect(painter.scene.toState.emotion, EyeEmotion.sleepy);
+  });
+
+  testWidgets('manual blink drives Kiss Cut and returns open', (tester) async {
+    final container = await _pumpAnimatedKissCut(tester);
+
+    container.read(eyePreviewControllerProvider.notifier).requestBlink();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(
+      _kissCutPainter(tester).scene.toState.motionPhase,
+      EyeMotionPhase.closed,
+    );
+
+    await tester.pump(const Duration(milliseconds: 90));
+    await tester.pump(const Duration(milliseconds: 45));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 30));
+    final state = _kissCutPainter(tester).scene.toState;
+    expect(state.motionPhase, EyeMotionPhase.idle);
+    expect(state.eyelidOpen, greaterThan(0.8));
+  });
+
+  testWidgets('study surface compares renderers, moods, scale and motion', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildAppTheme(),
+          home: const CharacterStudyScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('study_renderer_legacy')));
+    await tester.pump();
+    expect(find.byKey(const Key('procedural_eyes_painter')), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('study_renderer_kissCutV2')),
+    );
+    await tester.tap(find.byKey(const Key('study_renderer_kissCutV2')));
+    await tester.ensureVisible(find.byKey(const Key('study_mood_flirty')));
+    await tester.tap(find.byKey(const Key('study_mood_flirty')));
+    await tester.ensureVisible(find.text('64 px'));
+    await tester.tap(find.text('64 px'));
+    await tester.pump();
+    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const Key('character_study_preview'))),
+      const Size.square(64),
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('study_double_blink')));
+    await tester.tap(find.byKey(const Key('study_double_blink')));
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(
+      _kissCutPainter(tester).scene.toState.motionPhase,
+      isNot(EyeMotionPhase.idle),
+    );
+  });
+}
+
+Future<ProviderContainer> _pumpAnimatedKissCut(WidgetTester tester) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [eyeRandomProvider.overrideWithValue(Random(73))],
+      child: const MaterialApp(
+        home: SizedBox.square(
+          dimension: 240,
+          child: ProceduralEyesView(
+            initialEmotion: EyeEmotion.neutral,
+            rendererVariant: EyeRendererVariant.kissCutV2,
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pump();
+  return ProviderScope.containerOf(
+    tester.element(find.byType(ProceduralEyesView)),
+  );
+}
+
+KissCutEyePainter _kissCutPainter(WidgetTester tester) {
+  final paint = tester.widget<CustomPaint>(
+    find.byKey(const Key('kiss_cut_eye_painter')),
+  );
+  return paint.painter! as KissCutEyePainter;
+}

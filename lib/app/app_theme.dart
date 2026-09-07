@@ -1,95 +1,116 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'chrome_kiss_theme.dart';
 
-ThemeData buildAppTheme() {
-  final base = ThemeData.dark(useMaterial3: true);
+ThemeData buildAppTheme([
+  ResolvedAppAppearance appearance = ResolvedAppAppearance.obsidian,
+]) {
+  final colors = ChromeKissColors.forAppearance(appearance);
+  final brightness = switch (appearance) {
+    ResolvedAppAppearance.obsidian => Brightness.dark,
+    ResolvedAppAppearance.pearl => Brightness.light,
+  };
+  final base = ThemeData(brightness: brightness, useMaterial3: true);
+  final typography = ChromeKissTypography.fromColors(colors);
   final colorScheme =
       ColorScheme.fromSeed(
-        seedColor: AppColors.coral,
-        brightness: Brightness.dark,
-        surface: AppColors.surface,
+        seedColor: colors.accentPrimary,
+        brightness: brightness,
+        surface: colors.surfaceSecondary,
       ).copyWith(
-        primary: AppColors.coral,
-        secondary: AppColors.mint,
-        tertiary: AppColors.amber,
-        onPrimary: AppColors.background,
-        onSurface: AppColors.cream,
+        primary: colors.accentPrimary,
+        onPrimary: colors.onAccent,
+        secondary: colors.accentOptical,
+        onSecondary: colors.lens,
+        tertiary: colors.materialChampagne,
+        surface: colors.surfaceSecondary,
+        onSurface: colors.textPrimary,
+        error: colors.danger,
+        onError: colors.canvas,
+        outline: colors.materialChrome,
+        outlineVariant: colors.divider,
       );
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor: colors.canvas,
+    extensions: <ThemeExtension<dynamic>>[
+      colors,
+      typography,
+      ChromeKissMotion.standard,
+    ],
     textTheme: base.textTheme
         .apply(
-          fontFamily: 'NunitoSans',
-          bodyColor: AppColors.cream,
-          displayColor: AppColors.cream,
+          fontFamily: 'Manrope',
+          bodyColor: colors.textPrimary,
+          displayColor: colors.textPrimary,
         )
         .copyWith(
-          displaySmall: const TextStyle(
-            fontFamily: 'Fredoka',
-            fontFamilyFallback: ['NunitoSans'],
-            fontWeight: FontWeight.w600,
-            fontSize: 40,
-            height: 1.05,
-            letterSpacing: -1.2,
-            color: AppColors.cream,
+          displaySmall: typography.display,
+          headlineMedium: typography.title,
+          titleLarge: typography.body.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
-          headlineMedium: const TextStyle(
-            fontFamily: 'Fredoka',
-            fontFamilyFallback: ['NunitoSans'],
-            fontWeight: FontWeight.w600,
-            fontSize: 28,
-            height: 1.12,
-            color: AppColors.cream,
-          ),
-          titleLarge: const TextStyle(
-            fontFamily: 'Fredoka',
-            fontFamilyFallback: ['NunitoSans'],
-            fontWeight: FontWeight.w600,
-            fontSize: 21,
-            color: AppColors.cream,
-          ),
-          bodyLarge: const TextStyle(
-            fontFamily: 'NunitoSans',
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            height: 1.45,
-            color: AppColors.cream,
-          ),
-          bodyMedium: const TextStyle(
-            fontFamily: 'NunitoSans',
+          bodyLarge: typography.body,
+          bodyMedium: typography.body.copyWith(
             fontWeight: FontWeight.w400,
             fontSize: 14,
-            height: 1.45,
-            color: AppColors.muted,
+            color: colors.textSecondary,
           ),
-          labelLarge: const TextStyle(
-            fontFamily: 'NunitoSans',
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
+          labelLarge: typography.label,
         ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: colors.canvas,
+      foregroundColor: colors.textPrimary,
+      surfaceTintColor: Colors.transparent,
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: colors.surfaceSecondary,
+      modalBackgroundColor: colors.surfaceSecondary,
+      surfaceTintColor: Colors.transparent,
+    ),
+    cardTheme: CardThemeData(
+      color: colors.surfaceSecondary,
+      surfaceTintColor: Colors.transparent,
+    ),
+    dividerTheme: DividerThemeData(color: colors.divider),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: colors.accentPrimary,
+        foregroundColor: colors.onAccent,
         minimumSize: const Size(48, 54),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        textStyle: const TextStyle(
-          fontFamily: 'NunitoSans',
-          fontWeight: FontWeight.w700,
-          fontSize: 15,
-        ),
+        textStyle: typography.label,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: colors.textPrimary,
+        side: BorderSide(color: colors.materialChrome),
+        textStyle: typography.label,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: colors.textPrimary,
+        textStyle: typography.label,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+      style: IconButton.styleFrom(
+        foregroundColor: colors.textPrimary,
+        minimumSize: const Size(48, 48),
+      ),
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: colors.materialChrome,
     ),
     sliderTheme: base.sliderTheme.copyWith(
-      activeTrackColor: AppColors.amber,
-      inactiveTrackColor: AppColors.surfaceRaised,
-      thumbColor: AppColors.cream,
-      overlayColor: AppColors.amber.withValues(alpha: 0.14),
+      activeTrackColor: colors.materialChampagne,
+      inactiveTrackColor: colors.divider,
+      thumbColor: colors.materialChrome,
+      overlayColor: colors.materialChampagne.withValues(alpha: 0.14),
       trackHeight: 8,
     ),
   );

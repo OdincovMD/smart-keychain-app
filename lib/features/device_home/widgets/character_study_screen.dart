@@ -1,0 +1,328 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../app/chrome_kiss_theme.dart';
+import '../../../domain/eyes/eye_emotion.dart';
+import '../eye_preview_controller.dart';
+import 'kiss_cut_eye_renderer.dart';
+import 'procedural_eyes_view.dart';
+
+enum CharacterStudySize { full, thumbnail }
+
+final class CharacterStudyScreen extends ConsumerStatefulWidget {
+  const CharacterStudyScreen({super.key});
+
+  @override
+  ConsumerState<CharacterStudyScreen> createState() =>
+      _CharacterStudyScreenState();
+}
+
+final class _CharacterStudyScreenState
+    extends ConsumerState<CharacterStudyScreen> {
+  EyeRendererVariant _renderer = EyeRendererVariant.kissCutV21;
+  KissCutVisualMood _mood = KissCutVisualMood.neutral;
+  KissCutColourway _colourway = KissCutColourway.orchidLilac;
+  CharacterStudySize _size = CharacterStudySize.full;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.chromeKiss;
+    final eyeState = ref.watch(eyePreviewControllerProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kiss Cut Character Study')),
+      body: ColoredBox(
+        color: colors.canvas,
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'PROPOSED · NOT PRODUCTION DEFAULT',
+                      style: context.chromeKissText.status.copyWith(
+                        color: colors.materialChampagne,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Legacy / Kiss Cut V2 / V2.1',
+                      style: context.chromeKissText.title.copyWith(
+                        fontFamily: 'NunitoSans',
+                        fontSize: 26,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Isolated renderer study on the same behaviour engine.',
+                      style: context.chromeKissText.body.copyWith(
+                        color: colors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    _CharacterPreview(
+                      renderer: _renderer,
+                      mood: _mood,
+                      colourway: _colourway,
+                      size: _size,
+                    ),
+                    const SizedBox(height: 24),
+                    _StudySection(
+                      label: 'Renderer',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final renderer in EyeRendererVariant.values)
+                            ChoiceChip(
+                              key: Key('study_renderer_${renderer.name}'),
+                              label: Text(_rendererLabel(renderer)),
+                              selected: _renderer == renderer,
+                              onSelected: (_) {
+                                setState(() => _renderer = renderer);
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Mood',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final mood in KissCutVisualMood.values)
+                            ChoiceChip(
+                              key: Key('study_mood_${mood.name}'),
+                              label: Text(_moodLabel(mood)),
+                              selected: _mood == mood,
+                              onSelected: (_) => _selectMood(mood),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Scale',
+                      child: SegmentedButton<CharacterStudySize>(
+                        segments: const [
+                          ButtonSegment(
+                            value: CharacterStudySize.full,
+                            label: Text('Full'),
+                          ),
+                          ButtonSegment(
+                            value: CharacterStudySize.thumbnail,
+                            label: Text('64 px'),
+                          ),
+                        ],
+                        selected: {_size},
+                        onSelectionChanged: (value) {
+                          setState(() => _size = value.single);
+                        },
+                      ),
+                    ),
+                    if (_renderer != EyeRendererVariant.legacy) ...[
+                      const SizedBox(height: 18),
+                      _StudySection(
+                        label: 'Colour study',
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final colourway in KissCutColourway.values)
+                              ChoiceChip(
+                                key: Key('study_colourway_${colourway.name}'),
+                                label: Text(_colourwayLabel(colourway)),
+                                selected: _colourway == colourway,
+                                onSelected: (_) {
+                                  setState(() => _colourway = colourway);
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Motion checks',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton(
+                            key: const Key('study_blink'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestBlink(),
+                            child: const Text('Blink'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_double_blink'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestDoubleBlink(),
+                            child: const Text('Double blink'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_look_left'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestLookLeft(),
+                            child: const Text('Look left'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_look_right'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestLookRight(),
+                            child: const Text('Look right'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _StudySection(
+                      label: 'Random source',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final seed in <int?>[null, 7, 42])
+                            ChoiceChip(
+                              key: Key('study_seed_${seed ?? 'natural'}'),
+                              label: Text(
+                                seed == null ? 'Natural' : 'Seed $seed',
+                              ),
+                              selected: eyeState.randomSeed == seed,
+                              onSelected: (_) => ref
+                                  .read(eyePreviewControllerProvider.notifier)
+                                  .setRandomSeed(seed),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _selectMood(KissCutVisualMood mood) {
+    ref
+        .read(eyePreviewControllerProvider.notifier)
+        .setEmotion(_runtimeMoodFor(mood));
+    setState(() => _mood = mood);
+  }
+}
+
+final class _CharacterPreview extends StatelessWidget {
+  const _CharacterPreview({
+    required this.renderer,
+    required this.mood,
+    required this.colourway,
+    required this.size,
+  });
+
+  final EyeRendererVariant renderer;
+  final KissCutVisualMood mood;
+  final KissCutColourway colourway;
+  final CharacterStudySize size;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final diameter = size == CharacterStudySize.thumbnail
+            ? 64.0
+            : constraints.maxWidth.clamp(240.0, 300.0).toDouble();
+        return SizedBox(
+          height: size == CharacterStudySize.thumbnail ? 144 : diameter,
+          child: Center(
+            child: ClipOval(
+              child: SizedBox.square(
+                key: const Key('character_study_preview'),
+                dimension: diameter,
+                child: ProceduralEyesView(
+                  initialEmotion: _runtimeMoodFor(mood),
+                  rendererVariant: renderer,
+                  kissCutVisualMoodOverride:
+                      renderer == EyeRendererVariant.legacy ? null : mood,
+                  kissCutColourway: colourway,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+final class _StudySection extends StatelessWidget {
+  const _StudySection({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: context.chromeKissText.label),
+        const SizedBox(height: 9),
+        child,
+      ],
+    );
+  }
+}
+
+EyeEmotion _runtimeMoodFor(KissCutVisualMood mood) {
+  return switch (mood) {
+    KissCutVisualMood.neutral || KissCutVisualMood.flirty => EyeEmotion.neutral,
+    KissCutVisualMood.happy => EyeEmotion.happy,
+    KissCutVisualMood.sleepy => EyeEmotion.sleepy,
+    KissCutVisualMood.curious => EyeEmotion.curious,
+    KissCutVisualMood.annoyed => EyeEmotion.annoyed,
+    KissCutVisualMood.surprised => EyeEmotion.surprised,
+  };
+}
+
+String _moodLabel(KissCutVisualMood mood) {
+  return switch (mood) {
+    KissCutVisualMood.neutral => 'Neutral',
+    KissCutVisualMood.happy => 'Happy',
+    KissCutVisualMood.sleepy => 'Sleepy',
+    KissCutVisualMood.curious => 'Curious',
+    KissCutVisualMood.annoyed => 'Annoyed',
+    KissCutVisualMood.surprised => 'Surprised',
+    KissCutVisualMood.flirty => 'Flirty',
+  };
+}
+
+String _colourwayLabel(KissCutColourway colourway) {
+  return switch (colourway) {
+    KissCutColourway.orchidLilac => 'Orchid / Lilac',
+    KissCutColourway.icyCool => 'Icy / Cool',
+    KissCutColourway.pearlChampagne => 'Pearl / Champagne',
+  };
+}
+
+String _rendererLabel(EyeRendererVariant renderer) {
+  return switch (renderer) {
+    EyeRendererVariant.legacy => 'Legacy',
+    EyeRendererVariant.kissCutV2 => 'Kiss Cut V2',
+    EyeRendererVariant.kissCutV21 => 'Kiss Cut V2.1',
+  };
+}

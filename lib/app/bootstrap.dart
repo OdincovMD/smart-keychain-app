@@ -11,6 +11,7 @@ import '../domain/image/image_processor.dart';
 import '../domain/image/user_image_asset_repository.dart';
 import '../domain/image/user_image_id_generator.dart';
 import '../domain/settings/app_settings_repository.dart';
+import '../domain/settings/app_appearance.dart';
 import '../domain/storage/local_file_storage.dart';
 import '../infrastructure/content/built_in_scene_repository.dart';
 import '../infrastructure/content/composite_scene_repository.dart';
@@ -34,6 +35,7 @@ final class AppDependencies {
     required this.userImageIdGenerator,
     required this.database,
     required this.disposeDevice,
+    required this.initialAppearance,
   });
 
   final SceneRepository sceneRepository;
@@ -46,6 +48,7 @@ final class AppDependencies {
   final UserImageIdGenerator userImageIdGenerator;
   final AppDatabase database;
   final Future<void> Function() disposeDevice;
+  final AppAppearance initialAppearance;
 
   Future<void> close() async {
     await disposeDevice();
@@ -96,6 +99,7 @@ Future<AppDependencies> bootstrap({required FailureLogger log}) async {
       userImageIdGenerator: userImageIdGenerator,
       database: database,
       disposeDevice: deviceRepository.dispose,
+      initialAppearance: restored.appearance,
     );
   } catch (error, stackTrace) {
     log('app.bootstrap', error, stackTrace);

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../domain/content/scene.dart';
 import '../../../domain/device/display_profile.dart';
+import 'kiss_cut_eye_renderer.dart';
 import 'procedural_eyes_view.dart';
 
 final class SceneRenderer extends ConsumerWidget {
@@ -129,6 +130,7 @@ final class ProceduralEyesSceneRenderer extends StatelessWidget {
       initialEmotion: content.defaultEmotion,
       animate: animate,
       displayProfile: displayProfile,
+      rendererVariant: EyeRendererVariant.kissCutV21,
     );
   }
 }

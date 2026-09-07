@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/app_colors.dart';
+import '../../../app/chrome_kiss_theme.dart';
 import '../../../domain/content/scene.dart';
 import '../../../l10n/app_localizations.dart';
 import 'scene_renderer.dart';
@@ -24,7 +24,8 @@ final class SceneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final borderColor = isSelected ? AppColors.mint : Colors.transparent;
+    final colors = context.chromeKiss;
+    final borderColor = isSelected ? colors.materialChrome : Colors.transparent;
 
     return Semantics(
       selected: isSelected,
@@ -40,7 +41,7 @@ final class SceneCard extends StatelessWidget {
           width: 172,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: colors.surfaceSecondary,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: borderColor, width: 2),
           ),
@@ -66,14 +67,14 @@ final class SceneCard extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.background.withValues(alpha: 0.88),
+                          color: colors.lens.withValues(alpha: 0.88),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           l10n.activeScene,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
-                                color: AppColors.mint,
+                                color: colors.textPrimary,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),

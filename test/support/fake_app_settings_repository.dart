@@ -1,5 +1,6 @@
 import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/domain/settings/app_settings_repository.dart';
+import 'package:smart_keychain_app/domain/settings/app_appearance.dart';
 
 final class FakeAppSettingsRepository implements AppSettingsRepository {
   FakeAppSettingsRepository({
@@ -35,6 +36,12 @@ final class FakeAppSettingsRepository implements AppSettingsRepository {
   Future<void> saveBrightness(double brightness) async {
     _throwIfConfigured();
     _settings = _settings.copyWith(brightness: brightness);
+  }
+
+  @override
+  Future<void> saveAppearance(AppAppearance appearance) async {
+    _throwIfConfigured();
+    _settings = _settings.copyWith(appearance: appearance);
   }
 
   void _throwIfConfigured() {

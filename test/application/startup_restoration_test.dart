@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/application/startup_restoration.dart';
+import 'package:smart_keychain_app/domain/settings/app_appearance.dart';
 import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 
@@ -12,6 +13,7 @@ void main() {
         initialSettings: const AppSettings(
           activeSceneId: BuiltInSceneRepository.mintEyesId,
           brightness: 0.35,
+          appearance: AppAppearance.pearl,
         ),
       );
 
@@ -23,6 +25,7 @@ void main() {
 
       expect(restored.activeSceneId, BuiltInSceneRepository.mintEyesId);
       expect(restored.brightness, closeTo(0.35, 0.0001));
+      expect(restored.appearance, AppAppearance.pearl);
     });
 
     test('unknown persisted scene safely falls back to default', () async {

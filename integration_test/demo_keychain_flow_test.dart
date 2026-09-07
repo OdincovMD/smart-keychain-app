@@ -140,13 +140,25 @@ void main() {
       findsOneWidget,
     );
 
+    final brightnessButton = find.byKey(
+      const Key('brightness_settings_button'),
+    );
+    await tester.ensureVisible(brightnessButton);
+    await tester.pump();
+    await tester.tap(brightnessButton);
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.drag(
       find.byKey(const Key('brightness_slider')),
       const Offset(-120, 0),
     );
     await tester.pump(const Duration(milliseconds: 350));
+    await tester.tapAt(const Offset(12, 12));
+    await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.byKey(const Key('disconnect_button')));
+    final disconnectButton = find.byKey(const Key('disconnect_button'));
+    await tester.ensureVisible(disconnectButton);
+    await tester.pump();
+    await tester.tap(disconnectButton);
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('Выберите брелок'), findsOneWidget);
   });

@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/app_colors.dart';
+import '../../app/chrome_kiss_theme.dart';
 import '../../app/providers.dart';
 import '../../application/device_controller.dart';
 import '../../application/user_image_workflow.dart';
@@ -14,17 +15,22 @@ import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_snapshot.dart';
 import '../../domain/eyes/eye_emotion.dart';
 import '../../domain/image/crop_spec.dart';
+import '../../domain/settings/app_appearance.dart';
+import '../appearance/appearance_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../device_discovery/device_discovery_screen.dart';
 import '../image_editor/image_editor_screen.dart';
 import '../image_import/user_image_controller.dart';
 import '../shared/image_failure_label.dart';
-import '../shared/playful_background.dart';
 import '../user_content/user_content_screen.dart';
 import 'eye_preview_controller.dart';
+import 'widgets/all_looks_sheet.dart';
 import 'widgets/brightness_control.dart';
-import 'widgets/keychain_preview.dart';
-import 'widgets/scene_card.dart';
+import 'widgets/character_study_screen.dart';
+import 'widgets/companion_stage.dart';
+import 'widgets/jewel_button.dart';
+import 'widgets/status_glyph.dart';
+import 'widgets/wardrobe_rail.dart';
 
 final class DeviceHomeScreen extends ConsumerStatefulWidget {
   const DeviceHomeScreen({required this.deviceId, super.key});
@@ -85,7 +91,8 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
     });
 
     return Scaffold(
-      body: PlayfulBackground(
+      body: ColoredBox(
+        color: context.chromeKiss.canvas,
         child: SafeArea(
           child: snapshot.when(
             data: (value) => scenes.when(
@@ -183,7 +190,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   Future<void> _showSimulatorSettings(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.chromeKiss.surfaceSecondary,
       showDragHandle: true,
       builder: (context) => const _SimulatorSettingsSheet(),
     );
@@ -224,163 +231,294 @@ final class _DeviceHomeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
     final selectedIsActive = selectedSceneId == snapshot.activeSceneId;
+    final connectionLabel = switch (snapshot.connectionStatus) {
+      DeviceConnectionStatus.ready => l10n.statusReady,
+      DeviceConnectionStatus.connecting => l10n.statusConnecting,
+      DeviceConnectionStatus.discovering => l10n.statusDiscovering,
+      DeviceConnectionStatus.disconnecting => l10n.statusDisconnecting,
+      _ => l10n.statusDisconnected,
+    };
+    final connected = snapshot.connectionStatus == DeviceConnectionStatus.ready;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 40),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewportHeight = MediaQuery.sizeOf(context).height;
+        final stageDiameter = math.min(
+          constraints.maxWidth - 40,
+          math.min(326.0, math.max(248.0, viewportHeight * 0.365)),
+        );
+        final largeText = MediaQuery.textScalerOf(context).scale(12) > 17;
+        final stackHeader = largeText || constraints.maxWidth < 350;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 620),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
+                  _CompanionHeader(
+                    activeSceneName: activeScene.name,
+                    connectionLabel: connectionLabel,
+                    connected: connected,
+                    batteryPercent: snapshot.batteryPercent,
+                    stackStatus: stackHeader,
+                  ),
+                  const SizedBox(height: 18),
+                  Center(
+                    child: Transform.translate(
+                      offset: const Offset(-6, 0),
+                      child: CompanionStage(
+                        scene: activeScene,
+                        displayProfile: snapshot.displayProfile,
+                        snapshot: snapshot,
+                        diameter: stageDiameter,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Semantics(
+                    container: true,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      key: const Key('companion_presence'),
                       children: [
                         Text(
-                          l10n.deviceHomeEyebrow,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: AppColors.mint,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
-                              ),
+                          l10n.moodNeutral,
+                          textAlign: TextAlign.center,
+                          style: context.chromeKissText.title.copyWith(
+                            color: colors.textSecondary,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.55,
+                          ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
-                          l10n.demoKeychain,
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          l10n.presenceNeutral,
+                          textAlign: TextAlign.center,
+                          style: context.chromeKissText.body.copyWith(
+                            color: colors.textSecondary,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  if (kDebugMode)
-                    Semantics(
-                      label: l10n.openSimulatorSettings,
-                      button: true,
-                      child: IconButton.filledTonal(
-                        key: const Key('simulator_settings_button'),
-                        onPressed: onOpenSimulatorSettings,
-                        tooltip: l10n.openSimulatorSettings,
-                        icon: const Icon(Icons.tune_rounded),
+                  const SizedBox(height: 18),
+                  JewelButton(
+                    key: const Key('install_scene_button'),
+                    label: isBusy ? l10n.tryingOn : l10n.changeLook,
+                    busy: isBusy,
+                    onPressed: isBusy
+                        ? null
+                        : selectedIsActive
+                        ? () => _showAllLooks(context)
+                        : onInstallScene,
+                  ),
+                  const SizedBox(height: 30),
+                  WardrobeRail(
+                    scenes: scenes,
+                    selectedSceneId: selectedSceneId,
+                    activeSceneId: snapshot.activeSceneId,
+                    enabled: !isBusy,
+                    isAddingImage: isAddingImage,
+                    onSceneSelected: onSceneSelected,
+                    onOpenAll: () => _showAllLooks(context),
+                    onAddImage: onAddImage,
+                  ),
+                  const SizedBox(height: 22),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        key: const Key('brightness_settings_button'),
+                        onPressed: () => _showBrightness(context),
+                        icon: const Icon(Icons.light_mode_outlined, size: 19),
+                        label: Text(l10n.brightness),
                       ),
-                    ),
-                  const SizedBox(width: 6),
-                  IconButton(
-                    key: const Key('disconnect_button'),
-                    onPressed: isBusy ? null : onDisconnect,
-                    tooltip: l10n.disconnect,
-                    icon: const Icon(Icons.link_off_rounded),
+                      TextButton.icon(
+                        key: const Key('open_my_content_button'),
+                        onPressed: isBusy ? null : onOpenMyContent,
+                        icon: const Icon(
+                          Icons.photo_library_outlined,
+                          size: 19,
+                        ),
+                        label: Text(l10n.myContent),
+                      ),
+                      IconButton(
+                        key: const Key('disconnect_button'),
+                        onPressed: isBusy ? null : onDisconnect,
+                        tooltip: l10n.disconnect,
+                        icon: const Icon(Icons.link_off_rounded, size: 20),
+                      ),
+                      if (kDebugMode)
+                        IconButton(
+                          key: const Key('simulator_settings_button'),
+                          onPressed: onOpenSimulatorSettings,
+                          tooltip: l10n.openSimulatorSettings,
+                          icon: const Icon(Icons.tune_rounded, size: 20),
+                        ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  _StatusPill(snapshot: snapshot),
-                  const SizedBox(width: 10),
-                  _BatteryPill(value: snapshot.batteryPercent),
-                ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showAllLooks(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.chromeKiss.surfaceSecondary,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.68,
+        child: AllLooksSheet(
+          scenes: scenes,
+          selectedSceneId: selectedSceneId,
+          activeSceneId: snapshot.activeSceneId,
+          enabled: !isBusy,
+          onSceneSelected: (sceneId) {
+            Navigator.of(context).pop();
+            onSceneSelected(sceneId);
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBrightness(BuildContext context) async {
+    final colors = context.chromeKiss;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: colors.surfaceSecondary,
+      showDragHandle: false,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        side: BorderSide(color: colors.divider.withValues(alpha: 0.82)),
+      ),
+      builder: (context) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.materialChrome.withValues(alpha: 0.48),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: const SizedBox(width: 38, height: 3),
+                ),
               ),
-              const SizedBox(height: 18),
-              KeychainPreview(
-                scene: activeScene,
-                displayProfile: snapshot.displayProfile,
-                snapshot: snapshot,
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               BrightnessControl(
                 value: snapshot.brightness,
                 enabled: !isBusy,
                 onChangeEnd: onBrightnessChanged,
               ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.sceneLibrary,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton.filledTonal(
-                    key: const Key('add_user_image_button'),
-                    onPressed: isBusy ? null : onAddImage,
-                    tooltip: l10n.addImage,
-                    icon: isAddingImage
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.add_photo_alternate_outlined),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.sceneLibrarySubtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  key: const Key('open_my_content_button'),
-                  onPressed: isBusy ? null : onOpenMyContent,
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: Text(l10n.myContent),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 282,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: scenes.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final scene = scenes[index];
-                    return SceneCard(
-                      scene: scene,
-                      isSelected: scene.id == selectedSceneId,
-                      isActive: scene.id == snapshot.activeSceneId,
-                      enabled: !isBusy,
-                      onSelected: () => onSceneSelected(scene.id),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 14),
-              FilledButton.icon(
-                key: const Key('install_scene_button'),
-                onPressed: isBusy || selectedIsActive ? null : onInstallScene,
-                icon: isBusy
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
-                      )
-                    : Icon(
-                        selectedIsActive
-                            ? Icons.check_rounded
-                            : Icons.send_rounded,
-                      ),
-                label: Text(
-                  isBusy
-                      ? l10n.installing
-                      : selectedIsActive
-                      ? l10n.installed
-                      : l10n.installScene,
-                ),
-              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+final class _CompanionHeader extends StatelessWidget {
+  const _CompanionHeader({
+    required this.activeSceneName,
+    required this.connectionLabel,
+    required this.connected,
+    required this.batteryPercent,
+    required this.stackStatus,
+  });
+
+  final String activeSceneName;
+  final String connectionLabel;
+  final bool connected;
+  final int batteryPercent;
+  final bool stackStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
+    final identity = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.deviceHomeEyebrow,
+          style: context.chromeKissText.status.copyWith(
+            color: colors.textSecondary,
+            letterSpacing: 1.35,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          activeSceneName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: context.chromeKissText.title.copyWith(
+            fontSize: 18,
+            letterSpacing: -0.35,
+          ),
+        ),
+      ],
+    );
+    final status = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StatusGlyph(
+          key: const Key('connection_status_glyph'),
+          value: connectionLabel,
+          semanticLabel: connectionLabel,
+          tone: connected ? StatusGlyphTone.connected : StatusGlyphTone.neutral,
+        ),
+        const SizedBox(width: 4),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.divider.withValues(alpha: 0.72),
+          ),
+          child: const SizedBox(width: 1, height: 14),
+        ),
+        const SizedBox(width: 4),
+        StatusGlyph(
+          key: const Key('battery_status_glyph'),
+          value: l10n.percentValue(batteryPercent),
+          semanticLabel: l10n.batteryPercent(batteryPercent),
+          tone: StatusGlyphTone.battery,
+        ),
+      ],
+    );
+
+    if (stackStatus) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [identity, const SizedBox(height: 8), status],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: identity),
+        const SizedBox(width: 12),
+        Flexible(child: status),
+      ],
     );
   }
 }
@@ -401,95 +539,13 @@ final class _SceneLibraryError extends StatelessWidget {
   }
 }
 
-final class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.snapshot});
-
-  final DeviceSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final text = switch (snapshot.connectionStatus) {
-      DeviceConnectionStatus.ready => l10n.statusReady,
-      DeviceConnectionStatus.connecting => l10n.statusConnecting,
-      DeviceConnectionStatus.discovering => l10n.statusDiscovering,
-      DeviceConnectionStatus.disconnecting => l10n.statusDisconnecting,
-      _ => l10n.statusDisconnected,
-    };
-    final online = snapshot.connectionStatus == DeviceConnectionStatus.ready;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: online ? AppColors.mint : AppColors.muted,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 7),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: online ? AppColors.mint : AppColors.muted,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.7,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-final class _BatteryPill extends StatelessWidget {
-  const _BatteryPill({required this.value});
-
-  final int value;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.battery_5_bar_rounded,
-            size: 17,
-            color: AppColors.amber,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            l10n.percentValue(value),
-            style: Theme.of(context).textTheme.labelSmall
-                ?.copyWith(color: AppColors.cream, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 final class _SimulatorSettingsSheet extends ConsumerWidget {
   const _SimulatorSettingsSheet();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final appearance = ref.watch(appAppearanceProvider);
     final current =
         ref.watch(simulatorLatencyProvider).value ??
         const Duration(milliseconds: 300);
@@ -525,6 +581,36 @@ final class _SimulatorSettingsSheet extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 18),
+              Text(
+                l10n.appearance,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.appearanceHint,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final value in AppAppearance.values)
+                    ChoiceChip(
+                      key: Key('appearance_${value.name}'),
+                      label: Text(_appearanceLabel(l10n, value)),
+                      selected: value == appearance,
+                      onSelected: (_) => ref
+                          .read(appAppearanceProvider.notifier)
+                          .setAppearance(value),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 22),
+              const Divider(),
+              const SizedBox(height: 18),
+              Text(l10n.latency, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -569,6 +655,29 @@ final class _SimulatorSettingsSheet extends ConsumerWidget {
                       ),
                   ],
                 ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 14),
+                  OutlinedButton.icon(
+                    key: const Key('open_character_study_button'),
+                    onPressed: () {
+                      final navigator = Navigator.of(
+                        context,
+                        rootNavigator: true,
+                      );
+                      Navigator.of(context).pop();
+                      unawaited(
+                        navigator.push<void>(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (context) => const CharacterStudyScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('Kiss Cut character study'),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 8,
@@ -646,6 +755,14 @@ final class _SimulatorSettingsSheet extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _appearanceLabel(AppLocalizations l10n, AppAppearance appearance) {
+  return switch (appearance) {
+    AppAppearance.obsidian => l10n.appearanceObsidian,
+    AppAppearance.pearl => l10n.appearancePearl,
+    AppAppearance.system => l10n.appearanceSystem,
+  };
 }
 
 String _emotionLabel(AppLocalizations l10n, EyeEmotion emotion) {

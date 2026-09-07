@@ -3,11 +3,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_keychain_app/app/app_theme.dart';
 import 'package:smart_keychain_app/domain/device/device_connection_status.dart';
 import 'package:smart_keychain_app/domain/device/device_snapshot.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
@@ -23,16 +25,22 @@ void main() {
       sceneId: BuiltInSceneRepository.livingEyesId,
       disableAnimations: true,
     );
-    expect(find.byKey(const Key('procedural_eyes_painter')), findsOneWidget);
+    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
     expect(find.byType(ProceduralEyesSceneRenderer), findsOneWidget);
     expect(find.byType(Image), findsNothing);
+    final paint = tester.widget<CustomPaint>(
+      find.byKey(const Key('kiss_cut_eye_painter')),
+    );
+    final painter = paint.painter! as KissCutEyePainter;
+    expect(painter.scene.style, KissCutRendererStyle.v21Pure);
+    expect(painter.scene.colourway, KissCutColourway.orchidLilac);
 
     await _pumpScreen(
       tester,
       sceneId: BuiltInSceneRepository.mintEyesId,
       disableAnimations: true,
     );
-    expect(find.byKey(const Key('procedural_eyes_painter')), findsNothing);
+    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsNothing);
     expect(find.byType(StaticImageSceneRenderer), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
   });
@@ -244,6 +252,7 @@ Future<void> _pumpScreen(
           data: MediaQuery.of(context)
               .copyWith(disableAnimations: disableAnimations),
           child: MaterialApp(
+            theme: buildAppTheme(),
             home: Center(
               child: SizedBox.square(
                 dimension: 240,

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/app_colors.dart';
+import '../../app/chrome_kiss_theme.dart';
 import '../../app/providers.dart';
 import '../../application/device_controller.dart';
 import '../../application/user_image_workflow.dart';
@@ -83,7 +83,7 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
 
     return Scaffold(
       key: const Key('user_content_screen'),
-      backgroundColor: AppColors.background,
+      backgroundColor: context.chromeKiss.canvas,
       appBar: AppBar(
         title: Text(l10n.myContent),
         actions: [
@@ -205,6 +205,7 @@ final class _EmptyUserContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -213,10 +214,10 @@ final class _EmptyUserContent extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.photo_library_outlined,
                 size: 48,
-                color: AppColors.mint,
+                color: colors.materialChrome,
               ),
               const SizedBox(height: 18),
               Text(
@@ -265,10 +266,11 @@ final class _UserContentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
     return Card(
       key: Key('my_content_scene_${scene.id}'),
       margin: EdgeInsets.zero,
-      color: AppColors.surface,
+      color: colors.surfaceSecondary,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -298,7 +300,9 @@ final class _UserContentCard extends StatelessWidget {
                       Text(
                         isActive ? l10n.activeScene : l10n.userImage,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isActive ? AppColors.mint : AppColors.muted,
+                          color: isActive
+                              ? colors.success
+                              : colors.textSecondary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

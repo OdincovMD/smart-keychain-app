@@ -68,6 +68,27 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выберите образ, который появится на брелоке.';
 
   @override
+  String get wardrobe => 'Гардероб';
+
+  @override
+  String get allLooks => 'Все';
+
+  @override
+  String get allLooksTitle => 'Все образы';
+
+  @override
+  String get moodNeutral => 'СПОКОЙНАЯ';
+
+  @override
+  String get presenceNeutral => 'Сегодня просто рядом.';
+
+  @override
+  String get changeLook => 'Сменить образ';
+
+  @override
+  String get tryingOn => 'Примеряем…';
+
+  @override
   String get activeScene => 'НА ЭКРАНЕ';
 
   @override
@@ -91,6 +112,22 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get simulatorSettingsHint =>
       'Проверьте задержку команд и поведение живого экрана.';
+
+  @override
+  String get appearance => 'Оформление';
+
+  @override
+  String get appearanceHint =>
+      'Одна система Chrome Kiss в тёмной или светлой подаче.';
+
+  @override
+  String get appearanceObsidian => 'Obsidian';
+
+  @override
+  String get appearancePearl => 'Pearl';
+
+  @override
+  String get appearanceSystem => 'Как в системе';
 
   @override
   String get latency => 'Задержка';

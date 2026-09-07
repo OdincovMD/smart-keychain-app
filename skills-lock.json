@@ -181,6 +181,12 @@
       "skillPath": "skills/flutter-use-http-package/SKILL.md",
       "computedHash": "17efcf4da9933afaf9c1d41940bd6b92f1ae73dcae4bf6c59cfe24f7e487ee9f"
     },
+    "frontend-design": {
+      "source": "PracticalSwan/agent-skills",
+      "sourceType": "github",
+      "skillPath": "frontend-design/SKILL.md",
+      "computedHash": "ca2f7eef8e98bdf8a91b1e9a40a2af33baac6dec09d8d17f0f3bcf217d938a5d"
+    },
     "lint-and-style-config": {
       "source": "zakariaf/Flutter-Skills",
       "sourceType": "github",
@@ -222,6 +228,18 @@
       "sourceType": "github",
       "skillPath": "skills/testing-strategy/SKILL.md",
       "computedHash": "8c5d0323d70bdc230fb4e34e0167a26f842bd93f2a0b7cbc30d839a986458c52"
+    },
+    "ui-animation": {
+      "source": "mblode/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-animation/SKILL.md",
+      "computedHash": "75f2c6e538226d10ce75ddbb42bab0e56f051e8d8719c47cd6d5ab0c38d9e8af"
+    },
+    "ui-ux": {
+      "source": "atuizz/codex-ui-ux-skill",
+      "sourceType": "github",
+      "skillPath": "ui-ux/SKILL.md",
+      "computedHash": "b0036c59ae1246c487eee938f5c30136efa2513406a384f67045cbc12360f4da"
     },
     "widget-golden-and-a11y-testing": {
       "source": "zakariaf/Flutter-Skills",

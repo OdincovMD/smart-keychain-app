@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/chrome_kiss_theme.dart';
 import '../../../domain/content/scene.dart';
 import '../../../domain/device/device_snapshot.dart';
 import '../../../domain/device/display_profile.dart';
@@ -19,6 +20,7 @@ final class VirtualScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.chromeKiss;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final duration = reduceMotion
         ? Duration.zero
@@ -28,7 +30,7 @@ final class VirtualScreen extends StatelessWidget {
       aspectRatio: displayProfile.aspectRatio,
       child: ClipOval(
         child: ColoredBox(
-          color: Colors.black,
+          color: colors.lens,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -49,7 +51,7 @@ final class VirtualScreen extends StatelessWidget {
               IgnorePointer(
                 child: AnimatedContainer(
                   duration: duration,
-                  color: Colors.black.withValues(
+                  color: colors.lens.withValues(
                     alpha: (1 - snapshot.brightness).clamp(0.0, 1.0),
                   ),
                 ),

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/app_colors.dart';
+import '../../app/chrome_kiss_theme.dart';
 import '../../domain/image/crop_spec.dart';
 import '../../l10n/app_localizations.dart';
 import 'image_editor_controller.dart';
@@ -44,7 +44,7 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
     final crop = ref.watch(imageEditorControllerProvider(_session));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.chromeKiss.canvas,
       appBar: AppBar(
         title: Text(l10n.imageEditorTitle),
         leading: IconButton(
@@ -102,7 +102,7 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
                             },
                             child: ClipOval(
                               child: ColoredBox(
-                                color: Colors.black,
+                                color: context.chromeKiss.lens,
                                 child: Transform.rotate(
                                   angle: crop.rotation,
                                   child: Transform.scale(

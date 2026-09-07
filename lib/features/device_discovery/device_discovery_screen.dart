@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/app_colors.dart';
+import '../../app/chrome_kiss_theme.dart';
 import '../../app/providers.dart';
 import '../../application/device_controller.dart';
 import '../../domain/device/device_connection_status.dart';
@@ -25,6 +26,7 @@ final class _DeviceDiscoveryScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
     final devices = ref.watch(discoveredDevicesProvider);
     final connection = ref.watch(connectionStateProvider).value;
     final snapshot = ref.watch(deviceSnapshotProvider).value;
@@ -64,7 +66,7 @@ final class _DeviceDiscoveryScreenState
                     Text(
                       l10n.discoverySubtitle,
                       style: Theme.of(context).textTheme.bodyLarge
-                          ?.copyWith(color: AppColors.muted),
+                          ?.copyWith(color: colors.textSecondary),
                     ),
                     const SizedBox(height: 36),
                     devices.when(
@@ -107,17 +109,18 @@ final class _Eyebrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.chromeKiss;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.mint.withValues(alpha: 0.12),
+        color: colors.accentOptical.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.mint.withValues(alpha: 0.35)),
+        border: Border.all(color: colors.materialChrome),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: AppColors.mint,
+          color: colors.textPrimary,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.25,
         ),
@@ -144,6 +147,7 @@ final class _DeviceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
     final isDiscovering =
         connectionStatus == DeviceConnectionStatus.discovering;
     final buttonText = isDiscovering
@@ -158,12 +162,12 @@ final class _DeviceCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colors.surfaceSecondary,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          boxShadow: const [
+          border: Border.all(color: colors.divider),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x42000000),
+              color: colors.lens.withValues(alpha: 0.26),
               blurRadius: 30,
               offset: Offset(0, 18),
             ),
@@ -200,13 +204,13 @@ final class _DeviceCard extends StatelessWidget {
                     vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.amber.withValues(alpha: 0.12),
+                    color: colors.materialChampagne.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     l10n.demoMode,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.amber,
+                      color: colors.warning,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                     ),

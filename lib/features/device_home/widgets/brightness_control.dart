@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/app_colors.dart';
+import '../../../app/chrome_kiss_theme.dart';
 import '../../../l10n/app_localizations.dart';
 
 final class BrightnessControl extends StatefulWidget {
@@ -34,57 +34,60 @@ final class _BrightnessControlState extends State<BrightnessControl> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
     final percent = (_draftValue * 100).round();
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.light_mode_rounded, color: AppColors.amber),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  l10n.brightness,
-                  style: Theme.of(context).textTheme.titleLarge,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.light_mode_rounded, color: colors.materialChampagne),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.brightness,
+                style: context.chromeKissText.body.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              Text(
-                l10n.percentValue(percent),
-                style: Theme.of(context).textTheme.labelLarge
-                    ?.copyWith(color: AppColors.amber),
+            ),
+            Text(
+              l10n.percentValue(percent),
+              style: context.chromeKissText.status.copyWith(
+                color: colors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
-            ],
+            ),
+          ],
+        ),
+        Slider(
+          key: const Key('brightness_slider'),
+          value: _draftValue,
+          onChangeStart: widget.enabled
+              ? (_) => setState(() => _dragging = true)
+              : null,
+          onChanged: widget.enabled
+              ? (value) => setState(() => _draftValue = value)
+              : null,
+          onChangeEnd: widget.enabled
+              ? (value) {
+                  setState(() => _dragging = false);
+                  widget.onChangeEnd(value);
+                }
+              : null,
+        ),
+        Text(
+          l10n.brightnessHint,
+          style: context.chromeKissText.body.copyWith(
+            color: colors.textSecondary,
+            fontSize: 13.5,
+            fontWeight: FontWeight.w400,
           ),
-          Slider(
-            key: const Key('brightness_slider'),
-            value: _draftValue,
-            onChangeStart: widget.enabled
-                ? (_) => setState(() => _dragging = true)
-                : null,
-            onChanged: widget.enabled
-                ? (value) => setState(() => _draftValue = value)
-                : null,
-            onChangeEnd: widget.enabled
-                ? (value) {
-                    setState(() => _dragging = false);
-                    widget.onChangeEnd(value);
-                  }
-                : null,
-          ),
-          Text(
-            l10n.brightnessHint,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

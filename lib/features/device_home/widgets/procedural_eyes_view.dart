@@ -10,18 +10,25 @@ import '../../../domain/eyes/eye_behaviour_engine.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
 import '../eye_preview_controller.dart';
+import 'kiss_cut_eye_renderer.dart';
 
 final class ProceduralEyesView extends ConsumerStatefulWidget {
   const ProceduralEyesView({
     required this.initialEmotion,
     this.animate = true,
     this.displayProfile,
+    this.rendererVariant = EyeRendererVariant.legacy,
+    this.kissCutVisualMoodOverride,
+    this.kissCutColourway = KissCutColourway.orchidLilac,
     super.key,
   });
 
   final EyeEmotion initialEmotion;
   final bool animate;
   final DisplayProfile? displayProfile;
+  final EyeRendererVariant rendererVariant;
+  final KissCutVisualMood? kissCutVisualMoodOverride;
+  final KissCutColourway kissCutColourway;
 
   @override
   ConsumerState<ProceduralEyesView> createState() => _ProceduralEyesViewState();
@@ -126,15 +133,52 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
       glintColor: AppColors.amber,
       haloColor: AppColors.mint.withValues(alpha: 0.16),
     );
+    final painter = switch (widget.rendererVariant) {
+      EyeRendererVariant.legacy => ProceduralEyePainter(
+        scene,
+        progress: _controller,
+      ),
+      EyeRendererVariant.kissCutV2 => KissCutEyePainter(
+        KissCutPaintScene(
+          fromState: _fromState,
+          toState: _toState,
+          motionCurve: _motionCurve,
+          displayShape: widget.displayProfile?.shape ?? DisplayShape.circle,
+          visualMoodOverride: widget.kissCutVisualMoodOverride,
+          colourway: widget.kissCutColourway,
+          style: KissCutRendererStyle.v2,
+        ),
+        progress: _controller,
+      ),
+      EyeRendererVariant.kissCutV21 => KissCutEyePainter(
+        KissCutPaintScene(
+          fromState: _fromState,
+          toState: _toState,
+          motionCurve: _motionCurve,
+          displayShape: widget.displayProfile?.shape ?? DisplayShape.circle,
+          visualMoodOverride: widget.kissCutVisualMoodOverride,
+          colourway: widget.kissCutColourway,
+          style: KissCutRendererStyle.v21Pure,
+        ),
+        progress: _controller,
+      ),
+    };
+    final painterKey = switch (widget.rendererVariant) {
+      EyeRendererVariant.legacy => const Key('procedural_eyes_painter'),
+      EyeRendererVariant.kissCutV2 ||
+      EyeRendererVariant.kissCutV21 => const Key('kiss_cut_eye_painter'),
+    };
 
     return ColoredBox(
-      color: Colors.black,
+      color: widget.rendererVariant == EyeRendererVariant.legacy
+          ? Colors.black
+          : KissCutEyePainter.lensColor,
       child: ExcludeSemantics(
         child: RepaintBoundary(
           child: CustomPaint(
-            key: const Key('procedural_eyes_painter'),
-            painter: ProceduralEyePainter(scene, progress: _controller),
-            isComplex: false,
+            key: painterKey,
+            painter: painter,
+            isComplex: widget.rendererVariant != EyeRendererVariant.legacy,
             willChange: _motionEnabled,
             child: const SizedBox.expand(),
           ),

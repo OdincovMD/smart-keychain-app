@@ -15,7 +15,7 @@ final class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -42,6 +42,14 @@ final class AppDatabase extends _$AppDatabase {
     if (currentVersion == 1 && toVersion >= 2) {
       await migrator.createTable(userImageAssets);
       currentVersion = 2;
+    }
+
+    if (currentVersion == 2 && toVersion >= 3) {
+      await migrator.addColumn(
+        appSettingsEntries,
+        appSettingsEntries.appearance,
+      );
+      currentVersion = 3;
     }
 
     if (currentVersion < toVersion) {

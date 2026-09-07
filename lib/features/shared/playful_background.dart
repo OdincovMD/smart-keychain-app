@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/app_colors.dart';
+import '../../app/chrome_kiss_theme.dart';
 
 final class PlayfulBackground extends StatelessWidget {
   const PlayfulBackground({required this.child, super.key});
@@ -9,19 +9,20 @@ final class PlayfulBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.chromeKiss;
     return Stack(
       fit: StackFit.expand,
       children: [
-        const ColoredBox(color: AppColors.background),
+        ColoredBox(color: colors.canvas),
         Positioned(
           top: -100,
           right: -90,
-          child: _Glow(color: AppColors.coral.withValues(alpha: 0.12)),
+          child: _Glow(color: colors.accentPrimary.withValues(alpha: 0.09)),
         ),
         Positioned(
           top: 310,
           left: -130,
-          child: _Glow(color: AppColors.mint.withValues(alpha: 0.08)),
+          child: _Glow(color: colors.accentOptical.withValues(alpha: 0.07)),
         ),
         child,
       ],

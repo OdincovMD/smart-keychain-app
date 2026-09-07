@@ -100,6 +100,18 @@ class $AppSettingsEntriesTable extends AppSettingsEntries
     requiredDuringInsert: false,
     defaultValue: const Constant(800),
   );
+  static const VerificationMeta _appearanceMeta = const VerificationMeta(
+    'appearance',
+  );
+  @override
+  late final GeneratedColumn<String> appearance = GeneratedColumn<String>(
+    'appearance',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('system'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -110,6 +122,7 @@ class $AppSettingsEntriesTable extends AppSettingsEntries
     deletedAtUtcMs,
     activeSceneId,
     brightnessPermille,
+    appearance,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -192,6 +205,12 @@ class $AppSettingsEntriesTable extends AppSettingsEntries
         ),
       );
     }
+    if (data.containsKey('appearance')) {
+      context.handle(
+        _appearanceMeta,
+        appearance.isAcceptableOrUnknown(data['appearance']!, _appearanceMeta),
+      );
+    }
     return context;
   }
 
@@ -233,6 +252,10 @@ class $AppSettingsEntriesTable extends AppSettingsEntries
         DriftSqlType.int,
         data['${effectivePrefix}brightness_permille'],
       )!,
+      appearance: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}appearance'],
+      )!,
     );
   }
 
@@ -254,6 +277,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
   final int? deletedAtUtcMs;
   final String? activeSceneId;
   final int brightnessPermille;
+  final String appearance;
   const AppSettingsRow({
     required this.id,
     required this.createdAtUtcMs,
@@ -263,6 +287,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
     this.deletedAtUtcMs,
     this.activeSceneId,
     required this.brightnessPermille,
+    required this.appearance,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -279,6 +304,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
       map['active_scene_id'] = Variable<String>(activeSceneId);
     }
     map['brightness_permille'] = Variable<int>(brightnessPermille);
+    map['appearance'] = Variable<String>(appearance);
     return map;
   }
 
@@ -296,6 +322,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
           ? const Value.absent()
           : Value(activeSceneId),
       brightnessPermille: Value(brightnessPermille),
+      appearance: Value(appearance),
     );
   }
 
@@ -313,6 +340,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
       deletedAtUtcMs: serializer.fromJson<int?>(json['deletedAtUtcMs']),
       activeSceneId: serializer.fromJson<String?>(json['activeSceneId']),
       brightnessPermille: serializer.fromJson<int>(json['brightnessPermille']),
+      appearance: serializer.fromJson<String>(json['appearance']),
     );
   }
   @override
@@ -327,6 +355,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
       'deletedAtUtcMs': serializer.toJson<int?>(deletedAtUtcMs),
       'activeSceneId': serializer.toJson<String?>(activeSceneId),
       'brightnessPermille': serializer.toJson<int>(brightnessPermille),
+      'appearance': serializer.toJson<String>(appearance),
     };
   }
 
@@ -339,6 +368,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
     Value<int?> deletedAtUtcMs = const Value.absent(),
     Value<String?> activeSceneId = const Value.absent(),
     int? brightnessPermille,
+    String? appearance,
   }) => AppSettingsRow(
     id: id ?? this.id,
     createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
@@ -352,6 +382,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
         ? activeSceneId.value
         : this.activeSceneId,
     brightnessPermille: brightnessPermille ?? this.brightnessPermille,
+    appearance: appearance ?? this.appearance,
   );
   AppSettingsRow copyWithCompanion(AppSettingsEntriesCompanion data) {
     return AppSettingsRow(
@@ -375,6 +406,9 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
       brightnessPermille: data.brightnessPermille.present
           ? data.brightnessPermille.value
           : this.brightnessPermille,
+      appearance: data.appearance.present
+          ? data.appearance.value
+          : this.appearance,
     );
   }
 
@@ -388,7 +422,8 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
           ..write('isDeleted: $isDeleted, ')
           ..write('deletedAtUtcMs: $deletedAtUtcMs, ')
           ..write('activeSceneId: $activeSceneId, ')
-          ..write('brightnessPermille: $brightnessPermille')
+          ..write('brightnessPermille: $brightnessPermille, ')
+          ..write('appearance: $appearance')
           ..write(')'))
         .toString();
   }
@@ -403,6 +438,7 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
     deletedAtUtcMs,
     activeSceneId,
     brightnessPermille,
+    appearance,
   );
   @override
   bool operator ==(Object other) =>
@@ -415,7 +451,8 @@ class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
           other.isDeleted == this.isDeleted &&
           other.deletedAtUtcMs == this.deletedAtUtcMs &&
           other.activeSceneId == this.activeSceneId &&
-          other.brightnessPermille == this.brightnessPermille);
+          other.brightnessPermille == this.brightnessPermille &&
+          other.appearance == this.appearance);
 }
 
 class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
@@ -427,6 +464,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
   final Value<int?> deletedAtUtcMs;
   final Value<String?> activeSceneId;
   final Value<int> brightnessPermille;
+  final Value<String> appearance;
   final Value<int> rowid;
   const AppSettingsEntriesCompanion({
     this.id = const Value.absent(),
@@ -437,6 +475,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
     this.deletedAtUtcMs = const Value.absent(),
     this.activeSceneId = const Value.absent(),
     this.brightnessPermille = const Value.absent(),
+    this.appearance = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AppSettingsEntriesCompanion.insert({
@@ -448,6 +487,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
     this.deletedAtUtcMs = const Value.absent(),
     this.activeSceneId = const Value.absent(),
     this.brightnessPermille = const Value.absent(),
+    this.appearance = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAtUtcMs = Value(createdAtUtcMs),
@@ -461,6 +501,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
     Expression<int>? deletedAtUtcMs,
     Expression<String>? activeSceneId,
     Expression<int>? brightnessPermille,
+    Expression<String>? appearance,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -472,6 +513,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
       if (deletedAtUtcMs != null) 'deleted_at_utc_ms': deletedAtUtcMs,
       if (activeSceneId != null) 'active_scene_id': activeSceneId,
       if (brightnessPermille != null) 'brightness_permille': brightnessPermille,
+      if (appearance != null) 'appearance': appearance,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -485,6 +527,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
     Value<int?>? deletedAtUtcMs,
     Value<String?>? activeSceneId,
     Value<int>? brightnessPermille,
+    Value<String>? appearance,
     Value<int>? rowid,
   }) {
     return AppSettingsEntriesCompanion(
@@ -496,6 +539,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
       deletedAtUtcMs: deletedAtUtcMs ?? this.deletedAtUtcMs,
       activeSceneId: activeSceneId ?? this.activeSceneId,
       brightnessPermille: brightnessPermille ?? this.brightnessPermille,
+      appearance: appearance ?? this.appearance,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -527,6 +571,9 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
     if (brightnessPermille.present) {
       map['brightness_permille'] = Variable<int>(brightnessPermille.value);
     }
+    if (appearance.present) {
+      map['appearance'] = Variable<String>(appearance.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -544,6 +591,7 @@ class AppSettingsEntriesCompanion extends UpdateCompanion<AppSettingsRow> {
           ..write('deletedAtUtcMs: $deletedAtUtcMs, ')
           ..write('activeSceneId: $activeSceneId, ')
           ..write('brightnessPermille: $brightnessPermille, ')
+          ..write('appearance: $appearance, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1343,6 +1391,7 @@ typedef $$AppSettingsEntriesTableCreateCompanionBuilder =
       Value<int?> deletedAtUtcMs,
       Value<String?> activeSceneId,
       Value<int> brightnessPermille,
+      Value<String> appearance,
       Value<int> rowid,
     });
 typedef $$AppSettingsEntriesTableUpdateCompanionBuilder =
@@ -1355,6 +1404,7 @@ typedef $$AppSettingsEntriesTableUpdateCompanionBuilder =
       Value<int?> deletedAtUtcMs,
       Value<String?> activeSceneId,
       Value<int> brightnessPermille,
+      Value<String> appearance,
       Value<int> rowid,
     });
 
@@ -1404,6 +1454,11 @@ class $$AppSettingsEntriesTableFilterComposer
 
   ColumnFilters<int> get brightnessPermille => $composableBuilder(
     column: $table.brightnessPermille,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get appearance => $composableBuilder(
+    column: $table.appearance,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1456,6 +1511,11 @@ class $$AppSettingsEntriesTableOrderingComposer
     column: $table.brightnessPermille,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get appearance => $composableBuilder(
+    column: $table.appearance,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsEntriesTableAnnotationComposer
@@ -1500,6 +1560,11 @@ class $$AppSettingsEntriesTableAnnotationComposer
 
   GeneratedColumn<int> get brightnessPermille => $composableBuilder(
     column: $table.brightnessPermille,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get appearance => $composableBuilder(
+    column: $table.appearance,
     builder: (column) => column,
   );
 }
@@ -1552,6 +1617,7 @@ class $$AppSettingsEntriesTableTableManager
                 Value<int?> deletedAtUtcMs = const Value.absent(),
                 Value<String?> activeSceneId = const Value.absent(),
                 Value<int> brightnessPermille = const Value.absent(),
+                Value<String> appearance = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AppSettingsEntriesCompanion(
                 id: id,
@@ -1562,6 +1628,7 @@ class $$AppSettingsEntriesTableTableManager
                 deletedAtUtcMs: deletedAtUtcMs,
                 activeSceneId: activeSceneId,
                 brightnessPermille: brightnessPermille,
+                appearance: appearance,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1574,6 +1641,7 @@ class $$AppSettingsEntriesTableTableManager
                 Value<int?> deletedAtUtcMs = const Value.absent(),
                 Value<String?> activeSceneId = const Value.absent(),
                 Value<int> brightnessPermille = const Value.absent(),
+                Value<String> appearance = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AppSettingsEntriesCompanion.insert(
                 id: id,
@@ -1584,6 +1652,7 @@ class $$AppSettingsEntriesTableTableManager
                 deletedAtUtcMs: deletedAtUtcMs,
                 activeSceneId: activeSceneId,
                 brightnessPermille: brightnessPermille,
+                appearance: appearance,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -1,6 +1,10 @@
 import 'package:flutter/services.dart';
 
 Future<void> loadAppFonts() async {
+  final unbounded = FontLoader('Unbounded')
+    ..addFont(rootBundle.load('assets/fonts/Unbounded.ttf'));
+  final manrope = FontLoader('Manrope')
+    ..addFont(rootBundle.load('assets/fonts/Manrope.ttf'));
   final fredoka = FontLoader('Fredoka')
     ..addFont(rootBundle.load('assets/fonts/Fredoka.ttf'));
   final nunitoSans = FontLoader('NunitoSans')
@@ -8,5 +12,11 @@ Future<void> loadAppFonts() async {
   final materialIcons = FontLoader('MaterialIcons')
     ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
 
-  await Future.wait([fredoka.load(), nunitoSans.load(), materialIcons.load()]);
+  await Future.wait([
+    unbounded.load(),
+    manrope.load(),
+    fredoka.load(),
+    nunitoSans.load(),
+    materialIcons.load(),
+  ]);
 }

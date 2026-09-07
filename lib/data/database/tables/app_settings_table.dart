@@ -9,12 +9,15 @@ class AppSettingsEntries extends Table with AuditColumns {
   IntColumn get brightnessPermille =>
       integer().withDefault(const Constant(800))();
 
+  TextColumn get appearance => text().withDefault(const Constant('system'))();
+
   @override
   String get tableName => 'app_settings';
 
   @override
   List<String> get customConstraints => const [
     'CHECK (brightness_permille BETWEEN 0 AND 1000)',
+    "CHECK (appearance IN ('obsidian', 'pearl', 'system'))",
     'CHECK (is_deleted = 0 AND deleted_at_utc_ms IS NULL)',
   ];
 

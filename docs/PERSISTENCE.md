@@ -1,7 +1,8 @@
 # Local Persistence
 
-> Текущий этап: Image Pipeline Core. Хранятся стабильные settings и metadata
-> пользовательских изображений; BLE не входит в scope.
+> Текущий этап: Appearance + Design Tokens Core. Хранятся стабильные settings,
+> выбранная appearance и metadata пользовательских изображений; BLE не входит
+> в scope.
 
 ## Что хранится в SQLite
 
@@ -14,6 +15,7 @@ Drift управляет таблицами `app_settings` и `user_image_assets
 | `id` | стабильный singleton key `app` |
 | `active_scene_id` | последний подтверждённый `DeviceSnapshot.activeSceneId`, nullable |
 | `brightness_permille` | яркость как canonical integer `0…1000` |
+| `appearance` | `obsidian`, `pearl` или `system`; default `system` |
 | audit columns | UTC timestamps, revision и служебные delete invariants |
 
 Таблица создаётся в SQLite `STRICT` mode. Диапазон brightness защищён `CHECK`
@@ -54,6 +56,7 @@ abstract interface class AppSettingsRepository {
   Future<AppSettings> load();
   Future<void> saveActiveSceneId(String sceneId);
   Future<void> saveBrightness(double brightness);
+  Future<void> saveAppearance(AppAppearance appearance);
   Future<void> flush();
 }
 ```
@@ -72,6 +75,7 @@ bootstrap
 AppDatabase + DriftAppSettingsRepository
   ↓
 load AppSettings
+  ├─ restore AppAppearance before runApp
   ↓
 validate activeSceneId through SceneRepository
   ├─ known id → restore it
@@ -81,11 +85,12 @@ VirtualDeviceEngine(initialSceneId, initialBrightness)
   ↓
 ProviderScope overrides
   ↓
-UI
+UI + MaterialApp ThemeMode
 ```
 
 Повреждённая ссылка на удалённую сцену не приводит к crash. Brightness
-восстанавливается отдельно от device connection state.
+восстанавливается отдельно от device connection state. Значение `system`
+разрешается в Obsidian или Pearl на Flutter theme boundary, а не в domain.
 
 ## Persist-after-command flow
 
@@ -131,12 +136,14 @@ Production-запись атомарна через временный файл 
 
 ## Migration policy
 
-- текущий `schemaVersion = 2`;
+- текущий `schemaVersion = 3`;
 - создание новой базы выполняется через `createAll()`;
 - upgrades только forward-only;
 - downgrade и отсутствующая migration step завершаются явной ошибкой;
 - destructive reset или `DROP TABLE` не являются production fallback;
 - migration `1 → 2` создаёт `user_image_assets`, не изменяя сохранённые settings;
+- migration `2 → 3` добавляет `app_settings.appearance` с безопасным default
+  `system`, сохраняя сцену и яркость;
 - каждый следующий шаг добавляется отдельно (`2 → 3` и далее) с content-level
   migration test и обновлённым generated schema.
 
