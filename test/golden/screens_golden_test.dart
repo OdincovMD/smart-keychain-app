@@ -35,17 +35,6 @@ void main() {
     view.resetDevicePixelRatio();
   });
 
-  testWidgets('Device Discovery 390x844', (tester) async {
-    final repository = VirtualDeviceRepository(engine: _createEngine());
-    addTearDown(repository.dispose);
-    await _pumpApp(tester, repository, appearance: AppAppearance.obsidian);
-
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('baselines/device_discovery_390x844.png'),
-    );
-  });
-
   testWidgets('Companion Home Obsidian 390x844', (tester) async {
     final repository = VirtualDeviceRepository(engine: _createEngine());
     addTearDown(repository.dispose);
@@ -54,6 +43,7 @@ void main() {
     for (var frame = 0; frame < 6; frame++) {
       await tester.pump(const Duration(milliseconds: 1));
     }
+    await tester.pump(const Duration(milliseconds: 181));
     await tester.pump(const Duration(milliseconds: 300));
 
     await expectLater(
@@ -70,6 +60,7 @@ void main() {
     for (var frame = 0; frame < 6; frame++) {
       await tester.pump(const Duration(milliseconds: 1));
     }
+    await tester.pump(const Duration(milliseconds: 181));
     await tester.pump(const Duration(milliseconds: 300));
 
     await expectLater(

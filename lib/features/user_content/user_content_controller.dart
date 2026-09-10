@@ -136,20 +136,18 @@ final class UserContentController extends Notifier<UserContentActionState> {
     unawaited(_loadForEdit(assetId));
   }
 
-  void saveEdit(CropSpec cropSpec, DisplayProfile targetProfile) {
+  Future<bool> saveEdit(CropSpec cropSpec, DisplayProfile targetProfile) async {
     final current = state;
-    if (current is! UserContentEditing) return;
+    if (current is! UserContentEditing) return false;
     final sceneId = UserImageSceneRepository.sceneIdForAsset(
       current.draft.assetId,
     );
     state = UserContentSaving(sceneId);
-    unawaited(
-      _saveEdit(
-        draft: current.draft,
-        cropSpec: cropSpec,
-        targetProfile: targetProfile,
-        sceneId: sceneId,
-      ),
+    return _saveEdit(
+      draft: current.draft,
+      cropSpec: cropSpec,
+      targetProfile: targetProfile,
+      sceneId: sceneId,
     );
   }
 
@@ -180,7 +178,7 @@ final class UserContentController extends Notifier<UserContentActionState> {
     };
   }
 
-  Future<void> _saveEdit({
+  Future<bool> _saveEdit({
     required UserImageEditDraft draft,
     required CropSpec cropSpec,
     required DisplayProfile targetProfile,
@@ -193,7 +191,7 @@ final class UserContentController extends Notifier<UserContentActionState> {
           cropSpec: cropSpec,
           targetProfile: targetProfile,
         );
-    if (!ref.mounted) return;
+    if (!ref.mounted) return false;
     switch (result) {
       case Ok(:final value):
         ref.invalidate(sceneLibraryProvider);
@@ -203,8 +201,10 @@ final class UserContentController extends Notifier<UserContentActionState> {
           operation: UserContentOperation.edit,
           sceneId: sceneId,
         );
+        return true;
       case Err(:final failure):
         state = UserContentFailed(failure);
+        return false;
     }
   }
 

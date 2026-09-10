@@ -28,21 +28,34 @@ import 'package:smart_keychain_app/l10n/app_localizations.dart';
 import '../support/fake_app_settings_repository.dart';
 import '../support/fake_local_file_storage.dart';
 import '../support/fake_user_image_services.dart';
+import '../support/load_app_fonts.dart';
 
 void main() {
-  testWidgets('empty My Content shows Add Image action', (tester) async {
-    final rig = await _UserContentRig.create(tester, withAsset: false);
-    await _pumpScreen(tester, rig);
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadAppFonts);
 
-    expect(find.byKey(const Key('my_content_list')), findsNothing);
-    expect(
-      find.byKey(const Key('my_content_empty_add_button')),
-      findsOneWidget,
-    );
-    expect(find.text('Здесь появятся ваши фото'), findsOneWidget);
-  });
+  testWidgets(
+    'empty user collection keeps built-in looks and Add Look action',
+    (tester) async {
+      final rig = await _UserContentRig.create(tester, withAsset: false);
+      await _pumpScreen(tester, rig);
 
-  testWidgets('lists only user scenes and restores existing crop in editor', (
+      expect(find.byKey(const Key('my_content_list')), findsOneWidget);
+      expect(
+        find.byKey(
+          const Key('my_content_scene_${BuiltInSceneRepository.livingEyesId}'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('my_content_empty_add_button')),
+        findsOneWidget,
+      );
+      expect(find.text('Место для твоего образа'), findsOneWidget);
+    },
+  );
+
+  testWidgets('unifies all looks and restores existing crop in editor', (
     tester,
   ) async {
     final rig = await _UserContentRig.create(tester);
@@ -54,9 +67,10 @@ void main() {
       find.byKey(
         const Key('my_content_scene_${BuiltInSceneRepository.livingEyesId}'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
 
+    await _openLookDetails(tester, sceneId);
     await tester.tap(find.byKey(Key('edit_$sceneId')));
     await tester.pump();
     await tester.pump();
@@ -76,12 +90,7 @@ void main() {
     await _pumpScreen(tester, rig);
     final sceneId = UserImageSceneRepository.sceneIdForAsset(rig.asset!.id);
 
-    expect(
-      tester
-          .widget<TextButton>(find.byKey(Key('set_current_$sceneId')))
-          .onPressed,
-      isNotNull,
-    );
+    await _openLookDetails(tester, sceneId);
     await tester.tap(find.byKey(Key('set_current_$sceneId')));
     await _pumpCommandFrames(tester, 12);
     final container = ProviderScope.containerOf(
@@ -102,23 +111,22 @@ void main() {
       await _pumpScreen(tester, rig);
       final sceneId = UserImageSceneRepository.sceneIdForAsset(rig.asset!.id);
 
+      await _openLookDetails(tester, sceneId);
       await tester.tap(find.byKey(Key('delete_$sceneId')));
-      await tester.pump();
+      await _pumpSheetSwap(tester);
       expect(
         find.byKey(const Key('delete_image_confirmation')),
         findsOneWidget,
       );
       await tester.tap(find.byKey(const Key('cancel_delete_image')));
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.pump();
       expect(rig.assets.values, [rig.asset]);
       expect(rig.storage.existingPaths, hasLength(2));
 
-      expect(
-        tester.widget<IconButton>(find.byKey(Key('delete_$sceneId'))).onPressed,
-        isNotNull,
-      );
+      await _openLookDetails(tester, sceneId);
       await tester.tap(find.byKey(Key('delete_$sceneId')));
-      await tester.pump();
+      await _pumpSheetSwap(tester);
       await tester.tap(find.byKey(const Key('confirm_delete_image')));
       await _pumpCommandFrames(tester, 24);
       final container = ProviderScope.containerOf(
@@ -151,6 +159,7 @@ void main() {
       final sceneId = UserImageSceneRepository.sceneIdForAsset(rig.asset!.id);
       final oldPreview = await rig.storage.read(rig.asset!.previewStorageKey);
 
+      await _openLookDetails(tester, sceneId);
       await tester.tap(find.byKey(Key('edit_$sceneId')));
       await tester.pump();
       await tester.pump();
@@ -177,6 +186,44 @@ void main() {
       );
     },
   );
+
+  for (final testCase in const [
+    (name: 'compact 320x640', size: Size(320, 640), scale: 1.0),
+    (name: 'large 430x932', size: Size(430, 932), scale: 1.0),
+    (name: 'text scale 180%', size: Size(390, 844), scale: 1.8),
+  ]) {
+    testWidgets('Wardrobe remains usable at ${testCase.name}', (tester) async {
+      final rig = await _UserContentRig.create(tester);
+      await _pumpScreen(
+        tester,
+        rig,
+        size: testCase.size,
+        textScaler: TextScaler.linear(testCase.scale),
+      );
+
+      expect(find.text('Мои образы'), findsOneWidget);
+      expect(find.byKey(const Key('my_content_list')), findsOneWidget);
+      expect(find.byKey(const Key('my_content_add_button')), findsOneWidget);
+    });
+  }
+
+  testWidgets('built-in look details do not expose edit or delete', (
+    tester,
+  ) async {
+    final rig = await _UserContentRig.create(tester, withAsset: false);
+    await _pumpScreen(tester, rig);
+
+    await _openLookDetails(tester, BuiltInSceneRepository.livingEyesId);
+
+    expect(
+      find.byKey(const Key('edit_${BuiltInSceneRepository.livingEyesId}')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('delete_${BuiltInSceneRepository.livingEyesId}')),
+      findsNothing,
+    );
+  });
 }
 
 final class _UserContentRig {
@@ -265,11 +312,16 @@ final class _UserContentRig {
   }
 }
 
-Future<void> _pumpScreen(WidgetTester tester, _UserContentRig rig) async {
+Future<void> _pumpScreen(
+  WidgetTester tester,
+  _UserContentRig rig, {
+  Size size = const Size(390, 844),
+  TextScaler textScaler = TextScaler.noScaling,
+}) async {
   final connection = rig.device.connect(VirtualDeviceEngine.deviceId);
   await _pumpCommandFrames(tester, 6);
   await connection;
-  tester.view.physicalSize = const Size(390, 844);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(() async {
     await tester.pumpWidget(const SizedBox.shrink());
@@ -303,12 +355,32 @@ Future<void> _pumpScreen(WidgetTester tester, _UserContentRig rig) async {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child!,
+        ),
         home: const UserContentScreen(),
       ),
     ),
   );
   await tester.pump();
   await tester.pump();
+}
+
+Future<void> _openLookDetails(WidgetTester tester, String sceneId) async {
+  final tile = find.byKey(Key('my_content_scene_$sceneId'));
+  await tester.ensureVisible(tile);
+  await tester.pump();
+  await tester.tap(tile);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  expect(find.byKey(const Key('look_details_preview')), findsOneWidget);
+}
+
+Future<void> _pumpSheetSwap(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
 }
 
 void _ignoreFailure(String code, Object error, StackTrace stackTrace) {}

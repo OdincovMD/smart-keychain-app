@@ -115,7 +115,7 @@ void main() {
     expect(find.byKey(const Key('brightness_slider')), findsOneWidget);
   });
 
-  testWidgets('all looks sheet changes selection without installing it', (
+  testWidgets('full wardrobe opens look details and installs a look', (
     tester,
   ) async {
     await _pumpConnectedHome(tester);
@@ -126,20 +126,23 @@ void main() {
     await tester.tap(allButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byKey(const Key('all_scene_eyes_mint_static_v1')));
-    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('wardrobe_scroll')), findsOneWidget);
 
-    final action = tester.widget<InkWell>(
-      find.descendant(
-        of: find.byKey(const Key('install_scene_button')),
-        matching: find.byType(InkWell),
-      ),
-    );
-    expect(action.onTap, isNotNull);
-    expect(
-      find.byKey(const ValueKey(BuiltInSceneRepository.livingEyesId)),
-      findsOneWidget,
-    );
+    const mintSceneId = BuiltInSceneRepository.mintEyesId;
+    final mintTile = find.byKey(const Key('my_content_scene_$mintSceneId'));
+    await tester.ensureVisible(mintTile);
+    await tester.pump();
+    await tester.tap(mintTile);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('look_details_preview')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('set_current_$mintSceneId')));
+    for (var frame = 0; frame < 12; frame++) {
+      await tester.pump(const Duration(milliseconds: 1));
+    }
+
+    expect(find.text('Надето'), findsOneWidget);
   });
 }
 
@@ -190,4 +193,7 @@ Future<void> _pumpConnectedHome(
   for (var frame = 0; frame < 6; frame++) {
     await tester.pump(const Duration(milliseconds: 1));
   }
+  await tester.pump(const Duration(milliseconds: 181));
+  await tester.pump();
+  await tester.pump();
 }

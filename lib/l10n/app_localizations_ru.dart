@@ -167,6 +167,78 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retry => 'Попробовать снова';
 
   @override
+  String get pairingTitle => 'Найди свой брелок';
+
+  @override
+  String get pairingIntro => 'Он рядом — осталось только познакомиться.';
+
+  @override
+  String get pairingFindAction => 'Найти брелок';
+
+  @override
+  String get pairingSearchingTitle => 'Ищем рядом…';
+
+  @override
+  String get pairingSearchingBody =>
+      'Поднеси брелок ближе. Это займёт всего мгновение.';
+
+  @override
+  String get pairingFoundTitle => 'Нашли тебя';
+
+  @override
+  String get pairingFoundBody => 'Виртуальный брелок готов познакомиться.';
+
+  @override
+  String get pairingConnectingTitle => 'Подключаем…';
+
+  @override
+  String get pairingConnectingBody => 'Ещё мгновение — и он проснётся.';
+
+  @override
+  String get pairingConnectedTitle => 'Вы на связи';
+
+  @override
+  String get pairingConnectedBody => 'Привет. Твой брелок уже просыпается.';
+
+  @override
+  String get pairingConnectedAction => 'Мы на связи';
+
+  @override
+  String get pairingErrorTitle => 'Не получилось подключиться';
+
+  @override
+  String get pairingErrorBody =>
+      'Попробуй ещё раз. Твои образы и настройки останутся на месте.';
+
+  @override
+  String get pairingVirtualKeychain => 'Виртуальный брелок';
+
+  @override
+  String get pairingDemoMarker => 'ДЕМО';
+
+  @override
+  String get pairingDemoHint => 'Демо-брелок для знакомства с приложением';
+
+  @override
+  String get pairingStageDormantLabel => 'Виртуальный брелок спит';
+
+  @override
+  String get pairingStageSearchingLabel => 'Ищем виртуальный брелок рядом';
+
+  @override
+  String get pairingStageFoundLabel => 'Виртуальный брелок найден';
+
+  @override
+  String get pairingStageConnectingLabel => 'Виртуальный брелок подключается';
+
+  @override
+  String get pairingStageConnectedLabel => 'Виртуальный брелок подключён';
+
+  @override
+  String get pairingStageErrorLabel =>
+      'Не удалось подключить виртуальный брелок';
+
+  @override
   String get devicePreviewLabel => 'Виртуальный экран брелока';
 
   @override
@@ -194,58 +266,99 @@ class AppLocalizationsRu extends AppLocalizations {
   String get blinkNow => 'Моргнуть';
 
   @override
-  String get addImage => 'Добавить фото';
+  String get addImage => 'Добавить образ';
 
   @override
-  String get myContent => 'Мои фото';
+  String get myContent => 'Мои образы';
 
   @override
-  String get myContentEmptyTitle => 'Здесь появятся ваши фото';
+  String get wardrobeIntro =>
+      'Выбирайте настроение, примеряйте и создавайте свои образы.';
+
+  @override
+  String get myContentEmptyTitle => 'Место для твоего образа';
 
   @override
   String get myContentEmptyMessage =>
-      'Добавьте изображение и настройте кадр для круглого экрана брелока.';
+      'Добавь фото и настрой его для круглого экрана.';
+
+  @override
+  String get emptyLookPreview => 'Пустое место для нового образа';
 
   @override
   String get userImage => 'ВАШЕ ФОТО';
 
   @override
-  String get setAsCurrent => 'На экран';
+  String get setAsCurrent => 'Надеть';
 
   @override
-  String get editCrop => 'Изменить кадр';
+  String get wearLook => 'Надеть';
+
+  @override
+  String get lookIsWorn => 'Надето';
+
+  @override
+  String get lookIsActive => 'СЕЙЧАС НА БРЕЛОКЕ';
+
+  @override
+  String get lookReady => 'ГОТОВ К ПРИМЕРКЕ';
+
+  @override
+  String get editCrop => 'Изменить кадрирование';
 
   @override
   String get delete => 'Удалить';
 
   @override
-  String get deleteImageTitle => 'Удалить фото?';
+  String get deleteImageTitle => 'Удалить образ?';
 
   @override
   String get deleteImageMessage =>
-      'Оригинал, настроенный кадр и сцена будут удалены с этого устройства.';
+      'Образ и исходное фото будут удалены с этого устройства.';
 
   @override
   String get imageChangesSaved => 'Изменения кадра сохранены.';
 
   @override
-  String get imageDeleted => 'Фото удалено.';
+  String get imageDeleted => 'Образ удалён.';
 
   @override
-  String get imageSetAsCurrent => 'Фото установлено на экран брелока.';
+  String get imageSetAsCurrent => 'Образ надет на брелок.';
 
   @override
   String get processingImage => 'Обрабатываем…';
 
   @override
-  String get imageEditorTitle => 'Кадр для брелока';
+  String get imageEditorTitle => 'Настроить кадр';
+
+  @override
+  String get createLook => 'Создать образ';
+
+  @override
+  String get adjustLookCrop => 'Настроить кадр';
+
+  @override
+  String get saveLook => 'Сохранить образ';
+
+  @override
+  String get saveLookChanges => 'Сохранить изменения';
+
+  @override
+  String get preparingLook => 'Подготавливаем…';
+
+  @override
+  String get lookSaved => 'образ сохранён';
 
   @override
   String get imageEditorHint =>
-      'Перемещайте изображение и сведите пальцы, чтобы настроить круглый кадр.';
+      'Перемещайте фото и сведите пальцы, чтобы настроить круглый кадр.';
 
   @override
-  String get imageCropPreview => 'Предпросмотр круглого кадра';
+  String get imageCropPreview => 'Предпросмотр круглого образа';
+
+  @override
+  String get imageCropGestureHint =>
+      'Перемещайте фото и сведите пальцы, чтобы изменить масштаб.';
 
   @override
   String get rotate => 'Повернуть';
@@ -260,7 +373,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get save => 'Сохранить';
 
   @override
-  String get imageSaved => 'Фото сохранено в библиотеке.';
+  String get imageSaved => 'Образ сохранён в гардеробе.';
 
   @override
   String get imageUnsupported =>

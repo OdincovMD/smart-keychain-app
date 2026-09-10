@@ -58,10 +58,10 @@ final class UserImageController extends Notifier<UserImageFlowState> {
     unawaited(_startImport());
   }
 
-  void save(CropSpec cropSpec, DisplayProfile targetProfile) {
+  Future<bool> save(CropSpec cropSpec, DisplayProfile targetProfile) async {
     final current = state;
-    if (current is! UserImageEditing) return;
-    unawaited(_save(current.draft, cropSpec, targetProfile));
+    if (current is! UserImageEditing) return false;
+    return _save(current.draft, cropSpec, targetProfile);
   }
 
   void cancel() {
@@ -88,7 +88,7 @@ final class UserImageController extends Notifier<UserImageFlowState> {
     };
   }
 
-  Future<void> _save(
+  Future<bool> _save(
     PendingUserImage draft,
     CropSpec cropSpec,
     DisplayProfile targetProfile,
@@ -101,15 +101,17 @@ final class UserImageController extends Notifier<UserImageFlowState> {
           cropSpec: cropSpec,
           targetProfile: targetProfile,
         );
-    if (!ref.mounted) return;
+    if (!ref.mounted) return false;
     switch (result) {
       case Ok(:final value):
         ref.invalidate(sceneLibraryProvider);
         final sceneId = UserImageSceneRepository.sceneIdForAsset(value.id);
         ref.invalidate(sceneByIdProvider(sceneId));
         state = UserImageCompleted(sceneId);
+        return true;
       case Err(:final failure):
         state = UserImageFailed(failure);
+        return false;
     }
   }
 

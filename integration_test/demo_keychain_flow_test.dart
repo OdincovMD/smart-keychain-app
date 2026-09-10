@@ -120,6 +120,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 650));
     expect(
       find.byKey(const ValueKey(BuiltInSceneRepository.livingEyesId)),
       findsOneWidget,
@@ -160,7 +161,7 @@ void main() {
     await tester.pump();
     await tester.tap(disconnectButton);
     await tester.pump(const Duration(milliseconds: 350));
-    expect(find.text('Выберите брелок'), findsOneWidget);
+    expect(find.text('Нашли тебя'), findsOneWidget);
   });
 }
 

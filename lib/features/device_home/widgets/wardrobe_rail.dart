@@ -129,6 +129,7 @@ final class LookTile extends StatelessWidget {
     required this.isActive,
     required this.enabled,
     required this.onSelected,
+    this.isHighlighted = false,
     super.key,
   });
 
@@ -137,6 +138,7 @@ final class LookTile extends StatelessWidget {
   final double previewDiameter;
   final bool isSelected;
   final bool isActive;
+  final bool isHighlighted;
   final bool enabled;
   final VoidCallback onSelected;
 
@@ -146,14 +148,16 @@ final class LookTile extends StatelessWidget {
     final motion = context.chromeKissMotion;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final l10n = AppLocalizations.of(context);
-    final semanticLabel = isActive
-        ? '${scene.name}, ${l10n.activeScene}'
-        : scene.name;
+    final semanticLabel = switch ((isActive, isHighlighted)) {
+      (true, _) => '${scene.name}, ${l10n.activeScene}',
+      (false, true) => '${scene.name}, ${l10n.lookSaved}',
+      _ => scene.name,
+    };
 
     return Semantics(
       button: true,
       enabled: enabled,
-      selected: isSelected,
+      selected: isSelected || isHighlighted,
       label: semanticLabel,
       child: ExcludeSemantics(
         child: SizedBox(
@@ -165,90 +169,25 @@ final class LookTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 AnimatedScale(
-                  scale: reduceMotion || isSelected ? 1 : 0.965,
+                  scale: reduceMotion || isSelected || isHighlighted
+                      ? 1
+                      : 0.965,
                   duration: reduceMotion
                       ? Duration.zero
                       : motion.interaction.duration,
                   curve: motion.interaction.curve,
-                  child: AnimatedContainer(
-                    duration: reduceMotion
-                        ? Duration.zero
-                        : motion.interaction.duration,
-                    curve: motion.interaction.curve,
-                    width: previewDiameter,
-                    height: previewDiameter,
-                    padding: EdgeInsets.all(isSelected ? 3 : 1),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: colors.lens,
-                      border: Border.all(
-                        color: isSelected
-                            ? colors.materialChrome
-                            : colors.divider.withValues(alpha: 0.34),
-                        width: isSelected ? 1.5 : 0.65,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: colors.lens.withValues(alpha: 0.32),
-                                blurRadius: 9,
-                                spreadRadius: -4,
-                                offset: const Offset(0, 5),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ClipOval(
-                          child: SceneRenderer(scene: scene, animate: false),
-                        ),
-                        Positioned.fill(
-                          child: AnimatedOpacity(
-                            opacity: isSelected ? 1 : 0,
-                            duration: reduceMotion
-                                ? Duration.zero
-                                : motion.interaction.duration,
-                            curve: motion.interaction.curve,
-                            child: CustomPaint(
-                              painter: _LookSelectionTracePainter(
-                                colors.accentOptical,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (isActive)
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Container(
-                              width: 25,
-                              height: 25,
-                              decoration: BoxDecoration(
-                                color: colors.lens,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: colors.materialChrome,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                size: 15,
-                                color: colors.accentOptical,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                  child: LookPreview(
+                    scene: scene,
+                    diameter: previewDiameter,
+                    isSelected: isSelected || isHighlighted,
+                    isActive: isActive,
+                    isHighlighted: isHighlighted,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   scene.name,
                   textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                   style: context.chromeKissText.body.copyWith(
                     color: isSelected
                         ? colors.textPrimary
@@ -262,6 +201,117 @@ final class LookTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+final class LookPreview extends StatelessWidget {
+  const LookPreview({
+    required this.scene,
+    required this.diameter,
+    required this.isSelected,
+    required this.isActive,
+    this.animateScene = false,
+    this.isHighlighted = false,
+    super.key,
+  });
+
+  final Scene scene;
+  final double diameter;
+  final bool isSelected;
+  final bool isActive;
+  final bool animateScene;
+  final bool isHighlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.chromeKiss;
+    final motion = context.chromeKissMotion;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    return AnimatedContainer(
+      duration: reduceMotion ? Duration.zero : motion.interaction.duration,
+      curve: motion.interaction.curve,
+      width: diameter,
+      height: diameter,
+      padding: EdgeInsets.all(isSelected ? 3 : 1),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.lens,
+        border: Border.all(
+          color: isSelected
+              ? colors.materialChrome
+              : colors.divider.withValues(alpha: 0.34),
+          width: isSelected ? 1.5 : 0.65,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: colors.lens.withValues(alpha: 0.32),
+                  blurRadius: 9,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 5),
+                ),
+              ]
+            : null,
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipOval(
+            child: SceneRenderer(scene: scene, animate: animateScene),
+          ),
+          Positioned.fill(
+            child: AnimatedOpacity(
+              opacity: isSelected ? 1 : 0,
+              duration: reduceMotion
+                  ? Duration.zero
+                  : motion.interaction.duration,
+              curve: motion.interaction.curve,
+              child: CustomPaint(
+                painter: _LookSelectionTracePainter(colors.accentOptical),
+              ),
+            ),
+          ),
+          if (isActive)
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                width: diameter < 120 ? 25 : 32,
+                height: diameter < 120 ? 25 : 32,
+                decoration: BoxDecoration(
+                  color: colors.lens,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.materialChrome),
+                ),
+                child: Icon(
+                  Icons.check_rounded,
+                  size: diameter < 120 ? 15 : 19,
+                  color: colors.accentOptical,
+                ),
+              ),
+            ),
+          if (isHighlighted && !isActive)
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                key: const Key('look_saved_marker'),
+                width: diameter < 120 ? 25 : 32,
+                height: diameter < 120 ? 25 : 32,
+                decoration: BoxDecoration(
+                  color: colors.success,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.materialChrome),
+                ),
+                child: Icon(
+                  Icons.done_rounded,
+                  size: diameter < 120 ? 15 : 19,
+                  color: colors.lens,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -332,8 +382,6 @@ final class AddLookTile extends StatelessWidget {
                 Text(
                   l10n.addImage,
                   textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                   style: context.chromeKissText.body.copyWith(
                     color: colors.textSecondary,
                     fontSize: 13,

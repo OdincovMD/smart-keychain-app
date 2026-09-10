@@ -227,6 +227,7 @@ Future<void> _pumpConnectedHome(
   for (var frame = 0; frame < 6; frame++) {
     await tester.pump(const Duration(milliseconds: 1));
   }
+  await tester.pump(const Duration(milliseconds: 181));
   await tester.pump(const Duration(milliseconds: 300));
 }
 

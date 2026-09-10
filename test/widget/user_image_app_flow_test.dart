@@ -6,8 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/image/image_picker_gateway.dart';
-import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
 import 'package:smart_keychain_app/features/image_editor/image_editor_screen.dart';
+import 'package:smart_keychain_app/features/user_content/look_details_sheet.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/content/composite_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/content/user_image_scene_repository.dart';
@@ -78,6 +78,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1));
     await tester.pump();
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 601));
+    await tester.pump();
+    await tester.pump();
 
     expect(find.byKey(const Key('add_user_image_button')), findsOneWidget);
     final myContent = find.byKey(const Key('open_my_content_button'));
@@ -90,7 +93,10 @@ void main() {
       find.byKey(const Key('my_content_empty_add_button')),
       findsOneWidget,
     );
-    await tester.tap(find.byKey(const Key('my_content_empty_add_button')));
+    final emptyAdd = find.byKey(const Key('my_content_empty_add_button'));
+    await tester.ensureVisible(emptyAdd);
+    await tester.pump();
+    await tester.tap(emptyAdd);
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
@@ -101,31 +107,27 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
-    // Let the confirmation snackbar leave before interacting with controls
-    // behind it. The home screen has an autonomous eye ticker, so use an
-    // exact duration instead of pumpAndSettle.
-    await tester.pump(const Duration(seconds: 5));
-    const sceneKey = Key('scene_user-image:widget-asset');
-    final horizontalSceneList = find.byWidgetPredicate(
-      (widget) =>
-          widget is Scrollable && widget.axisDirection == AxisDirection.right,
-    );
-    await tester.ensureVisible(horizontalSceneList);
     await tester.pump();
-    await tester.scrollUntilVisible(
-      find.byKey(sceneKey),
-      180,
-      scrollable: horizontalSceneList,
-    );
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+    const sceneKey = Key('my_content_scene_user-image:widget-asset');
+    expect(find.byKey(const Key('user_content_screen')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(sceneKey));
     await tester.pump();
     expect(find.byKey(sceneKey), findsOneWidget);
+    expect(find.byKey(const Key('look_saved_marker')), findsOneWidget);
 
     await tester.tap(find.byKey(sceneKey));
     await tester.pump();
-    final install = find.byKey(const Key('install_scene_button'));
-    await tester.ensureVisible(install);
+    await tester.pump(const Duration(milliseconds: 350));
+    const install = Key('set_current_user-image:widget-asset');
+    final detailsScroll = find.descendant(
+      of: find.byType(LookDetailsSheet),
+      matching: find.byType(SingleChildScrollView),
+    );
+    await tester.drag(detailsScroll, const Offset(0, -520));
     await tester.pump();
-    await tester.tap(install);
+    await tester.tap(find.byKey(install));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pump();
@@ -133,8 +135,12 @@ void main() {
     await tester.pump();
 
     expect(
+      (await device.watchDeviceState().first).activeSceneId,
+      'user-image:widget-asset',
+    );
+    expect(
       find.descendant(
-        of: find.byType(VirtualScreen),
+        of: find.byKey(const Key('look_details_preview')),
         matching: find.byType(Image),
       ),
       findsOneWidget,

@@ -7,6 +7,7 @@ import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/features/device_home/device_home_screen.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/jewel_button.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
@@ -24,7 +25,7 @@ void main() {
     addTearDown(repository.dispose);
     await _pumpApp(tester, repository);
 
-    expect(find.text('Выберите брелок'), findsOneWidget);
+    expect(find.text('Нашли тебя'), findsOneWidget);
     expect(find.text('Подключить'), findsOneWidget);
   });
 
@@ -38,11 +39,11 @@ void main() {
     await tester.tap(find.byKey(const Key('connect_button')));
     await tester.pump();
 
-    final button = tester.widget<FilledButton>(
+    final button = tester.widget<JewelButton>(
       find.byKey(const Key('connect_button')),
     );
     expect(button.onPressed, isNull);
-    expect(find.text('Подключаем…'), findsOneWidget);
+    expect(find.text('Подключаем…'), findsWidgets);
     await tester.pump(const Duration(milliseconds: 220));
     await tester.pump(const Duration(milliseconds: 110));
   });
@@ -206,7 +207,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
     }
 
-    expect(find.text('Выберите брелок'), findsOneWidget);
+    expect(find.text('Нашли тебя'), findsOneWidget);
   });
 }
 
@@ -255,6 +256,7 @@ Future<void> _pumpConnectedApp(
   await tester.pump(transitionStep);
   await tester.pump(transitionStep);
   await tester.pump(const Duration(milliseconds: 1));
+  await tester.pump(const Duration(milliseconds: 601));
   await tester.pump();
   await tester.pump();
 }

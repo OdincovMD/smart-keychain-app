@@ -14,7 +14,6 @@ import '../../domain/content/scene.dart';
 import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_snapshot.dart';
 import '../../domain/eyes/eye_emotion.dart';
-import '../../domain/image/crop_spec.dart';
 import '../../domain/settings/app_appearance.dart';
 import '../appearance/appearance_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -24,7 +23,6 @@ import '../image_import/user_image_controller.dart';
 import '../shared/image_failure_label.dart';
 import '../user_content/user_content_screen.dart';
 import 'eye_preview_controller.dart';
-import 'widgets/all_looks_sheet.dart';
 import 'widgets/brightness_control.dart';
 import 'widgets/character_study_screen.dart';
 import 'widgets/companion_stage.dart';
@@ -43,6 +41,7 @@ final class DeviceHomeScreen extends ConsumerStatefulWidget {
 
 final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   String? _selectedSceneId;
+  String? _newLookSceneId;
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +72,10 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
           break;
         case UserImageCompleted(:final sceneId):
           if (mounted) {
-            setState(() => _selectedSceneId = sceneId);
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(l10n.imageSaved)));
+            setState(() {
+              _selectedSceneId = sceneId;
+              _newLookSceneId = sceneId;
+            });
           }
           ref.read(userImageControllerProvider.notifier).acknowledge();
         case UserImageFailed(:final failure):
@@ -153,30 +153,42 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   }
 
   Future<void> _openImageEditor(PendingUserImage draft) async {
-    final cropSpec = await Navigator.of(context).push<CropSpec>(
+    final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => ImageEditorScreen(
           assetId: draft.id,
           originalBytes: draft.originalBytes,
+          onSave: (cropSpec) async {
+            final profile = ref
+                .read(deviceSnapshotProvider)
+                .value
+                ?.displayProfile;
+            if (profile == null) return false;
+            return ref
+                .read(userImageControllerProvider.notifier)
+                .save(cropSpec, profile);
+          },
         ),
       ),
     );
     if (!mounted) return;
-    if (cropSpec == null) {
+    if (saved == null) {
       ref.read(userImageControllerProvider.notifier).cancel();
       return;
     }
-    final profile = ref.read(deviceSnapshotProvider).value?.displayProfile;
-    if (profile == null) {
-      ref.read(userImageControllerProvider.notifier).cancel();
-      return;
-    }
-    ref.read(userImageControllerProvider.notifier).save(cropSpec, profile);
+    if (!saved) return;
+    final sceneId = _newLookSceneId;
+    if (sceneId == null) return;
+    _newLookSceneId = null;
+    await _openMyContent(highlightedSceneId: sceneId);
   }
 
-  Future<void> _openMyContent() async {
+  Future<void> _openMyContent({String? highlightedSceneId}) async {
     final result = await Navigator.of(context).push<UserContentScreenResult>(
-      MaterialPageRoute(builder: (context) => const UserContentScreen()),
+      MaterialPageRoute(
+        builder: (context) =>
+            UserContentScreen(highlightedSceneId: highlightedSceneId),
+      ),
     );
     if (!mounted || result != UserContentScreenResult.addImage) return;
     ref.read(userImageControllerProvider.notifier).startImport();
@@ -316,7 +328,7 @@ final class _DeviceHomeContent extends StatelessWidget {
                     onPressed: isBusy
                         ? null
                         : selectedIsActive
-                        ? () => _showAllLooks(context)
+                        ? onOpenMyContent
                         : onInstallScene,
                   ),
                   const SizedBox(height: 30),
@@ -327,7 +339,7 @@ final class _DeviceHomeContent extends StatelessWidget {
                     enabled: !isBusy,
                     isAddingImage: isAddingImage,
                     onSceneSelected: onSceneSelected,
-                    onOpenAll: () => _showAllLooks(context),
+                    onOpenAll: onOpenMyContent,
                     onAddImage: onAddImage,
                   ),
                   const SizedBox(height: 22),
@@ -372,28 +384,6 @@ final class _DeviceHomeContent extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Future<void> _showAllLooks(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: context.chromeKiss.surfaceSecondary,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.68,
-        child: AllLooksSheet(
-          scenes: scenes,
-          selectedSceneId: selectedSceneId,
-          activeSceneId: snapshot.activeSceneId,
-          enabled: !isBusy,
-          onSceneSelected: (sceneId) {
-            Navigator.of(context).pop();
-            onSceneSelected(sceneId);
-          },
-        ),
-      ),
     );
   }
 

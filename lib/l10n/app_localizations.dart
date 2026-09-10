@@ -388,6 +388,144 @@ abstract class AppLocalizations {
   /// **'Попробовать снова'**
   String get retry;
 
+  /// No description provided for @pairingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найди свой брелок'**
+  String get pairingTitle;
+
+  /// No description provided for @pairingIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Он рядом — осталось только познакомиться.'**
+  String get pairingIntro;
+
+  /// No description provided for @pairingFindAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти брелок'**
+  String get pairingFindAction;
+
+  /// No description provided for @pairingSearchingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ищем рядом…'**
+  String get pairingSearchingTitle;
+
+  /// No description provided for @pairingSearchingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поднеси брелок ближе. Это займёт всего мгновение.'**
+  String get pairingSearchingBody;
+
+  /// No description provided for @pairingFoundTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нашли тебя'**
+  String get pairingFoundTitle;
+
+  /// No description provided for @pairingFoundBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виртуальный брелок готов познакомиться.'**
+  String get pairingFoundBody;
+
+  /// No description provided for @pairingConnectingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключаем…'**
+  String get pairingConnectingTitle;
+
+  /// No description provided for @pairingConnectingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё мгновение — и он проснётся.'**
+  String get pairingConnectingBody;
+
+  /// No description provided for @pairingConnectedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы на связи'**
+  String get pairingConnectedTitle;
+
+  /// No description provided for @pairingConnectedBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привет. Твой брелок уже просыпается.'**
+  String get pairingConnectedBody;
+
+  /// No description provided for @pairingConnectedAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы на связи'**
+  String get pairingConnectedAction;
+
+  /// No description provided for @pairingErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получилось подключиться'**
+  String get pairingErrorTitle;
+
+  /// No description provided for @pairingErrorBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробуй ещё раз. Твои образы и настройки останутся на месте.'**
+  String get pairingErrorBody;
+
+  /// No description provided for @pairingVirtualKeychain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виртуальный брелок'**
+  String get pairingVirtualKeychain;
+
+  /// No description provided for @pairingDemoMarker.
+  ///
+  /// In ru, this message translates to:
+  /// **'ДЕМО'**
+  String get pairingDemoMarker;
+
+  /// No description provided for @pairingDemoHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Демо-брелок для знакомства с приложением'**
+  String get pairingDemoHint;
+
+  /// No description provided for @pairingStageDormantLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виртуальный брелок спит'**
+  String get pairingStageDormantLabel;
+
+  /// No description provided for @pairingStageSearchingLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ищем виртуальный брелок рядом'**
+  String get pairingStageSearchingLabel;
+
+  /// No description provided for @pairingStageFoundLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виртуальный брелок найден'**
+  String get pairingStageFoundLabel;
+
+  /// No description provided for @pairingStageConnectingLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виртуальный брелок подключается'**
+  String get pairingStageConnectingLabel;
+
+  /// No description provided for @pairingStageConnectedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Виртуальный брелок подключён'**
+  String get pairingStageConnectedLabel;
+
+  /// No description provided for @pairingStageErrorLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось подключить виртуальный брелок'**
+  String get pairingStageErrorLabel;
+
   /// No description provided for @devicePreviewLabel.
   ///
   /// In ru, this message translates to:
@@ -445,26 +583,38 @@ abstract class AppLocalizations {
   /// No description provided for @addImage.
   ///
   /// In ru, this message translates to:
-  /// **'Добавить фото'**
+  /// **'Добавить образ'**
   String get addImage;
 
   /// No description provided for @myContent.
   ///
   /// In ru, this message translates to:
-  /// **'Мои фото'**
+  /// **'Мои образы'**
   String get myContent;
+
+  /// No description provided for @wardrobeIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбирайте настроение, примеряйте и создавайте свои образы.'**
+  String get wardrobeIntro;
 
   /// No description provided for @myContentEmptyTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Здесь появятся ваши фото'**
+  /// **'Место для твоего образа'**
   String get myContentEmptyTitle;
 
   /// No description provided for @myContentEmptyMessage.
   ///
   /// In ru, this message translates to:
-  /// **'Добавьте изображение и настройте кадр для круглого экрана брелока.'**
+  /// **'Добавь фото и настрой его для круглого экрана.'**
   String get myContentEmptyMessage;
+
+  /// No description provided for @emptyLookPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пустое место для нового образа'**
+  String get emptyLookPreview;
 
   /// No description provided for @userImage.
   ///
@@ -475,13 +625,37 @@ abstract class AppLocalizations {
   /// No description provided for @setAsCurrent.
   ///
   /// In ru, this message translates to:
-  /// **'На экран'**
+  /// **'Надеть'**
   String get setAsCurrent;
+
+  /// No description provided for @wearLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Надеть'**
+  String get wearLook;
+
+  /// No description provided for @lookIsWorn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Надето'**
+  String get lookIsWorn;
+
+  /// No description provided for @lookIsActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'СЕЙЧАС НА БРЕЛОКЕ'**
+  String get lookIsActive;
+
+  /// No description provided for @lookReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'ГОТОВ К ПРИМЕРКЕ'**
+  String get lookReady;
 
   /// No description provided for @editCrop.
   ///
   /// In ru, this message translates to:
-  /// **'Изменить кадр'**
+  /// **'Изменить кадрирование'**
   String get editCrop;
 
   /// No description provided for @delete.
@@ -493,13 +667,13 @@ abstract class AppLocalizations {
   /// No description provided for @deleteImageTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Удалить фото?'**
+  /// **'Удалить образ?'**
   String get deleteImageTitle;
 
   /// No description provided for @deleteImageMessage.
   ///
   /// In ru, this message translates to:
-  /// **'Оригинал, настроенный кадр и сцена будут удалены с этого устройства.'**
+  /// **'Образ и исходное фото будут удалены с этого устройства.'**
   String get deleteImageMessage;
 
   /// No description provided for @imageChangesSaved.
@@ -511,13 +685,13 @@ abstract class AppLocalizations {
   /// No description provided for @imageDeleted.
   ///
   /// In ru, this message translates to:
-  /// **'Фото удалено.'**
+  /// **'Образ удалён.'**
   String get imageDeleted;
 
   /// No description provided for @imageSetAsCurrent.
   ///
   /// In ru, this message translates to:
-  /// **'Фото установлено на экран брелока.'**
+  /// **'Образ надет на брелок.'**
   String get imageSetAsCurrent;
 
   /// No description provided for @processingImage.
@@ -529,20 +703,62 @@ abstract class AppLocalizations {
   /// No description provided for @imageEditorTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Кадр для брелока'**
+  /// **'Настроить кадр'**
   String get imageEditorTitle;
+
+  /// No description provided for @createLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать образ'**
+  String get createLook;
+
+  /// No description provided for @adjustLookCrop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настроить кадр'**
+  String get adjustLookCrop;
+
+  /// No description provided for @saveLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить образ'**
+  String get saveLook;
+
+  /// No description provided for @saveLookChanges.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить изменения'**
+  String get saveLookChanges;
+
+  /// No description provided for @preparingLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подготавливаем…'**
+  String get preparingLook;
+
+  /// No description provided for @lookSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'образ сохранён'**
+  String get lookSaved;
 
   /// No description provided for @imageEditorHint.
   ///
   /// In ru, this message translates to:
-  /// **'Перемещайте изображение и сведите пальцы, чтобы настроить круглый кадр.'**
+  /// **'Перемещайте фото и сведите пальцы, чтобы настроить круглый кадр.'**
   String get imageEditorHint;
 
   /// No description provided for @imageCropPreview.
   ///
   /// In ru, this message translates to:
-  /// **'Предпросмотр круглого кадра'**
+  /// **'Предпросмотр круглого образа'**
   String get imageCropPreview;
+
+  /// No description provided for @imageCropGestureHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перемещайте фото и сведите пальцы, чтобы изменить масштаб.'**
+  String get imageCropGestureHint;
 
   /// No description provided for @rotate.
   ///
@@ -571,7 +787,7 @@ abstract class AppLocalizations {
   /// No description provided for @imageSaved.
   ///
   /// In ru, this message translates to:
-  /// **'Фото сохранено в библиотеке.'**
+  /// **'Образ сохранён в гардеробе.'**
   String get imageSaved;
 
   /// No description provided for @imageUnsupported.

@@ -52,6 +52,9 @@ void main() {
     for (var frame = 0; frame < 6; frame++) {
       await tester.pump(const Duration(milliseconds: 1));
     }
+    await tester.pump(const Duration(milliseconds: 601));
+    await tester.pump();
+    await tester.pump();
 
     final settingsButton = find.byKey(const Key('simulator_settings_button'));
     await tester.ensureVisible(settingsButton);

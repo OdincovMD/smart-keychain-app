@@ -1,0 +1,278 @@
+@Tags(['golden'])
+library;
+
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_keychain_app/app/app_theme.dart';
+import 'package:smart_keychain_app/app/chrome_kiss_theme.dart';
+import 'package:smart_keychain_app/app/providers.dart';
+import 'package:smart_keychain_app/core/result.dart';
+import 'package:smart_keychain_app/domain/image/crop_spec.dart';
+import 'package:smart_keychain_app/domain/image/image_picker_gateway.dart';
+import 'package:smart_keychain_app/domain/image/user_image_asset.dart';
+import 'package:smart_keychain_app/domain/settings/app_settings.dart';
+import 'package:smart_keychain_app/domain/storage/local_file_storage.dart';
+import 'package:smart_keychain_app/domain/storage/storage_failure.dart';
+import 'package:smart_keychain_app/features/user_content/user_content_screen.dart';
+import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
+import 'package:smart_keychain_app/infrastructure/content/composite_scene_repository.dart';
+import 'package:smart_keychain_app/infrastructure/content/user_image_scene_repository.dart';
+import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
+import 'package:smart_keychain_app/infrastructure/device/virtual_device_repository.dart';
+import 'package:smart_keychain_app/l10n/app_localizations.dart';
+
+import '../support/fake_app_settings_repository.dart';
+import '../support/fake_local_file_storage.dart';
+import '../support/fake_user_image_services.dart';
+import '../support/load_app_fonts.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadAppFonts);
+
+  testWidgets('Wardrobe Obsidian', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.obsidian);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_obsidian_390x844.png'),
+    );
+  });
+
+  testWidgets('Wardrobe Pearl', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.pearl);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_pearl_390x844.png'),
+    );
+  });
+
+  testWidgets('Built-in look details Obsidian', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.obsidian);
+    await _openLivingEyes(tester);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/look_details_obsidian.png'),
+    );
+  });
+
+  testWidgets('Built-in look details Pearl', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.pearl);
+    await _openLivingEyes(tester);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/look_details_pearl.png'),
+    );
+  });
+
+  testWidgets('Wardrobe with user content Obsidian', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 3);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.obsidian);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_user_content_obsidian.png'),
+    );
+  });
+
+  testWidgets('Wardrobe empty user content Obsidian', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 0);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.obsidian);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_empty_user_content_obsidian.png'),
+    );
+  });
+
+  testWidgets('Create look success returns to Wardrobe Obsidian', (
+    tester,
+  ) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(
+      tester,
+      rig,
+      ResolvedAppAppearance.obsidian,
+      highlightedSceneId: 'user-image:golden-1',
+    );
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/create_look_success_wardrobe_obsidian.png'),
+    );
+  });
+}
+
+final class _WardrobeGoldenRig {
+  const _WardrobeGoldenRig({
+    required this.scenes,
+    required this.device,
+    required this.settings,
+    required this.storage,
+    required this.assets,
+    required this.processor,
+  });
+
+  final CompositeSceneRepository scenes;
+  final VirtualDeviceRepository device;
+  final FakeAppSettingsRepository settings;
+  final FakeLocalFileStorage storage;
+  final FakeUserImageAssetRepository assets;
+  final FakeImageProcessor processor;
+
+  static Future<_WardrobeGoldenRig> create(
+    WidgetTester tester, {
+    required int userLookCount,
+  }) async {
+    final bytes = (await tester.runAsync(
+      () => File('assets/scenes/eyes_mint_static_v1.png').readAsBytes(),
+    ))!;
+    final storage = FakeLocalFileStorage();
+    final items = <UserImageAsset>[];
+    for (var index = 0; index < userLookCount; index++) {
+      final id = 'golden-${index + 1}';
+      final original = await storage.write(
+        namespace: LocalStorageNamespace.userImageOriginals,
+        fileName: '$id.png',
+        bytes: bytes,
+      );
+      final preview = await storage.write(
+        namespace: LocalStorageNamespace.userImagePreviews,
+        fileName: '$id.png',
+        bytes: bytes,
+      );
+      items.add(
+        UserImageAsset(
+          id: id,
+          originalStorageKey: (original as Ok<String, StorageFailure>).value,
+          previewStorageKey: (preview as Ok<String, StorageFailure>).value,
+          cropSpec: CropSpec.centered,
+          createdAt: DateTime.utc(2026, 9, index + 1),
+        ),
+      );
+    }
+    final assets = FakeUserImageAssetRepository(items);
+    final scenes = CompositeSceneRepository([
+      BuiltInSceneRepository(),
+      UserImageSceneRepository(assets),
+    ]);
+    final device = VirtualDeviceRepository(
+      engine: VirtualDeviceEngine(
+        sceneRepository: scenes,
+        initialSceneId: BuiltInSceneRepository.livingEyesId,
+        latency: Duration.zero,
+      ),
+    );
+    return _WardrobeGoldenRig(
+      scenes: scenes,
+      device: device,
+      settings: FakeAppSettingsRepository(
+        initialSettings: const AppSettings(
+          activeSceneId: BuiltInSceneRepository.livingEyesId,
+          brightness: AppSettings.defaultBrightness,
+        ),
+      ),
+      storage: storage,
+      assets: assets,
+      processor: FakeImageProcessor()..previewBytes = bytes,
+    );
+  }
+}
+
+Future<void> _pumpWardrobe(
+  WidgetTester tester,
+  _WardrobeGoldenRig rig,
+  ResolvedAppAppearance appearance, {
+  String? highlightedSceneId,
+}) async {
+  tester.view
+    ..devicePixelRatio = 1
+    ..physicalSize = const Size(390, 844);
+  addTearDown(() async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await rig.device.dispose();
+    tester.view.reset();
+  });
+
+  final connection = rig.device.connect(VirtualDeviceEngine.deviceId);
+  for (var frame = 0; frame < 6; frame++) {
+    await tester.pump(const Duration(milliseconds: 1));
+  }
+  await connection;
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        sceneRepositoryProvider.overrideWithValue(rig.scenes),
+        deviceRepositoryProvider.overrideWithValue(rig.device),
+        appSettingsRepositoryProvider.overrideWithValue(rig.settings),
+        localFileStorageProvider.overrideWithValue(rig.storage),
+        userImageAssetRepositoryProvider.overrideWithValue(rig.assets),
+        imagePickerGatewayProvider.overrideWithValue(
+          FakeImagePickerGateway(const ImagePickCancelled()),
+        ),
+        imageProcessorProvider.overrideWithValue(rig.processor),
+        userImageIdGeneratorProvider.overrideWithValue(
+          FakeUserImageIdGenerator(),
+        ),
+        failureLoggerProvider.overrideWithValue(_ignoreFailure),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(appearance),
+        locale: const Locale('ru'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          child: child!,
+        ),
+        home: UserContentScreen(highlightedSceneId: highlightedSceneId),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump();
+  await tester.runAsync(() async {
+    final context = tester.element(find.byType(MaterialApp));
+    await Future.wait([
+      precacheImage(
+        const AssetImage('assets/scenes/eyes_mint_static_v1.png'),
+        context,
+      ),
+      precacheImage(
+        const AssetImage('assets/scenes/sunny_friend_static_v1.png'),
+        context,
+      ),
+      precacheImage(
+        ResizeImage(MemoryImage(rig.processor.previewBytes), width: 240),
+        context,
+      ),
+    ]);
+  });
+  for (var frame = 0; frame < 4; frame++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+Future<void> _openLivingEyes(WidgetTester tester) async {
+  await tester.tap(
+    find.byKey(
+      const Key('my_content_scene_${BuiltInSceneRepository.livingEyesId}'),
+    ),
+  );
+  await tester.pump();
+}
+
+void _ignoreFailure(String code, Object error, StackTrace stackTrace) {}
