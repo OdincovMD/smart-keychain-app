@@ -20,3 +20,13 @@ Future<void> loadAppFonts() async {
     materialIcons.load(),
   ]);
 }
+
+Future<void> loadCompanionHomeFonts() async {
+  await loadAppFonts();
+  final greatVibes = FontLoader('GreatVibes')
+    ..addFont(rootBundle.load('assets/fonts/GreatVibes-Regular.ttf'));
+  final cormorantGaramond = FontLoader('CormorantGaramond')
+    ..addFont(rootBundle.load('assets/fonts/CormorantGaramond.ttf'));
+
+  await Future.wait([greatVibes.load(), cormorantGaramond.load()]);
+}

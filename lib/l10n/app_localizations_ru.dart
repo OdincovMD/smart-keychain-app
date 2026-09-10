@@ -46,6 +46,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get connected => 'Подключено';
 
   @override
+  String get online => 'Онлайн';
+
+  @override
   String get disconnected => 'Отключено';
 
   @override
@@ -55,7 +58,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get disconnect => 'Отключить';
 
   @override
-  String get deviceHomeEyebrow => 'МОЙ БРЕЛОК';
+  String get deviceHomeEyebrow => 'My Keychain';
+
+  @override
+  String get companionName => 'Luna';
+
+  @override
+  String get companionWelcome => 'good\nto see you';
+
+  @override
+  String get heartSymbolLabel => 'сердце';
 
   @override
   String get deviceReady => 'Готов к командам';
@@ -77,10 +89,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get allLooksTitle => 'Все образы';
 
   @override
-  String get moodNeutral => 'СПОКОЙНАЯ';
+  String get moodNeutral => 'Настроение: игривое';
 
   @override
-  String get presenceNeutral => 'Сегодня просто рядом.';
+  String get presenceNeutral => 'Всегда рядом с тобой';
 
   @override
   String get changeLook => 'Сменить образ';
@@ -269,7 +281,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addImage => 'Добавить образ';
 
   @override
+  String get photoLook => 'Фото';
+
+  @override
   String get myContent => 'Мои образы';
+
+  @override
+  String get homeTab => 'Главная';
+
+  @override
+  String get looksTab => 'Образы';
+
+  @override
+  String get ritualsTab => 'Ритуалы';
+
+  @override
+  String get profileTab => 'Профиль';
 
   @override
   String get wardrobeIntro =>

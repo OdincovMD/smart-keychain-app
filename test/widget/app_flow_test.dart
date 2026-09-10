@@ -53,7 +53,7 @@ void main() {
     addTearDown(repository.dispose);
     await _pumpConnectedApp(tester, repository);
 
-    expect(find.text('Гардероб'), findsOneWidget);
+    expect(find.text('Мои образы'), findsOneWidget);
     expect(find.byKey(const Key('companion_stage')), findsOneWidget);
     expect(find.byType(VirtualScreen), findsOneWidget);
     expect(find.byKey(const Key('kiss_cut_eye_painter')), findsNWidgets(2));
@@ -199,9 +199,14 @@ void main() {
     addTearDown(repository.dispose);
     await _pumpConnectedApp(tester, repository);
 
-    final disconnectButton = find.byKey(const Key('disconnect_button'));
-    await tester.ensureVisible(disconnectButton);
+    final settingsButton = find.byKey(const Key('brightness_settings_button'));
+    await tester.ensureVisible(settingsButton);
     await tester.pump();
+    await tester.tap(settingsButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final disconnectButton = find.byKey(const Key('disconnect_button'));
     await tester.tap(disconnectButton);
     for (var frame = 0; frame < 6; frame++) {
       await tester.pump(const Duration(milliseconds: 1));

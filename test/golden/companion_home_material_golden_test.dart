@@ -23,7 +23,7 @@ import '../support/load_app_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(loadAppFonts);
+  setUpAll(loadCompanionHomeFonts);
 
   testWidgets('Companion Home Obsidian material pass', (tester) async {
     _setSurface(tester, const Size(390, 844));
@@ -211,16 +211,24 @@ Future<void> _pumpConnectedHome(
   await tester.pump();
   await tester.runAsync(() async {
     final context = tester.element(find.byType(MaterialApp));
-    await Future.wait([
-      precacheImage(
-        const AssetImage('assets/scenes/eyes_mint_static_v1.png'),
-        context,
-      ),
-      precacheImage(
-        const AssetImage('assets/scenes/sunny_friend_static_v1.png'),
-        context,
-      ),
-    ]);
+    await Future.wait(
+      const <String>[
+        'assets/scenes/eyes_mint_static_v1.png',
+        'assets/scenes/sunny_friend_static_v1.png',
+        'assets/chrome_kiss/key_ring.png',
+        'assets/chrome_kiss/key_ring_opening.png',
+        'assets/chrome_kiss/pendant_chrome_shell.png',
+        'assets/chrome_kiss/pendant_lens.png',
+        'assets/chrome_kiss/lens_inner_rim.png',
+        'assets/chrome_kiss/lens_glint_lilac.png',
+        'assets/chrome_kiss/lens_glint_white.png',
+        'assets/chrome_kiss/lens_glint_orchid.png',
+        'assets/chrome_kiss/bow_left.png',
+        'assets/chrome_kiss/bow_right.png',
+        'assets/chrome_kiss/bow_knot.png',
+        'assets/chrome_kiss/charm_ring.png',
+      ].map((path) => precacheImage(AssetImage(path), context)),
+    );
   });
   await tester.pump();
   await tester.tap(find.byKey(const Key('connect_button')));
@@ -228,7 +236,9 @@ Future<void> _pumpConnectedHome(
     await tester.pump(const Duration(milliseconds: 1));
   }
   await tester.pump(const Duration(milliseconds: 181));
-  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pump(const Duration(milliseconds: 601));
+  await tester.pump();
+  await tester.pump();
 }
 
 void _setSurface(WidgetTester tester, Size size) {

@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="36.3731" height="25.5" viewBox="0 0 36.3731 25.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path id="Bow / Left" d="M18.1865 0L36.3731 25.5H0L18.1865 0Z" fill="url(#paint0_linear_0_4)"/>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="18.1865" y1="0" x2="18.1865" y2="34" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF8CD1"/>
+<stop offset="0.34" stop-color="#FF4FB8"/>
+<stop offset="0.7" stop-color="#B80A6E"/>
+<stop offset="1" stop-color="#470533"/>
+</linearGradient>
+</defs>
+</svg>

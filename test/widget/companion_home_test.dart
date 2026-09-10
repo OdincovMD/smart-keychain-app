@@ -13,13 +13,13 @@ import '../support/load_app_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(loadAppFonts);
+  setUpAll(loadCompanionHomeFonts);
 
   for (final testCase in <({String name, Size size, double textScale})>[
-    (name: 'narrow', size: const Size(320, 640), textScale: 1),
+    (name: 'small', size: const Size(360, 800), textScale: 1),
     (name: 'reference', size: const Size(390, 844), textScale: 1),
-    (name: 'tall', size: const Size(430, 932), textScale: 1),
-    (name: 'large text', size: const Size(320, 640), textScale: 1.8),
+    (name: 'medium', size: const Size(412, 915), textScale: 1),
+    (name: 'large text', size: const Size(360, 800), textScale: 1.8),
   ]) {
     testWidgets('Companion Home fits ${testCase.name}', (tester) async {
       await _pumpConnectedHome(
@@ -36,7 +36,7 @@ void main() {
     });
   }
 
-  testWidgets('primary hierarchy precedes wardrobe and utility controls', (
+  testWidgets('primary hierarchy precedes wardrobe and navigation', (
     tester,
   ) async {
     await _pumpConnectedHome(tester);
@@ -60,7 +60,7 @@ void main() {
     expect(find.byType(KeychainPreview), findsNothing);
   });
 
-  testWidgets('wardrobe reveals a partial next look at reference width', (
+  testWidgets('wardrobe presents four aligned looks at reference width', (
     tester,
   ) async {
     await _pumpConnectedHome(tester);
@@ -73,11 +73,17 @@ void main() {
     final third = tester.getRect(
       find.byKey(const Key('scene_sunny_friend_static_v1')),
     );
+    final photo = tester.getRect(
+      find.byKey(const Key('add_user_image_button')),
+    );
 
     expect(first.right, lessThan(viewport.right));
     expect(second.right, lessThan(viewport.right));
-    expect(third.left, lessThan(viewport.right));
-    expect(third.right, greaterThan(viewport.right));
+    expect(third.right, lessThan(viewport.right));
+    expect(photo.right, lessThanOrEqualTo(viewport.right));
+    expect(second.top, moreOrLessEquals(first.top, epsilon: 0.5));
+    expect(third.top, moreOrLessEquals(first.top, epsilon: 0.5));
+    expect(photo.top, moreOrLessEquals(first.top, epsilon: 0.5));
   });
 
   testWidgets('stage and jewel expose semantics with stable press layout', (

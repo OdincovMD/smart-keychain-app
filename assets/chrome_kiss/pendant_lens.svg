@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="270" height="270" viewBox="0 0 270 270" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle id="Pendant / Lens" cx="135" cy="135" r="134" fill="url(#paint0_linear_0_4)" stroke="#FF4FB8" stroke-width="2"/>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="39.5262" y1="39.5262" x2="230.474" y2="230.474" gradientUnits="userSpaceOnUse">
+<stop stop-color="#291F3D"/>
+<stop offset="0.28" stop-color="#030308"/>
+<stop offset="0.72" stop-color="#0D081A"/>
+<stop offset="1" stop-color="#381433"/>
+</linearGradient>
+</defs>
+</svg>

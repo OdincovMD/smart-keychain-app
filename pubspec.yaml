@@ -34,6 +34,7 @@ flutter:
   uses-material-design: true
   generate: true
   assets:
+    - assets/chrome_kiss/
     - assets/scenes/
   fonts:
     - family: Unbounded
@@ -66,3 +67,11 @@ flutter:
           weight: 600
         - asset: assets/fonts/NunitoSans.ttf
           weight: 700
+    - family: GreatVibes
+      fonts:
+        - asset: assets/fonts/GreatVibes-Regular.ttf
+          weight: 400
+    - family: CormorantGaramond
+      fonts:
+        - asset: assets/fonts/CormorantGaramond.ttf
+          weight: 500

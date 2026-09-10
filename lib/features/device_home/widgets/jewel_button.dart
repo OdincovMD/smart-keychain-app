@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../app/chrome_kiss_theme.dart';
 
+enum JewelButtonStyle { standard, hero }
+
 final class JewelButton extends StatefulWidget {
   const JewelButton({
     required this.label,
     required this.onPressed,
     this.busy = false,
+    this.style = JewelButtonStyle.standard,
     super.key,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool busy;
+  final JewelButtonStyle style;
 
   @override
   State<JewelButton> createState() => _JewelButtonState();
@@ -36,6 +40,14 @@ final class _JewelButtonState extends State<JewelButton> {
     final pressDuration = reduceMotion || _pressed
         ? Duration.zero
         : motion.micro.duration;
+    if (widget.style == JewelButtonStyle.hero) {
+      return _buildHero(
+        context,
+        enabled: enabled,
+        pressDuration: pressDuration,
+        reduceMotion: reduceMotion,
+      );
+    }
     final lacquer = enabled || widget.busy
         ? colors.accentPrimary
         : Color.alphaBlend(
@@ -145,6 +157,148 @@ final class _JewelButtonState extends State<JewelButton> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHero(
+    BuildContext context, {
+    required bool enabled,
+    required Duration pressDuration,
+    required bool reduceMotion,
+  }) {
+    final colors = context.chromeKiss;
+    final motion = context.chromeKissMotion;
+    final lacquer = enabled || widget.busy
+        ? colors.accentPrimary
+        : Color.alphaBlend(
+            colors.surfaceSecondary.withValues(alpha: 0.46),
+            colors.accentPrimary,
+          );
+    final lacquerTop = Color.alphaBlend(
+      colors.textPrimary.withValues(alpha: _pressed ? 0.18 : 0.38),
+      lacquer,
+    );
+    final lacquerDepth = Color.alphaBlend(
+      colors.lens.withValues(alpha: _pressed ? 0.5 : 0.64),
+      lacquer,
+    );
+    final foreground = colors.textPrimary.withValues(
+      alpha: enabled || widget.busy ? 1 : 0.6,
+    );
+    const radius = BorderRadius.all(Radius.circular(36));
+    const shape = RoundedRectangleBorder(borderRadius: radius);
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.label,
+      child: ExcludeSemantics(
+        child: AnimatedScale(
+          scale: reduceMotion || !_pressed ? 1 : 0.982,
+          duration: pressDuration,
+          curve: motion.micro.curve,
+          child: AnimatedContainer(
+            duration: pressDuration,
+            curve: motion.micro.curve,
+            constraints: const BoxConstraints(minHeight: 72),
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              border: Border.all(
+                color: colors.accentPrimary.withValues(alpha: 0.92),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.accentPrimary.withValues(
+                    alpha: _pressed ? 0.18 : 0.34,
+                  ),
+                  blurRadius: _pressed ? 14 : 26,
+                  spreadRadius: _pressed ? -6 : -3,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: colors.accentOptical.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  spreadRadius: -5,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              shape: shape,
+              clipBehavior: Clip.antiAlias,
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [lacquerTop, lacquer, lacquerDepth],
+                    stops: const [0, 0.34, 1],
+                  ),
+                ),
+                child: InkWell(
+                  onTap: widget.onPressed,
+                  customBorder: shape,
+                  onHighlightChanged: enabled
+                      ? (pressed) => setState(() => _pressed = pressed)
+                      : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 17,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 28,
+                          child: Icon(
+                            Icons.auto_awesome_rounded,
+                            color: foreground,
+                            size: 20,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            widget.label,
+                            textAlign: TextAlign.center,
+                            style: context.chromeKissText.label.copyWith(
+                              color: foreground,
+                              fontSize: 18,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 28,
+                          child: widget.busy
+                              ? Center(
+                                  child: SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                      color: foreground,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: foreground,
+                                  size: 30,
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

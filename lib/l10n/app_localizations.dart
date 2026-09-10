@@ -160,6 +160,12 @@ abstract class AppLocalizations {
   /// **'Подключено'**
   String get connected;
 
+  /// No description provided for @online.
+  ///
+  /// In ru, this message translates to:
+  /// **'Онлайн'**
+  String get online;
+
   /// No description provided for @disconnected.
   ///
   /// In ru, this message translates to:
@@ -181,8 +187,26 @@ abstract class AppLocalizations {
   /// No description provided for @deviceHomeEyebrow.
   ///
   /// In ru, this message translates to:
-  /// **'МОЙ БРЕЛОК'**
+  /// **'My Keychain'**
   String get deviceHomeEyebrow;
+
+  /// No description provided for @companionName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Luna'**
+  String get companionName;
+
+  /// No description provided for @companionWelcome.
+  ///
+  /// In ru, this message translates to:
+  /// **'good\nto see you'**
+  String get companionWelcome;
+
+  /// No description provided for @heartSymbolLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'сердце'**
+  String get heartSymbolLabel;
 
   /// No description provided for @deviceReady.
   ///
@@ -223,13 +247,13 @@ abstract class AppLocalizations {
   /// No description provided for @moodNeutral.
   ///
   /// In ru, this message translates to:
-  /// **'СПОКОЙНАЯ'**
+  /// **'Настроение: игривое'**
   String get moodNeutral;
 
   /// No description provided for @presenceNeutral.
   ///
   /// In ru, this message translates to:
-  /// **'Сегодня просто рядом.'**
+  /// **'Всегда рядом с тобой'**
   String get presenceNeutral;
 
   /// No description provided for @changeLook.
@@ -586,11 +610,41 @@ abstract class AppLocalizations {
   /// **'Добавить образ'**
   String get addImage;
 
+  /// No description provided for @photoLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото'**
+  String get photoLook;
+
   /// No description provided for @myContent.
   ///
   /// In ru, this message translates to:
   /// **'Мои образы'**
   String get myContent;
+
+  /// No description provided for @homeTab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главная'**
+  String get homeTab;
+
+  /// No description provided for @looksTab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образы'**
+  String get looksTab;
+
+  /// No description provided for @ritualsTab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ритуалы'**
+  String get ritualsTab;
+
+  /// No description provided for @profileTab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль'**
+  String get profileTab;
 
   /// No description provided for @wardrobeIntro.
   ///

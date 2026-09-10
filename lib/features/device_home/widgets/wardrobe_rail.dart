@@ -18,6 +18,7 @@ final class WardrobeRail extends StatelessWidget {
     required this.onSceneSelected,
     required this.onOpenAll,
     required this.onAddImage,
+    this.compact = false,
     super.key,
   });
 
@@ -29,10 +30,23 @@ final class WardrobeRail extends StatelessWidget {
   final ValueChanged<String> onSceneSelected;
   final VoidCallback onOpenAll;
   final VoidCallback onAddImage;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    if (compact) {
+      return _CompactWardrobeRail(
+        scenes: scenes,
+        selectedSceneId: selectedSceneId,
+        activeSceneId: activeSceneId,
+        enabled: enabled,
+        isAddingImage: isAddingImage,
+        onSceneSelected: onSceneSelected,
+        onOpenAll: onOpenAll,
+        onAddImage: onAddImage,
+      );
+    }
 
     return Column(
       key: const Key('wardrobe_rail'),
@@ -120,6 +134,129 @@ final class WardrobeRail extends StatelessWidget {
   }
 }
 
+final class _CompactWardrobeRail extends StatelessWidget {
+  const _CompactWardrobeRail({
+    required this.scenes,
+    required this.selectedSceneId,
+    required this.activeSceneId,
+    required this.enabled,
+    required this.isAddingImage,
+    required this.onSceneSelected,
+    required this.onOpenAll,
+    required this.onAddImage,
+  });
+
+  final List<Scene> scenes;
+  final String selectedSceneId;
+  final String activeSceneId;
+  final bool enabled;
+  final bool isAddingImage;
+  final ValueChanged<String> onSceneSelected;
+  final VoidCallback onOpenAll;
+  final VoidCallback onAddImage;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.chromeKiss;
+    final visibleScenes = scenes.take(3).toList(growable: false);
+
+    return Column(
+      key: const Key('wardrobe_rail'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 26,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.myContent,
+                  style: context.chromeKissText.body.copyWith(
+                    color: colors.textPrimary,
+                    fontSize: 15,
+                    height: 1.2,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                key: const Key('open_all_looks_button'),
+                onPressed: onOpenAll,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(64, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  foregroundColor: colors.textSecondary,
+                  textStyle: context.chromeKissText.status.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
+                  ),
+                ),
+                iconAlignment: IconAlignment.end,
+                icon: const Icon(Icons.chevron_right_rounded, size: 17),
+                label: Text(l10n.allLooks),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const gap = 12.0;
+            final scaledLabelSize = MediaQuery.textScalerOf(context).scale(10);
+            final tileWidth = scaledLabelSize > 13
+                ? math.max(74.0, scaledLabelSize * 6.8)
+                : math.min(74.0, (constraints.maxWidth - gap * 3) / 4);
+            final previewDiameter = math.min(58.0, tileWidth);
+            final labelHeight = scaledLabelSize * 1.1 * 2;
+
+            return SizedBox(
+              height: previewDiameter + 5 + labelHeight,
+              child: ListView.separated(
+                key: const Key('wardrobe_list'),
+                scrollDirection: Axis.horizontal,
+                physics: scaledLabelSize > 13
+                    ? const BouncingScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
+                itemCount: visibleScenes.length + 1,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(width: gap),
+                itemBuilder: (context, index) {
+                  if (index == visibleScenes.length) {
+                    return AddLookTile(
+                      key: const Key('add_user_image_button'),
+                      width: tileWidth,
+                      previewDiameter: previewDiameter,
+                      enabled: enabled,
+                      busy: isAddingImage,
+                      onPressed: onAddImage,
+                      compact: true,
+                    );
+                  }
+                  final scene = visibleScenes[index];
+                  return LookTile(
+                    key: Key('scene_${scene.id}'),
+                    scene: scene,
+                    width: tileWidth,
+                    previewDiameter: previewDiameter,
+                    isSelected: scene.id == selectedSceneId,
+                    isActive: scene.id == activeSceneId,
+                    enabled: enabled,
+                    onSelected: () => onSceneSelected(scene.id),
+                    compact: true,
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 final class LookTile extends StatelessWidget {
   const LookTile({
     required this.scene,
@@ -130,6 +267,7 @@ final class LookTile extends StatelessWidget {
     required this.enabled,
     required this.onSelected,
     this.isHighlighted = false,
+    this.compact = false,
     super.key,
   });
 
@@ -141,6 +279,7 @@ final class LookTile extends StatelessWidget {
   final bool isHighlighted;
   final bool enabled;
   final VoidCallback onSelected;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +303,7 @@ final class LookTile extends StatelessWidget {
           width: width,
           child: InkWell(
             onTap: enabled ? onSelected : null,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(compact ? 8 : 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -182,9 +321,10 @@ final class LookTile extends StatelessWidget {
                     isSelected: isSelected || isHighlighted,
                     isActive: isActive,
                     isHighlighted: isHighlighted,
+                    compact: compact,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: compact ? 4 : 8),
                 Text(
                   scene.name,
                   textAlign: TextAlign.center,
@@ -192,9 +332,10 @@ final class LookTile extends StatelessWidget {
                     color: isSelected
                         ? colors.textPrimary
                         : colors.textSecondary,
-                    fontSize: 13,
-                    height: 1.28,
+                    fontSize: compact ? 10 : 13,
+                    height: compact ? 1.1 : 1.28,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    letterSpacing: compact ? 0 : null,
                   ),
                 ),
               ],
@@ -214,6 +355,7 @@ final class LookPreview extends StatelessWidget {
     required this.isActive,
     this.animateScene = false,
     this.isHighlighted = false,
+    this.compact = false,
     super.key,
   });
 
@@ -223,6 +365,7 @@ final class LookPreview extends StatelessWidget {
   final bool isActive;
   final bool animateScene;
   final bool isHighlighted;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -235,23 +378,27 @@ final class LookPreview extends StatelessWidget {
       curve: motion.interaction.curve,
       width: diameter,
       height: diameter,
-      padding: EdgeInsets.all(isSelected ? 3 : 1),
+      padding: EdgeInsets.all(isSelected ? (compact ? 2 : 3) : 1),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: colors.lens,
         border: Border.all(
           color: isSelected
-              ? colors.materialChrome
+              ? compact
+                    ? colors.accentPrimary
+                    : colors.materialChrome
               : colors.divider.withValues(alpha: 0.34),
-          width: isSelected ? 1.5 : 0.65,
+          width: isSelected ? (compact ? 2 : 1.5) : 0.65,
         ),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: colors.lens.withValues(alpha: 0.32),
-                  blurRadius: 9,
-                  spreadRadius: -4,
-                  offset: const Offset(0, 5),
+                  color: compact
+                      ? colors.accentPrimary.withValues(alpha: 0.34)
+                      : colors.lens.withValues(alpha: 0.32),
+                  blurRadius: compact ? 12 : 9,
+                  spreadRadius: compact ? -2 : -4,
+                  offset: Offset(0, compact ? 0 : 5),
                 ),
               ]
             : null,
@@ -274,7 +421,7 @@ final class LookPreview extends StatelessWidget {
               ),
             ),
           ),
-          if (isActive)
+          if (isActive && !compact)
             Align(
               alignment: Alignment.bottomRight,
               child: Container(
@@ -324,6 +471,7 @@ final class AddLookTile extends StatelessWidget {
     required this.enabled,
     required this.busy,
     required this.onPressed,
+    this.compact = false,
     super.key,
   });
 
@@ -332,6 +480,7 @@ final class AddLookTile extends StatelessWidget {
   final bool enabled;
   final bool busy;
   final VoidCallback onPressed;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +496,7 @@ final class AddLookTile extends StatelessWidget {
           width: width,
           child: InkWell(
             onTap: enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(compact ? 8 : 18),
             child: Column(
               children: [
                 Container(
@@ -366,7 +515,7 @@ final class AddLookTile extends StatelessWidget {
                   ),
                   child: busy
                       ? Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: EdgeInsets.all(compact ? 18 : 24),
                           child: CircularProgressIndicator(
                             color: colors.materialChrome,
                             strokeWidth: 2,
@@ -378,14 +527,15 @@ final class AddLookTile extends StatelessWidget {
                           size: 27,
                         ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: compact ? 4 : 8),
                 Text(
-                  l10n.addImage,
+                  compact ? l10n.photoLook : l10n.addImage,
                   textAlign: TextAlign.center,
                   style: context.chromeKissText.body.copyWith(
                     color: colors.textSecondary,
-                    fontSize: 13,
-                    height: 1.28,
+                    fontSize: compact ? 10 : 13,
+                    height: compact ? 1.1 : 1.28,
+                    letterSpacing: compact ? 0 : null,
                   ),
                 ),
               ],

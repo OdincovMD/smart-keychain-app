@@ -25,9 +25,10 @@ import '../user_content/user_content_screen.dart';
 import 'eye_preview_controller.dart';
 import 'widgets/brightness_control.dart';
 import 'widgets/character_study_screen.dart';
-import 'widgets/companion_stage.dart';
+import 'widgets/chrome_kiss_bottom_navigation.dart';
+import 'widgets/companion_home_hero.dart';
+import 'widgets/companion_identity_header.dart';
 import 'widgets/jewel_button.dart';
-import 'widgets/status_glyph.dart';
 import 'widgets/wardrobe_rail.dart';
 
 final class DeviceHomeScreen extends ConsumerStatefulWidget {
@@ -256,42 +257,46 @@ final class _DeviceHomeContent extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final viewportHeight = MediaQuery.sizeOf(context).height;
-        final stageDiameter = math.min(
-          constraints.maxWidth - 40,
-          math.min(326.0, math.max(248.0, viewportHeight * 0.365)),
-        );
         final largeText = MediaQuery.textScalerOf(context).scale(12) > 17;
-        final stackHeader = largeText || constraints.maxWidth < 350;
+        final bottomNavGap = largeText
+            ? 10.0
+            : 10.0 + math.max(0.0, constraints.maxHeight - 844.0);
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
+          key: const Key('device_home_scroll'),
+          padding: const EdgeInsets.fromLTRB(0, 8, 0, 6),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 620),
+              constraints: const BoxConstraints(maxWidth: 393),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _CompanionHeader(
-                    activeSceneName: activeScene.name,
-                    connectionLabel: connectionLabel,
-                    connected: connected,
-                    batteryPercent: snapshot.batteryPercent,
-                    stackStatus: stackHeader,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: CompanionIdentityHeader(
+                      connectionLabel: connectionLabel,
+                      connected: connected,
+                      batteryPercent: snapshot.batteryPercent,
+                      onSettings: () => _showBrightness(context),
+                    ),
                   ),
-                  const SizedBox(height: 18),
-                  Center(
-                    child: Transform.translate(
-                      offset: const Offset(-6, 0),
-                      child: CompanionStage(
-                        scene: activeScene,
-                        displayProfile: snapshot.displayProfile,
-                        snapshot: snapshot,
-                        diameter: stageDiameter,
+                  SizedBox(
+                    height: 320,
+                    child: OverflowBox(
+                      alignment: Alignment.topCenter,
+                      minHeight: CompanionHomeHero.height,
+                      maxHeight: CompanionHomeHero.height,
+                      child: Transform.translate(
+                        offset: const Offset(0, -14),
+                        child: CompanionHomeHero(
+                          scene: activeScene,
+                          displayProfile: snapshot.displayProfile,
+                          snapshot: snapshot,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   Semantics(
                     container: true,
                     child: Column(
@@ -300,83 +305,86 @@ final class _DeviceHomeContent extends StatelessWidget {
                         Text(
                           l10n.moodNeutral,
                           textAlign: TextAlign.center,
-                          style: context.chromeKissText.title.copyWith(
-                            color: colors.textSecondary,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.55,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          l10n.presenceNeutral,
-                          textAlign: TextAlign.center,
                           style: context.chromeKissText.body.copyWith(
                             color: colors.textSecondary,
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Semantics(
+                          label:
+                              '${l10n.presenceNeutral}, ${l10n.heartSymbolLabel}',
+                          child: ExcludeSemantics(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    l10n.presenceNeutral,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: colors.textPrimary,
+                                      fontFamily: 'CormorantGaramond',
+                                      fontSize: 20,
+                                      height: 1.1,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.favorite_border_rounded,
+                                  color: colors.textPrimary,
+                                  size: 14,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  JewelButton(
-                    key: const Key('install_scene_button'),
-                    label: isBusy ? l10n.tryingOn : l10n.changeLook,
-                    busy: isBusy,
-                    onPressed: isBusy
-                        ? null
-                        : selectedIsActive
-                        ? onOpenMyContent
-                        : onInstallScene,
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: JewelButton(
+                      key: const Key('install_scene_button'),
+                      label: isBusy ? l10n.tryingOn : l10n.changeLook,
+                      busy: isBusy,
+                      style: JewelButtonStyle.hero,
+                      onPressed: isBusy
+                          ? null
+                          : selectedIsActive
+                          ? onOpenMyContent
+                          : onInstallScene,
+                    ),
                   ),
-                  const SizedBox(height: 30),
-                  WardrobeRail(
-                    scenes: scenes,
-                    selectedSceneId: selectedSceneId,
-                    activeSceneId: snapshot.activeSceneId,
-                    enabled: !isBusy,
-                    isAddingImage: isAddingImage,
-                    onSceneSelected: onSceneSelected,
-                    onOpenAll: onOpenMyContent,
-                    onAddImage: onAddImage,
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: WardrobeRail(
+                      scenes: scenes,
+                      selectedSceneId: selectedSceneId,
+                      activeSceneId: snapshot.activeSceneId,
+                      enabled: !isBusy,
+                      isAddingImage: isAddingImage,
+                      onSceneSelected: onSceneSelected,
+                      onOpenAll: onOpenMyContent,
+                      onAddImage: onAddImage,
+                      compact: true,
+                    ),
                   ),
-                  const SizedBox(height: 22),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: [
-                      TextButton.icon(
-                        key: const Key('brightness_settings_button'),
-                        onPressed: () => _showBrightness(context),
-                        icon: const Icon(Icons.light_mode_outlined, size: 19),
-                        label: Text(l10n.brightness),
-                      ),
-                      TextButton.icon(
-                        key: const Key('open_my_content_button'),
-                        onPressed: isBusy ? null : onOpenMyContent,
-                        icon: const Icon(
-                          Icons.photo_library_outlined,
-                          size: 19,
-                        ),
-                        label: Text(l10n.myContent),
-                      ),
-                      IconButton(
-                        key: const Key('disconnect_button'),
-                        onPressed: isBusy ? null : onDisconnect,
-                        tooltip: l10n.disconnect,
-                        icon: const Icon(Icons.link_off_rounded, size: 20),
-                      ),
-                      if (kDebugMode)
-                        IconButton(
-                          key: const Key('simulator_settings_button'),
-                          onPressed: onOpenSimulatorSettings,
-                          tooltip: l10n.openSimulatorSettings,
-                          icon: const Icon(Icons.tune_rounded, size: 20),
-                        ),
-                    ],
+                  SizedBox(height: bottomNavGap),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: ChromeKissBottomNavigation(
+                      onLooks: onOpenMyContent,
+                      onProfile: kDebugMode ? onOpenSimulatorSettings : null,
+                    ),
                   ),
                 ],
               ),
@@ -421,94 +429,24 @@ final class _DeviceHomeContent extends StatelessWidget {
                 enabled: !isBusy,
                 onChangeEnd: onBrightnessChanged,
               ),
+              const SizedBox(height: 12),
+              Divider(color: colors.divider),
+              const SizedBox(height: 4),
+              TextButton.icon(
+                key: const Key('disconnect_button'),
+                onPressed: isBusy
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        onDisconnect();
+                      },
+                icon: const Icon(Icons.link_off_rounded, size: 20),
+                label: Text(AppLocalizations.of(context).disconnect),
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-final class _CompanionHeader extends StatelessWidget {
-  const _CompanionHeader({
-    required this.activeSceneName,
-    required this.connectionLabel,
-    required this.connected,
-    required this.batteryPercent,
-    required this.stackStatus,
-  });
-
-  final String activeSceneName;
-  final String connectionLabel;
-  final bool connected;
-  final int batteryPercent;
-  final bool stackStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.chromeKiss;
-    final identity = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.deviceHomeEyebrow,
-          style: context.chromeKissText.status.copyWith(
-            color: colors.textSecondary,
-            letterSpacing: 1.35,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          activeSceneName,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: context.chromeKissText.title.copyWith(
-            fontSize: 18,
-            letterSpacing: -0.35,
-          ),
-        ),
-      ],
-    );
-    final status = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        StatusGlyph(
-          key: const Key('connection_status_glyph'),
-          value: connectionLabel,
-          semanticLabel: connectionLabel,
-          tone: connected ? StatusGlyphTone.connected : StatusGlyphTone.neutral,
-        ),
-        const SizedBox(width: 4),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.divider.withValues(alpha: 0.72),
-          ),
-          child: const SizedBox(width: 1, height: 14),
-        ),
-        const SizedBox(width: 4),
-        StatusGlyph(
-          key: const Key('battery_status_glyph'),
-          value: l10n.percentValue(batteryPercent),
-          semanticLabel: l10n.batteryPercent(batteryPercent),
-          tone: StatusGlyphTone.battery,
-        ),
-      ],
-    );
-
-    if (stackStatus) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [identity, const SizedBox(height: 8), status],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: identity),
-        const SizedBox(width: 12),
-        Flexible(child: status),
-      ],
     );
   }
 }
