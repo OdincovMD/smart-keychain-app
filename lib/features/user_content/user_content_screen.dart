@@ -9,13 +9,16 @@ import '../../app/providers.dart';
 import '../../application/device_controller.dart';
 import '../../application/user_image_workflow.dart';
 import '../../domain/content/scene.dart';
+import '../../infrastructure/content/built_in_scene_repository.dart';
 import '../../l10n/app_localizations.dart';
-import '../device_home/widgets/jewel_button.dart';
+import '../device_home/widgets/chrome_kiss_bottom_navigation.dart';
+import '../device_home/widgets/scene_renderer.dart';
 import '../device_home/widgets/wardrobe_rail.dart';
 import '../image_editor/image_editor_screen.dart';
+import '../shared/chrome_kiss_fidelity_frame.dart';
+import '../shared/chrome_kiss_fidelity_tokens.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
 import '../shared/image_failure_label.dart';
-import '../shared/playful_background.dart';
 import 'look_details_sheet.dart';
 import 'user_content_controller.dart';
 
@@ -32,6 +35,7 @@ final class UserContentScreen extends ConsumerStatefulWidget {
 
 final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
   late String? _highlightedSceneId = widget.highlightedSceneId;
+  var _showPhotosOnly = false;
 
   @override
   Widget build(BuildContext context) {
@@ -93,24 +97,27 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
 
     return Scaffold(
       key: const Key('user_content_screen'),
-      backgroundColor: context.chromeKiss.canvas,
-      body: PlayfulBackground(
-        child: SafeArea(
-          child: scenes.when(
-            data: (items) => _WardrobeCollection(
-              scenes: items,
-              activeSceneId: snapshot?.activeSceneId,
-              highlightedSceneId: _highlightedSceneId,
-              enabled: !busy,
-              onAddLook: _addImage,
-              onOpenLook: (scene) => unawaited(_openLookDetails(scene)),
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: FilledButton(
-                onPressed: () => ref.invalidate(sceneLibraryProvider),
-                child: Text(l10n.retry),
-              ),
+      backgroundColor: ChromeKissFidelityTokens.outside,
+      body: ChromeKissFidelityFrame(
+        child: scenes.when(
+          data: (items) => _WardrobeCollection(
+            scenes: items,
+            activeSceneId: snapshot?.activeSceneId,
+            highlightedSceneId: _highlightedSceneId,
+            enabled: !busy,
+            showPhotosOnly: _showPhotosOnly,
+            onShowPhotosOnlyChanged: (value) {
+              setState(() => _showPhotosOnly = value);
+            },
+            onBack: () => Navigator.of(context).pop(),
+            onAddLook: _addImage,
+            onOpenLook: (scene) => unawaited(_openLookDetails(scene)),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(
+            child: FilledButton(
+              onPressed: () => ref.invalidate(sceneLibraryProvider),
+              child: Text(l10n.retry),
             ),
           ),
         ),
@@ -241,6 +248,9 @@ final class _WardrobeCollection extends StatelessWidget {
     required this.activeSceneId,
     required this.highlightedSceneId,
     required this.enabled,
+    required this.showPhotosOnly,
+    required this.onShowPhotosOnlyChanged,
+    required this.onBack,
     required this.onAddLook,
     required this.onOpenLook,
   });
@@ -249,231 +259,415 @@ final class _WardrobeCollection extends StatelessWidget {
   final String? activeSceneId;
   final String? highlightedSceneId;
   final bool enabled;
+  final bool showPhotosOnly;
+  final ValueChanged<bool> onShowPhotosOnlyChanged;
+  final VoidCallback onBack;
+  final VoidCallback onAddLook;
+  final ValueChanged<Scene> onOpenLook;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+        final exact = constraints.maxWidth >= 380 && textScale <= 1.15;
+        return exact
+            ? _WardrobeReferenceLayout(
+                scenes: scenes,
+                activeSceneId: activeSceneId,
+                highlightedSceneId: highlightedSceneId,
+                enabled: enabled,
+                showPhotosOnly: showPhotosOnly,
+                onShowPhotosOnlyChanged: onShowPhotosOnlyChanged,
+                onBack: onBack,
+                onAddLook: onAddLook,
+                onOpenLook: onOpenLook,
+              )
+            : _WardrobeAdaptiveLayout(
+                scenes: scenes,
+                activeSceneId: activeSceneId,
+                highlightedSceneId: highlightedSceneId,
+                enabled: enabled,
+                showPhotosOnly: showPhotosOnly,
+                onShowPhotosOnlyChanged: onShowPhotosOnlyChanged,
+                onBack: onBack,
+                onAddLook: onAddLook,
+                onOpenLook: onOpenLook,
+              );
+      },
+    );
+  }
+}
+
+final class _WardrobeReferenceLayout extends StatelessWidget {
+  const _WardrobeReferenceLayout({
+    required this.scenes,
+    required this.activeSceneId,
+    required this.highlightedSceneId,
+    required this.enabled,
+    required this.showPhotosOnly,
+    required this.onShowPhotosOnlyChanged,
+    required this.onBack,
+    required this.onAddLook,
+    required this.onOpenLook,
+  });
+
+  final List<Scene> scenes;
+  final String? activeSceneId;
+  final String? highlightedSceneId;
+  final bool enabled;
+  final bool showPhotosOnly;
+  final ValueChanged<bool> onShowPhotosOnlyChanged;
+  final VoidCallback onBack;
   final VoidCallback onAddLook;
   final ValueChanged<Scene> onOpenLook;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final active = _sceneById(scenes, activeSceneId) ?? scenes.firstOrNull;
+    final tiles = _wardrobeTiles(scenes, photosOnly: showPhotosOnly);
     final hasUserLooks = scenes.any(
       (scene) => scene.source == SceneSource.userGenerated,
     );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final outerPadding = math.max(18.0, (constraints.maxWidth - 620) / 2);
-        final gridWidth = constraints.maxWidth - outerPadding * 2;
-        final columnCount = gridWidth >= 520 ? 3 : 2;
-        const columnGap = 14.0;
-        final tileWidth =
-            (gridWidth - columnGap * (columnCount - 1)) / columnCount;
-        final previewDiameter = math.min(tileWidth, 184.0);
-        final scaledLabelLine =
-            MediaQuery.textScalerOf(context).scale(13) * 1.28;
-        final tileExtent = previewDiameter + scaledLabelLine * 3 + 24;
-
-        return CustomScrollView(
-          key: const Key('wardrobe_scroll'),
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                outerPadding - 6,
-                4,
-                outerPadding - 6,
-                0,
+    return SingleChildScrollView(
+      key: const Key('wardrobe_scroll'),
+      child: SizedBox(
+        height: ChromeKissFidelityTokens.referenceSize.height,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Positioned.fill(child: _WardrobeAtmosphere()),
+            const Positioned.fill(child: _WardrobeCornerVeil()),
+            const Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: ChromeKissReferenceStatusBar(),
+            ),
+            Positioned(
+              left: 24,
+              top: 51,
+              child: Text(
+                l10n.wardrobe,
+                style: ChromeKissFidelityTokens.titleStyle,
               ),
-              sliver: SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    IconButton(
-                      key: const Key('wardrobe_back_button'),
-                      onPressed: () => Navigator.of(context).pop(),
-                      tooltip: MaterialLocalizations.of(context)
-                          .backButtonTooltip,
-                      icon: const Icon(Icons.arrow_back_rounded),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      key: const Key('my_content_add_button'),
-                      onPressed: enabled ? onAddLook : null,
-                      tooltip: l10n.addImage,
-                      icon: const Icon(Icons.add_rounded),
-                    ),
-                  ],
+            ),
+            Positioned(
+              left: 25,
+              top: 87,
+              child: ChromeKissScriptHeartText(text: l10n.wardrobeAccent),
+            ),
+            Positioned(
+              left: 24,
+              top: 122,
+              child: _WardrobeTabs(
+                photosOnly: showPhotosOnly,
+                onChanged: onShowPhotosOnlyChanged,
+              ),
+            ),
+            if (active != null)
+              Positioned(
+                left: 24,
+                top: 178,
+                child: _CurrentLookCard(
+                  scene: active,
+                  enabled: enabled,
+                  onPressed: () => onOpenLook(active),
+                ),
+              ),
+            Positioned(
+              left: 24,
+              top: 355,
+              child: Text(
+                showPhotosOnly ? l10n.wardrobePhotosTab : l10n.myContent,
+                style: const TextStyle(
+                  color: ChromeKissFidelityTokens.ink,
+                  fontFamily: 'Manrope',
+                  fontSize: 17,
+                  height: 24 / 17,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(outerPadding, 8, outerPadding, 26),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.myContent,
-                      style: context.chromeKissText.title.copyWith(
-                        fontSize: 30,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.wardrobeIntro,
-                      style: context.chromeKissText.body.copyWith(
-                        color: context.chromeKiss.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+            Positioned(
+              left: 24,
+              top: 386,
+              child: _WardrobeGrid(
+                scenes: tiles,
+                referenceLayout: true,
+                activeSceneId: activeSceneId,
+                highlightedSceneId: highlightedSceneId,
+                enabled: enabled,
+                hasUserLooks: hasUserLooks,
+                onAddLook: onAddLook,
+                onOpenLook: onOpenLook,
               ),
             ),
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: outerPadding),
-              sliver: SliverGrid(
-                key: const Key('my_content_list'),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columnCount,
-                  crossAxisSpacing: columnGap,
-                  mainAxisSpacing: 10,
-                  mainAxisExtent: tileExtent,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  childCount: scenes.length + (hasUserLooks ? 1 : 0),
-                  (context, index) {
-                    final offset = index.isOdd ? 12.0 : 0.0;
-                    if (index == scenes.length) {
-                      return Padding(
-                        padding: EdgeInsets.only(top: offset),
-                        child: AddLookTile(
-                          key: const Key('wardrobe_add_look_tile'),
-                          width: tileWidth,
-                          previewDiameter: previewDiameter,
-                          enabled: enabled,
-                          busy: false,
-                          onPressed: onAddLook,
-                        ),
-                      );
-                    }
-                    final scene = scenes[index];
-                    final isActive = scene.id == activeSceneId;
-                    return Padding(
-                      padding: EdgeInsets.only(top: offset),
-                      child: LookTile(
-                        key: Key('my_content_scene_${scene.id}'),
-                        scene: scene,
-                        width: tileWidth,
-                        previewDiameter: previewDiameter,
-                        isSelected: isActive,
-                        isActive: isActive,
-                        isHighlighted: scene.id == highlightedSceneId,
-                        enabled: enabled,
-                        onSelected: () => onOpenLook(scene),
-                      ),
-                    );
-                  },
-                ),
+            Positioned(
+              left: 14,
+              top: 752,
+              width: 365,
+              child: ChromeKissBottomNavigation(
+                selectedDestination: ChromeKissNavDestination.looks,
+                selectedForeground: ChromeKissFidelityTokens.specular,
+                onHome: onBack,
+                onLooks: () {},
               ),
             ),
-            if (!hasUserLooks)
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  outerPadding,
-                  12,
-                  outerPadding,
-                  40,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: _EmptyUserLookSlot(
-                    onAddLook: enabled ? onAddLook : null,
-                  ),
-                ),
-              )
-            else
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-final class _EmptyUserLookSlot extends StatelessWidget {
-  const _EmptyUserLookSlot({required this.onAddLook});
+final class _WardrobeAdaptiveLayout extends StatelessWidget {
+  const _WardrobeAdaptiveLayout({
+    required this.scenes,
+    required this.activeSceneId,
+    required this.highlightedSceneId,
+    required this.enabled,
+    required this.showPhotosOnly,
+    required this.onShowPhotosOnlyChanged,
+    required this.onBack,
+    required this.onAddLook,
+    required this.onOpenLook,
+  });
 
-  final VoidCallback? onAddLook;
+  final List<Scene> scenes;
+  final String? activeSceneId;
+  final String? highlightedSceneId;
+  final bool enabled;
+  final bool showPhotosOnly;
+  final ValueChanged<bool> onShowPhotosOnlyChanged;
+  final VoidCallback onBack;
+  final VoidCallback onAddLook;
+  final ValueChanged<Scene> onOpenLook;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final largeText = MediaQuery.textScalerOf(context).scale(14) > 20;
-    final colors = context.chromeKiss;
-    final copy = Column(
-      crossAxisAlignment: largeText
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.myContentEmptyTitle,
-          textAlign: largeText ? TextAlign.center : TextAlign.start,
-          style: context.chromeKissText.label.copyWith(fontSize: 17),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          l10n.myContentEmptyMessage,
-          textAlign: largeText ? TextAlign.center : TextAlign.start,
-          style: context.chromeKissText.body.copyWith(
-            color: colors.textSecondary,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 18),
-        SizedBox(
-          width: largeText ? double.infinity : 210,
-          child: JewelButton(
-            key: const Key('my_content_empty_add_button'),
-            label: l10n.addImage,
-            onPressed: onAddLook,
-          ),
-        ),
-      ],
+    final active = _sceneById(scenes, activeSceneId) ?? scenes.firstOrNull;
+    final tiles = _wardrobeTiles(scenes, photosOnly: showPhotosOnly);
+    final hasUserLooks = scenes.any(
+      (scene) => scene.source == SceneSource.userGenerated,
     );
-
-    if (largeText) {
-      return Column(
-        children: [
-          const _EmptyLensSlot(diameter: 112),
-          const SizedBox(height: 20),
-          copy,
-        ],
-      );
-    }
-    return Row(
-      children: [
-        const _EmptyLensSlot(diameter: 112),
-        const SizedBox(width: 22),
-        Expanded(child: copy),
+    return CustomScrollView(
+      key: const Key('wardrobe_scroll'),
+      slivers: [
+        const SliverToBoxAdapter(child: ChromeKissReferenceStatusBar()),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 26),
+          sliver: SliverList.list(
+            children: [
+              Text(l10n.wardrobe, style: ChromeKissFidelityTokens.titleStyle),
+              ChromeKissScriptHeartText(text: l10n.wardrobeAccent),
+              const SizedBox(height: 12),
+              _WardrobeTabs(
+                photosOnly: showPhotosOnly,
+                onChanged: onShowPhotosOnlyChanged,
+              ),
+              const SizedBox(height: 12),
+              if (active != null)
+                Center(
+                  child: _CurrentLookCard(
+                    scene: active,
+                    enabled: enabled,
+                    onPressed: () => onOpenLook(active),
+                  ),
+                ),
+              const SizedBox(height: 14),
+              Text(showPhotosOnly ? l10n.wardrobePhotosTab : l10n.myContent),
+              const SizedBox(height: 8),
+              Center(
+                child: _WardrobeGrid(
+                  scenes: tiles,
+                  referenceLayout: false,
+                  activeSceneId: activeSceneId,
+                  highlightedSceneId: highlightedSceneId,
+                  enabled: enabled,
+                  hasUserLooks: hasUserLooks,
+                  onAddLook: onAddLook,
+                  onOpenLook: onOpenLook,
+                ),
+              ),
+              const SizedBox(height: 28),
+              ChromeKissBottomNavigation(
+                selectedDestination: ChromeKissNavDestination.looks,
+                selectedForeground: ChromeKissFidelityTokens.specular,
+                onHome: onBack,
+                onLooks: () {},
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-final class _EmptyLensSlot extends StatelessWidget {
-  const _EmptyLensSlot({required this.diameter});
-
-  final double diameter;
+final class _WardrobeAtmosphere extends StatelessWidget {
+  const _WardrobeAtmosphere();
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.chromeKiss;
+    return const Stack(
+      children: [
+        Positioned(
+          left: 0,
+          top: 0,
+          child: Image(
+            image: AssetImage('assets/chrome_kiss/wardrobe_pearl_blush.png'),
+            width: 117,
+            height: 190,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+        Positioned(
+          right: 0,
+          top: 0,
+          child: Image(
+            image: AssetImage('assets/chrome_kiss/wardrobe_lilac_blush.png'),
+            width: 125,
+            height: 220,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+final class _WardrobeCornerVeil extends StatelessWidget {
+  const _WardrobeCornerVeil();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Stack(
+      children: [
+        Positioned(
+          right: 0,
+          top: 111,
+          child: Image(
+            image: AssetImage('assets/chrome_kiss/wardrobe_blush_veil.png'),
+            width: 134,
+            height: 122,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+final class _WardrobeTabs extends StatelessWidget {
+  const _WardrobeTabs({required this.photosOnly, required this.onChanged});
+
+  final bool photosOnly;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      width: math.min(345, MediaQuery.sizeOf(context).width - 48),
+      height: 44,
+      decoration: BoxDecoration(
+        color: const Color(0x52FFFFFF),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+      ),
+      child: Stack(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _WardrobeTab(
+                  key: const Key('wardrobe_looks_tab'),
+                  label: l10n.wardrobeLooksTab,
+                  showHeart: true,
+                  selected: !photosOnly,
+                  onPressed: () => onChanged(false),
+                ),
+              ),
+              Expanded(
+                child: _WardrobeTab(
+                  key: const Key('wardrobe_photos_tab'),
+                  label: l10n.wardrobePhotosTab,
+                  showHeart: false,
+                  selected: photosOnly,
+                  onPressed: () => onChanged(true),
+                ),
+              ),
+            ],
+          ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            left: photosOnly ? 236 : 63,
+            bottom: 1,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                color: ChromeKissFidelityTokens.accentInk,
+                borderRadius: BorderRadius.all(Radius.circular(2)),
+              ),
+              child: SizedBox(width: 44, height: 3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+final class _WardrobeTab extends StatelessWidget {
+  const _WardrobeTab({
+    required this.label,
+    required this.showHeart,
+    required this.selected,
+    required this.onPressed,
+    super.key,
+  });
+
+  final String label;
+  final bool showHeart;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
-      image: true,
-      label: AppLocalizations.of(context).emptyLookPreview,
-      child: ExcludeSemantics(
-        child: CustomPaint(
-          size: Size.square(diameter),
-          painter: _EmptyLensPainter(
-            lens: colors.lens,
-            chrome: colors.materialChrome,
-            optical: colors.accentOptical,
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(24),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected
+                      ? ChromeKissFidelityTokens.ink
+                      : ChromeKissFidelityTokens.mutedInk,
+                  fontFamily: 'Manrope',
+                  fontSize: 12,
+                  height: 16 / 12,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              if (showHeart) ...[
+                const SizedBox(width: 2),
+                const Icon(
+                  Icons.favorite_border_rounded,
+                  size: 12,
+                  color: ChromeKissFidelityTokens.ink,
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -481,53 +675,461 @@ final class _EmptyLensSlot extends StatelessWidget {
   }
 }
 
-final class _EmptyLensPainter extends CustomPainter {
-  _EmptyLensPainter({
-    required this.lens,
-    required this.chrome,
-    required this.optical,
-  }) : _fill = Paint()..color = lens,
-       _edge = Paint()
-         ..color = chrome.withValues(alpha: 0.56)
-         ..style = PaintingStyle.stroke
-         ..strokeWidth = 1.1,
-       _trace = Paint()
-         ..color = optical.withValues(alpha: 0.58)
-         ..style = PaintingStyle.stroke
-         ..strokeCap = StrokeCap.round
-         ..strokeWidth = 2;
+final class _CurrentLookCard extends StatelessWidget {
+  const _CurrentLookCard({
+    required this.scene,
+    required this.enabled,
+    required this.onPressed,
+  });
 
-  final Color lens;
-  final Color chrome;
-  final Color optical;
-  final Paint _fill;
-  final Paint _edge;
-  final Paint _trace;
+  final Scene scene;
+  final bool enabled;
+  final VoidCallback onPressed;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = math.min(size.width, size.height) / 2 - 2;
-    canvas.drawCircle(center, radius, _fill);
-    canvas.drawCircle(center, radius, _edge);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 8),
-      math.pi * 1.08,
-      math.pi * 0.48,
-      false,
-      _trace,
-    );
-    canvas.drawCircle(
-      center.translate(radius * 0.26, -radius * 0.18),
-      4,
-      _trace,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final width = math.min(345.0, MediaQuery.sizeOf(context).width - 48);
+    return Container(
+      width: width,
+      height: 160,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xD9FFFFFF), Color(0x66FFFFFF), Color(0x55EADDE8)],
+        ),
+        border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+      ),
+      child: Stack(
+        children: [
+          Positioned(left: 0, top: 7, child: _CurrentLookPreview(scene: scene)),
+          const Positioned(
+            left: 101,
+            top: 10,
+            child: Image(
+              image: AssetImage('assets/chrome_kiss/wardrobe_glossy_bow.png'),
+              width: 42,
+              height: 30,
+              filterQuality: FilterQuality.high,
+            ),
+          ),
+          Positioned(
+            left: 149,
+            top: 22,
+            child: Text(
+              l10n.wardrobeOnDevice,
+              style: const TextStyle(
+                color: ChromeKissFidelityTokens.mutedInk,
+                fontFamily: 'Manrope',
+                fontSize: 11,
+                height: 15 / 11,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 149,
+            top: 47,
+            child: Text(
+              _sceneLabel(l10n, scene),
+              style: ChromeKissFidelityTokens.titleStyle.copyWith(
+                fontSize: 26,
+                height: 32 / 26,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 149,
+            top: 80,
+            child: ChromeKissScriptHeartText(
+              text: l10n.wardrobeCurrentLookMeta,
+              fontSize: 19,
+            ),
+          ),
+          Positioned(
+            left: 149,
+            top: 111,
+            child: Container(
+              height: 28,
+              padding: const EdgeInsets.symmetric(horizontal: 17),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0x70FFFFFF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+              ),
+              child: Text(
+                l10n.wardrobeWorn,
+                style: const TextStyle(
+                  color: ChromeKissFidelityTokens.accentInk,
+                  fontFamily: 'Manrope',
+                  fontSize: 11,
+                  height: 15 / 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            top: 103,
+            child: Semantics(
+              button: true,
+              enabled: enabled,
+              label: _sceneLabel(l10n, scene),
+              child: SizedBox.square(
+                dimension: 44,
+                child: Material(
+                  color: ChromeKissFidelityTokens.lens,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    key: const Key('wardrobe_current_look_button'),
+                    customBorder: const CircleBorder(),
+                    onTap: enabled ? onPressed : null,
+                    child: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: ChromeKissFidelityTokens.lacquer,
+                      size: 25,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+final class _CurrentLookPreview extends StatelessWidget {
+  const _CurrentLookPreview({required this.scene});
+
+  final Scene scene;
 
   @override
-  bool shouldRepaint(_EmptyLensPainter oldDelegate) {
-    return oldDelegate.lens != lens ||
-        oldDelegate.chrome != chrome ||
-        oldDelegate.optical != optical;
+  Widget build(BuildContext context) {
+    if (scene.id == BuiltInSceneRepository.livingEyesId) {
+      return const Image(
+        image: AssetImage('assets/chrome_kiss/wardrobe_current_look.png'),
+        width: 145,
+        height: 147,
+        filterQuality: FilterQuality.high,
+      );
+    }
+    return SizedBox(
+      width: 145,
+      height: 147,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Image(
+            image: AssetImage('assets/chrome_kiss/wardrobe_jewelry_halo.png'),
+            width: 143,
+            height: 146,
+            filterQuality: FilterQuality.high,
+          ),
+          LookPreview(
+            scene: scene,
+            diameter: 102,
+            isSelected: false,
+            isActive: false,
+          ),
+        ],
+      ),
+    );
   }
+}
+
+final class _WardrobeGrid extends StatelessWidget {
+  const _WardrobeGrid({
+    required this.scenes,
+    required this.referenceLayout,
+    required this.activeSceneId,
+    required this.highlightedSceneId,
+    required this.enabled,
+    required this.hasUserLooks,
+    required this.onAddLook,
+    required this.onOpenLook,
+  });
+
+  final List<Scene> scenes;
+  final bool referenceLayout;
+  final String? activeSceneId;
+  final String? highlightedSceneId;
+  final bool enabled;
+  final bool hasUserLooks;
+  final VoidCallback onAddLook;
+  final ValueChanged<Scene> onOpenLook;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <Widget>[
+      for (final scene in scenes)
+        _WardrobeTile(
+          key: Key('my_content_scene_${scene.id}'),
+          scene: scene,
+          referenceLayout: referenceLayout,
+          selected: scene.id == activeSceneId,
+          highlighted: scene.id == highlightedSceneId,
+          enabled: enabled,
+          onPressed: () => onOpenLook(scene),
+        ),
+      _AddWardrobeTile(
+        referenceLayout: referenceLayout,
+        enabled: enabled,
+        hasUserLooks: hasUserLooks,
+        onPressed: onAddLook,
+      ),
+    ];
+    return SizedBox(
+      key: const Key('my_content_list'),
+      width: 345,
+      child: Wrap(spacing: 35, runSpacing: 35, children: entries),
+    );
+  }
+}
+
+final class _WardrobeTile extends StatelessWidget {
+  const _WardrobeTile({
+    required this.scene,
+    required this.referenceLayout,
+    required this.selected,
+    required this.highlighted,
+    required this.enabled,
+    required this.onPressed,
+    super.key,
+  });
+
+  final Scene scene;
+  final bool referenceLayout;
+  final bool selected;
+  final bool highlighted;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      selected: selected,
+      label: _sceneLabel(l10n, scene),
+      child: SizedBox(
+        width: 155,
+        height: referenceLayout ? 149 : 178,
+        child: InkWell(
+          onTap: enabled ? onPressed : null,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 11),
+            child: Column(
+              children: [
+                Container(
+                  width: 132,
+                  height: 103,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: ChromeKissFidelityTokens.pearlGradient,
+                    border: Border.all(
+                      color: ChromeKissFidelityTokens.chromeLine,
+                    ),
+                  ),
+                  child: _WardrobeTilePreview(
+                    scene: scene,
+                    highlighted: highlighted,
+                  ),
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  _sceneLabel(l10n, scene),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: ChromeKissFidelityTokens.ink,
+                    fontFamily: 'Manrope',
+                    fontSize: 13,
+                    height: 18 / 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final class _WardrobeTilePreview extends StatelessWidget {
+  const _WardrobeTilePreview({required this.scene, required this.highlighted});
+
+  final Scene scene;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = switch (scene.id) {
+      BuiltInSceneRepository.livingEyesId =>
+        'assets/chrome_kiss/home_look_original.png',
+      BuiltInSceneRepository.mintEyesId =>
+        'assets/chrome_kiss/home_look_mint.png',
+      _ => null,
+    };
+    if (asset != null) {
+      return ClipOval(
+        child: Image.asset(
+          asset,
+          width: 75,
+          height: 75,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        ),
+      );
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 74,
+          height: 74,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: ChromeKissFidelityTokens.ink, width: 1.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33211823),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SceneRenderer(scene: scene, animate: false),
+        ),
+        if (highlighted)
+          const Positioned(
+            right: -2,
+            bottom: -2,
+            child: DecoratedBox(
+              key: Key('look_saved_marker'),
+              decoration: BoxDecoration(
+                color: ChromeKissFidelityTokens.lacquer,
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox.square(
+                dimension: 22,
+                child: Icon(Icons.done_rounded, color: Colors.white, size: 15),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+final class _AddWardrobeTile extends StatelessWidget {
+  const _AddWardrobeTile({
+    required this.referenceLayout,
+    required this.enabled,
+    required this.hasUserLooks,
+    required this.onPressed,
+  });
+
+  final bool referenceLayout;
+  final bool enabled;
+  final bool hasUserLooks;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: l10n.addImage,
+      child: SizedBox(
+        key: const Key('wardrobe_add_look_tile'),
+        width: 155,
+        height: referenceLayout ? 149 : 178,
+        child: InkWell(
+          key: hasUserLooks
+              ? const Key('my_content_add_button')
+              : const Key('my_content_empty_add_button'),
+          onTap: enabled ? onPressed : null,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 11),
+            child: Column(
+              children: [
+                Container(
+                  width: 132,
+                  height: 103,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: ChromeKissFidelityTokens.pearlGradient,
+                    border: Border.all(
+                      color: ChromeKissFidelityTokens.chromeLine,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: ChromeKissFidelityTokens.accentInk,
+                    size: 31,
+                  ),
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  l10n.addLookShort,
+                  style: const TextStyle(
+                    color: ChromeKissFidelityTokens.ink,
+                    fontFamily: 'Manrope',
+                    fontSize: 13,
+                    height: 18 / 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+List<Scene> _wardrobeTiles(List<Scene> scenes, {required bool photosOnly}) {
+  final userScenes = scenes
+      .where((scene) => scene.source == SceneSource.userGenerated)
+      .toList();
+  if (photosOnly) return userScenes;
+  final builtIns = <Scene>[];
+  for (final id in [
+    BuiltInSceneRepository.livingEyesId,
+    BuiltInSceneRepository.mintEyesId,
+  ]) {
+    final scene = _sceneById(scenes, id);
+    if (scene != null) builtIns.add(scene);
+  }
+  return [...builtIns, ...userScenes.take(1)];
+}
+
+Scene? _sceneById(List<Scene> scenes, String? id) {
+  for (final scene in scenes) {
+    if (scene.id == id) return scene;
+  }
+  return null;
+}
+
+String _sceneLabel(AppLocalizations l10n, Scene scene) {
+  return switch (scene.id) {
+    BuiltInSceneRepository.livingEyesId => l10n.homeLookOriginal,
+    BuiltInSceneRepository.mintEyesId => l10n.homeLookMint,
+    _ when scene.source == SceneSource.userGenerated => l10n.homeLookPhoto,
+    _ => scene.name,
+  };
 }

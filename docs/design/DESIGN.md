@@ -1,6 +1,6 @@
 # Chrome Kiss Design Foundation
 
-> Статус: direction approved, implementation not started
+> Статус: direction approved, Companion Home fidelity pass implemented
 >
 > Primary direction: Chrome Kiss
 >
@@ -283,6 +283,27 @@ Tokens описывают намерение и не привязаны к `Them
   эффект остаётся частью material/character recipe и не становится скрытым
   component-level theme override.
 
+### Companion Home Figma fidelity mapping
+
+Глобальный runtime owner остаётся `ChromeKissColors`. Для Obsidian Home узел
+Figma `2:2` задаёт более точный component recipe, изолированный в
+`CompanionHomeTokens`: это не смена палитры остальных экранов и не вторая тема.
+
+| Home role | Figma value | Runtime owner |
+|---|---:|---|
+| Primary text / specular | `#F8F3FF` | `CompanionHomeTokens.textPrimary` |
+| Secondary text | `#C7B6D9` | `CompanionHomeTokens.textSecondary` |
+| Glass surface | `#171222` | `CompanionHomeTokens.glass` |
+| Subtle chrome border | `rgba(217, 216, 226, 0.24)` | `CompanionHomeTokens.borderSubtle` |
+| Lacquer highlight | `#FF8CD1` | `CompanionHomeTokens.lacquerHighlight` |
+| Lacquer body | `#FF4FB8` | `CompanionHomeTokens.lacquerPrimary` |
+| Lacquer mid-depth | `#B80A6E` | `CompanionHomeTokens.lacquerMid` |
+| Lacquer depth | `#470533` | `CompanionHomeTokens.lacquerDepth` |
+
+Pearl Home продолжает брать semantic roles из `ChromeKissColors.pearl`; единая
+иерархия и geometry сохраняются, а Obsidian-only fidelity recipe не протекает в
+discovery, wardrobe или editor.
+
 ### Surface and divider roles
 
 - `color.canvas` несёт большинство negative space.
@@ -418,6 +439,24 @@ cards, technical tags, icon-only destructive action без названия/по
 Пользователь думает в терминах `look`, `style`, `wear`, `edit`. Доменная модель
 может продолжать использовать `Scene` и `Asset`; это не обязывает UI показывать
 те же слова.
+
+### Figma fidelity contract — Wardrobe and Create Look
+
+Экраны продолжают эталон Chrome Kiss из Figma без создания параллельного
+image-flow:
+
+| Экран | Figma node | Reference viewport | Runtime owner |
+|---|---|---:|---|
+| Wardrobe / Pearl | `74:83` | `393×852` | `UserContentScreen`, `SceneRepository`, `UserContentController` |
+| Create Look / Upload Photo | `94:248` | `393×852` | `CreateLookScreen`; после выбора — `UserImageController` |
+
+Общий canvas — `#F4F2F6`, frame radius — `48`, content inset — `24`, ключевые
+карточки имеют radius `32`. На reference viewport экран повторяет координаты
+макета; на узком viewport и при enlarged text переходит в независимую
+прокручиваемую композицию без масштабирования всего UI и без скрытия действий.
+Wardrobe остаётся единой библиотекой built-in и пользовательских образов, а
+`CreateLookScreen` возвращает только намерение `pickPhoto`: picker, crop,
+сохранение и ошибки по-прежнему принадлежат существующему application workflow.
 
 ## Open Design Questions
 

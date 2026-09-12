@@ -7,6 +7,7 @@ import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/image/image_picker_gateway.dart';
 import 'package:smart_keychain_app/features/image_editor/image_editor_screen.dart';
+import 'package:smart_keychain_app/features/image_import/create_look_screen.dart';
 import 'package:smart_keychain_app/features/user_content/look_details_sheet.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/content/composite_scene_repository.dart';
@@ -17,8 +18,12 @@ import 'package:smart_keychain_app/infrastructure/device/virtual_device_reposito
 import '../support/fake_app_settings_repository.dart';
 import '../support/fake_local_file_storage.dart';
 import '../support/fake_user_image_services.dart';
+import '../support/load_app_fonts.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadCompanionHomeFonts);
+
   testWidgets('pick, crop, save, select, and render a user image scene', (
     tester,
   ) async {
@@ -97,6 +102,10 @@ void main() {
     await tester.ensureVisible(emptyAdd);
     await tester.pump();
     await tester.tap(emptyAdd);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(CreateLookScreen), findsOneWidget);
+    await tester.tap(find.byKey(const Key('create_look_pick_photo')));
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));

@@ -163,7 +163,7 @@ abstract class AppLocalizations {
   /// No description provided for @online.
   ///
   /// In ru, this message translates to:
-  /// **'Онлайн'**
+  /// **'На связи'**
   String get online;
 
   /// No description provided for @disconnected.
@@ -616,11 +616,179 @@ abstract class AppLocalizations {
   /// **'Фото'**
   String get photoLook;
 
+  /// No description provided for @homeLookOriginal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оригинал'**
+  String get homeLookOriginal;
+
+  /// No description provided for @homeLookMint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мятный'**
+  String get homeLookMint;
+
+  /// No description provided for @homeLookLilac.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лиловый'**
+  String get homeLookLilac;
+
+  /// No description provided for @homeLookPhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Моё фото'**
+  String get homeLookPhoto;
+
   /// No description provided for @myContent.
   ///
   /// In ru, this message translates to:
   /// **'Мои образы'**
   String get myContent;
+
+  /// No description provided for @wardrobeAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'hot girl closet'**
+  String get wardrobeAccent;
+
+  /// No description provided for @wardrobeLooksTab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образы'**
+  String get wardrobeLooksTab;
+
+  /// No description provided for @wardrobePhotosTab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мои фото'**
+  String get wardrobePhotosTab;
+
+  /// No description provided for @wardrobeOnDevice.
+  ///
+  /// In ru, this message translates to:
+  /// **'НА БРЕЛОКЕ'**
+  String get wardrobeOnDevice;
+
+  /// No description provided for @wardrobeCurrentLookMeta.
+  ///
+  /// In ru, this message translates to:
+  /// **'feeling flirty'**
+  String get wardrobeCurrentLookMeta;
+
+  /// No description provided for @wardrobeWorn.
+  ///
+  /// In ru, this message translates to:
+  /// **'НА МНЕ'**
+  String get wardrobeWorn;
+
+  /// No description provided for @addLookShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить'**
+  String get addLookShort;
+
+  /// No description provided for @createLookStep.
+  ///
+  /// In ru, this message translates to:
+  /// **'CREATE A LOOK · 1/3'**
+  String get createLookStep;
+
+  /// No description provided for @createLookTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Твоя история'**
+  String get createLookTitle;
+
+  /// No description provided for @createLookAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'make it yours'**
+  String get createLookAccent;
+
+  /// No description provided for @choosePhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать фото'**
+  String get choosePhoto;
+
+  /// No description provided for @photoFormatsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'JPG / PNG · лицо или любимый кадр'**
+  String get photoFormatsHint;
+
+  /// No description provided for @photoFantasyAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'your face, your fantasy'**
+  String get photoFantasyAccent;
+
+  /// No description provided for @inspiration.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вдохновение'**
+  String get inspiration;
+
+  /// No description provided for @inspirationOriginal.
+  ///
+  /// In ru, this message translates to:
+  /// **'glossy'**
+  String get inspirationOriginal;
+
+  /// No description provided for @inspirationMint.
+  ///
+  /// In ru, this message translates to:
+  /// **'mint kiss'**
+  String get inspirationMint;
+
+  /// No description provided for @inspirationLilac.
+  ///
+  /// In ru, this message translates to:
+  /// **'dreamy'**
+  String get inspirationLilac;
+
+  /// No description provided for @inspirationPhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'my photo'**
+  String get inspirationPhoto;
+
+  /// No description provided for @prepareForScreen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подготовим для экрана'**
+  String get prepareForScreen;
+
+  /// No description provided for @circularCrop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Круглая\nобрезка'**
+  String get circularCrop;
+
+  /// No description provided for @lightAndColor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свет и\nцвет'**
+  String get lightAndColor;
+
+  /// No description provided for @chromeKissFeature.
+  ///
+  /// In ru, this message translates to:
+  /// **'Chrome\nKiss'**
+  String get chromeKissFeature;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить'**
+  String get continueAction;
+
+  /// No description provided for @choosePhotoToContinue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбери фото, чтобы продолжить.'**
+  String get choosePhotoToContinue;
 
   /// No description provided for @homeTab.
   ///

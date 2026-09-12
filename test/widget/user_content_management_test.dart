@@ -51,7 +51,7 @@ void main() {
         find.byKey(const Key('my_content_empty_add_button')),
         findsOneWidget,
       );
-      expect(find.text('Место для твоего образа'), findsOneWidget);
+      expect(find.text('Добавить'), findsOneWidget);
     },
   );
 

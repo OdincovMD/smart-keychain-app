@@ -227,6 +227,13 @@ Future<void> _pumpConnectedHome(
         'assets/chrome_kiss/bow_right.png',
         'assets/chrome_kiss/bow_knot.png',
         'assets/chrome_kiss/charm_ring.png',
+        'assets/chrome_kiss/atmosphere_orchid_halo.png',
+        'assets/chrome_kiss/eye_left_figma.png',
+        'assets/chrome_kiss/eye_right_figma.png',
+        'assets/chrome_kiss/home_look_original.png',
+        'assets/chrome_kiss/home_look_mint.png',
+        'assets/chrome_kiss/home_look_lilac.png',
+        'assets/chrome_kiss/home_look_photo.png',
       ].map((path) => precacheImage(AssetImage(path), context)),
     );
   });

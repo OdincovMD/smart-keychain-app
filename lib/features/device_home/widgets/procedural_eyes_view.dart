@@ -10,6 +10,7 @@ import '../../../domain/eyes/eye_behaviour_engine.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
 import '../eye_preview_controller.dart';
+import 'figma_kiss_cut_eyes_view.dart';
 import 'kiss_cut_eye_renderer.dart';
 
 final class ProceduralEyesView extends ConsumerStatefulWidget {
@@ -133,6 +134,19 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
       glintColor: AppColors.amber,
       haloColor: AppColors.mint.withValues(alpha: 0.16),
     );
+    if (widget.rendererVariant == EyeRendererVariant.figmaJewelry) {
+      return ExcludeSemantics(
+        child: RepaintBoundary(
+          child: FigmaKissCutEyesView(
+            key: const Key('figma_kiss_cut_eyes'),
+            fromState: _fromState,
+            toState: _toState,
+            motionCurve: _motionCurve,
+            progress: _controller,
+          ),
+        ),
+      );
+    }
     final painter = switch (widget.rendererVariant) {
       EyeRendererVariant.legacy => ProceduralEyePainter(
         scene,
@@ -162,11 +176,13 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
         ),
         progress: _controller,
       ),
+      EyeRendererVariant.figmaJewelry => null,
     };
     final painterKey = switch (widget.rendererVariant) {
       EyeRendererVariant.legacy => const Key('procedural_eyes_painter'),
       EyeRendererVariant.kissCutV2 ||
       EyeRendererVariant.kissCutV21 => const Key('kiss_cut_eye_painter'),
+      EyeRendererVariant.figmaJewelry => const Key('figma_kiss_cut_eyes'),
     };
 
     return ColoredBox(

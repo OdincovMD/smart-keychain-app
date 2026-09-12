@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/chrome_kiss_theme.dart';
+import 'chrome_kiss_sparkle.dart';
+import 'companion_home_tokens.dart';
 
 enum JewelButtonStyle { standard, hero }
 
@@ -174,22 +176,9 @@ final class _JewelButtonState extends State<JewelButton> {
     required bool reduceMotion,
   }) {
     final colors = context.chromeKiss;
+    final home = context.companionHome;
     final motion = context.chromeKissMotion;
-    final lacquer = enabled || widget.busy
-        ? colors.accentPrimary
-        : Color.alphaBlend(
-            colors.surfaceSecondary.withValues(alpha: 0.46),
-            colors.accentPrimary,
-          );
-    final lacquerTop = Color.alphaBlend(
-      colors.textPrimary.withValues(alpha: _pressed ? 0.18 : 0.38),
-      lacquer,
-    );
-    final lacquerDepth = Color.alphaBlend(
-      colors.lens.withValues(alpha: _pressed ? 0.5 : 0.64),
-      lacquer,
-    );
-    final foreground = colors.textPrimary.withValues(
+    final foreground = home.ctaForeground.withValues(
       alpha: enabled || widget.busy ? 1 : 0.6,
     );
     const radius = BorderRadius.all(Radius.circular(36));
@@ -212,22 +201,20 @@ final class _JewelButtonState extends State<JewelButton> {
               borderRadius: radius,
               border: Border.all(
                 color: colors.accentPrimary.withValues(alpha: 0.92),
-                width: 1.2,
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: colors.accentPrimary.withValues(
-                    alpha: _pressed ? 0.18 : 0.34,
-                  ),
-                  blurRadius: _pressed ? 14 : 26,
-                  spreadRadius: _pressed ? -6 : -3,
-                  offset: const Offset(0, 8),
+                  color: const Color(0xFF7D45FF)
+                      .withValues(alpha: _pressed ? 0.14 : 0.22),
+                  blurRadius: _pressed ? 22 : 36,
+                  offset: const Offset(0, 14),
                 ),
                 BoxShadow(
-                  color: colors.accentOptical.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  spreadRadius: -5,
-                  offset: const Offset(0, -2),
+                  color: colors.accentPrimary.withValues(
+                    alpha: _pressed ? 0.24 : 0.34,
+                  ),
+                  blurRadius: _pressed ? 16 : 24,
                 ),
               ],
             ),
@@ -241,8 +228,13 @@ final class _JewelButtonState extends State<JewelButton> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [lacquerTop, lacquer, lacquerDepth],
-                    stops: const [0, 0.34, 1],
+                    colors: [
+                      home.lacquerHighlight,
+                      home.lacquerPrimary,
+                      home.lacquerMid,
+                      home.lacquerDepth,
+                    ],
+                    stops: const [0, 0.34, 0.7, 1],
                   ),
                 ),
                 child: InkWell(
@@ -252,20 +244,20 @@ final class _JewelButtonState extends State<JewelButton> {
                       ? (pressed) => setState(() => _pressed = pressed)
                       : null,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 17,
-                    ),
+                    padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
                         SizedBox(
-                          width: 28,
-                          child: Icon(
-                            Icons.auto_awesome_rounded,
-                            color: foreground,
-                            size: 20,
+                          width: 24,
+                          height: 28,
+                          child: Center(
+                            child: SizedBox.square(
+                              dimension: 24,
+                              child: ChromeKissSparkle(color: foreground),
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             widget.label,
@@ -273,14 +265,15 @@ final class _JewelButtonState extends State<JewelButton> {
                             style: context.chromeKissText.label.copyWith(
                               color: foreground,
                               fontSize: 18,
-                              height: 1.15,
-                              fontWeight: FontWeight.w700,
+                              height: 1.55,
+                              fontWeight: FontWeight.w500,
                               letterSpacing: 0,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         SizedBox(
-                          width: 28,
+                          width: 24,
                           child: widget.busy
                               ? Center(
                                   child: SizedBox.square(
@@ -291,10 +284,16 @@ final class _JewelButtonState extends State<JewelButton> {
                                     ),
                                   ),
                                 )
-                              : Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: foreground,
-                                  size: 30,
+                              : Text(
+                                  '›',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: foreground,
+                                    fontFamily: 'Manrope',
+                                    fontSize: 30,
+                                    height: 1,
+                                    fontWeight: FontWeight.w400,
+                                  ),
                                 ),
                         ),
                       ],

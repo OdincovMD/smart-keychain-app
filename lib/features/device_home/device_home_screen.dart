@@ -19,6 +19,7 @@ import '../appearance/appearance_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../device_discovery/device_discovery_screen.dart';
 import '../image_editor/image_editor_screen.dart';
+import '../image_import/create_look_screen.dart';
 import '../image_import/user_image_controller.dart';
 import '../shared/image_failure_label.dart';
 import '../user_content/user_content_screen.dart';
@@ -27,6 +28,7 @@ import 'widgets/brightness_control.dart';
 import 'widgets/character_study_screen.dart';
 import 'widgets/chrome_kiss_bottom_navigation.dart';
 import 'widgets/companion_home_hero.dart';
+import 'widgets/companion_home_tokens.dart';
 import 'widgets/companion_identity_header.dart';
 import 'widgets/jewel_button.dart';
 import 'widgets/wardrobe_rail.dart';
@@ -121,9 +123,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
                             onBrightnessChanged: (brightness) => ref
                                 .read(deviceControllerProvider.notifier)
                                 .setBrightness(brightness),
-                            onAddImage: () => ref
-                                .read(userImageControllerProvider.notifier)
-                                .startImport(),
+                            onAddImage: () => unawaited(_openCreateLook()),
                             onOpenMyContent: () => unawaited(_openMyContent()),
                             onDisconnect: () => ref
                                 .read(deviceControllerProvider.notifier)
@@ -192,6 +192,14 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
       ),
     );
     if (!mounted || result != UserContentScreenResult.addImage) return;
+    await _openCreateLook();
+  }
+
+  Future<void> _openCreateLook() async {
+    final result = await Navigator.of(context).push<CreateLookScreenResult>(
+      MaterialPageRoute(builder: (context) => const CreateLookScreen()),
+    );
+    if (!mounted || result != CreateLookScreenResult.pickPhoto) return;
     ref.read(userImageControllerProvider.notifier).startImport();
   }
 
@@ -244,7 +252,7 @@ final class _DeviceHomeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.chromeKiss;
+    final home = context.companionHome;
     final selectedIsActive = selectedSceneId == snapshot.activeSceneId;
     final connectionLabel = switch (snapshot.connectionStatus) {
       DeviceConnectionStatus.ready => l10n.statusReady,
@@ -297,55 +305,59 @@ final class _DeviceHomeContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Semantics(
-                    container: true,
-                    child: Column(
-                      key: const Key('companion_presence'),
-                      children: [
-                        Text(
-                          l10n.moodNeutral,
-                          textAlign: TextAlign.center,
-                          style: context.chromeKissText.body.copyWith(
-                            color: colors.textSecondary,
-                            fontSize: 14,
-                            height: 1.35,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Semantics(
-                          label:
-                              '${l10n.presenceNeutral}, ${l10n.heartSymbolLabel}',
-                          child: ExcludeSemantics(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    l10n.presenceNeutral,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: colors.textPrimary,
-                                      fontFamily: 'CormorantGaramond',
-                                      fontSize: 20,
-                                      height: 1.1,
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: 0,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.favorite_border_rounded,
-                                  color: colors.textPrimary,
-                                  size: 14,
-                                ),
-                              ],
+                  SizedBox(
+                    height: largeText ? 80 : 50,
+                    child: Semantics(
+                      container: true,
+                      child: Column(
+                        key: const Key('companion_presence'),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            l10n.moodNeutral,
+                            textAlign: TextAlign.center,
+                            style: context.chromeKissText.body.copyWith(
+                              color: home.textSecondary,
+                              fontSize: 14,
+                              height: 1.35,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Semantics(
+                            label:
+                                '${l10n.presenceNeutral}, ${l10n.heartSymbolLabel}',
+                            child: ExcludeSemantics(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      l10n.presenceNeutral,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: home.textPrimary,
+                                        fontFamily: 'CormorantGaramond',
+                                        fontSize: 20,
+                                        height: 1.1,
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 0,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.favorite_border_rounded,
+                                    color: home.textPrimary,
+                                    size: 14,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

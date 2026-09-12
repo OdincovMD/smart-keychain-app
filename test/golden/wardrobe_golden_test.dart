@@ -16,6 +16,7 @@ import 'package:smart_keychain_app/domain/image/user_image_asset.dart';
 import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/domain/storage/local_file_storage.dart';
 import 'package:smart_keychain_app/domain/storage/storage_failure.dart';
+import 'package:smart_keychain_app/features/image_import/create_look_screen.dart';
 import 'package:smart_keychain_app/features/user_content/user_content_screen.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/content/composite_scene_repository.dart';
@@ -31,7 +32,66 @@ import '../support/load_app_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(loadAppFonts);
+  setUpAll(loadCompanionHomeFonts);
+
+  testWidgets('Wardrobe Pearl matches Figma node 74:83', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(
+      tester,
+      rig,
+      ResolvedAppAppearance.pearl,
+      size: const Size(393, 852),
+    );
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_pearl_figma_74_83.png'),
+    );
+  });
+
+  testWidgets('Create Look Pearl matches Figma node 94:248', (tester) async {
+    tester.view
+      ..devicePixelRatio = 1
+      ..physicalSize = const Size(393, 852);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(ResolvedAppAppearance.pearl),
+        locale: const Locale('ru'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: const CreateLookScreen(),
+      ),
+    );
+    await tester.pump();
+    await tester.runAsync(() async {
+      final context = tester.element(find.byType(CreateLookScreen));
+      await Future.wait([
+        for (final asset in <String>[
+          'assets/chrome_kiss/create_story_blush.png',
+          'assets/chrome_kiss/create_progress_jewels.png',
+          'assets/chrome_kiss/create_upload_blush.png',
+          'assets/chrome_kiss/create_upload_halo.png',
+          'assets/chrome_kiss/create_photo_target.png',
+          'assets/chrome_kiss/create_upload_bow.png',
+          'assets/chrome_kiss/create_champagne_sparkle.png',
+          'assets/chrome_kiss/create_preview_original.png',
+          'assets/chrome_kiss/create_preview_mint.png',
+          'assets/chrome_kiss/create_preview_lilac.png',
+          'assets/chrome_kiss/create_preview_sparkle.png',
+        ])
+          precacheImage(AssetImage(asset), context),
+      ]);
+    });
+    await tester.pump();
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/create_look_pearl_figma_94_248.png'),
+    );
+  });
 
   testWidgets('Wardrobe Obsidian', (tester) async {
     final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
@@ -135,7 +195,7 @@ final class _WardrobeGoldenRig {
     required int userLookCount,
   }) async {
     final bytes = (await tester.runAsync(
-      () => File('assets/scenes/eyes_mint_static_v1.png').readAsBytes(),
+      () => File('assets/chrome_kiss/wardrobe_user_photo.jpeg').readAsBytes(),
     ))!;
     final storage = FakeLocalFileStorage();
     final items = <UserImageAsset>[];
@@ -194,10 +254,11 @@ Future<void> _pumpWardrobe(
   _WardrobeGoldenRig rig,
   ResolvedAppAppearance appearance, {
   String? highlightedSceneId,
+  Size size = const Size(390, 844),
 }) async {
   tester.view
     ..devicePixelRatio = 1
-    ..physicalSize = const Size(390, 844);
+    ..physicalSize = size;
   addTearDown(() async {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -244,6 +305,16 @@ Future<void> _pumpWardrobe(
   );
   await tester.pump();
   await tester.pump();
+  final container = ProviderScope.containerOf(
+    tester.element(find.byKey(const Key('user_content_screen'))),
+  );
+  await tester.runAsync(() async {
+    await Future.wait([
+      for (final asset in rig.assets.values)
+        container.read(localImageBytesProvider(asset.previewStorageKey).future),
+    ]);
+  });
+  await tester.pump();
   await tester.runAsync(() async {
     final context = tester.element(find.byType(MaterialApp));
     await Future.wait([
@@ -259,6 +330,16 @@ Future<void> _pumpWardrobe(
         ResizeImage(MemoryImage(rig.processor.previewBytes), width: 240),
         context,
       ),
+      for (final asset in <String>[
+        'assets/chrome_kiss/wardrobe_pearl_blush.png',
+        'assets/chrome_kiss/wardrobe_lilac_blush.png',
+        'assets/chrome_kiss/wardrobe_blush_veil.png',
+        'assets/chrome_kiss/wardrobe_current_look.png',
+        'assets/chrome_kiss/wardrobe_glossy_bow.png',
+        'assets/chrome_kiss/home_look_original.png',
+        'assets/chrome_kiss/home_look_mint.png',
+      ])
+        precacheImage(AssetImage(asset), context),
     ]);
   });
   for (var frame = 0; frame < 4; frame++) {

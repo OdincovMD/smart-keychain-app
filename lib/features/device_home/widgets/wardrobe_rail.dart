@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import '../../../app/chrome_kiss_theme.dart';
 import '../../../domain/content/scene.dart';
 import '../../../l10n/app_localizations.dart';
+import 'companion_home_tokens.dart';
 import 'scene_renderer.dart';
 
 final class WardrobeRail extends StatelessWidget {
@@ -159,7 +160,18 @@ final class _CompactWardrobeRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.chromeKiss;
+    final home = context.companionHome;
     final visibleScenes = scenes.take(3).toList(growable: false);
+    final labels = [
+      l10n.homeLookOriginal,
+      l10n.homeLookMint,
+      l10n.homeLookLilac,
+    ];
+    const previewAssets = [
+      'assets/chrome_kiss/home_look_original.png',
+      'assets/chrome_kiss/home_look_mint.png',
+      'assets/chrome_kiss/home_look_lilac.png',
+    ];
 
     return Column(
       key: const Key('wardrobe_rail'),
@@ -173,10 +185,10 @@ final class _CompactWardrobeRail extends StatelessWidget {
                 child: Text(
                   l10n.myContent,
                   style: context.chromeKissText.body.copyWith(
-                    color: colors.textPrimary,
-                    fontSize: 15,
-                    height: 1.2,
-                    fontWeight: FontWeight.w700,
+                    color: home.textPrimary,
+                    fontSize: 18,
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0,
                   ),
                 ),
@@ -187,15 +199,15 @@ final class _CompactWardrobeRail extends StatelessWidget {
                 style: TextButton.styleFrom(
                   minimumSize: const Size(64, 44),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  foregroundColor: colors.textSecondary,
+                  foregroundColor: colors.accentPrimary,
                   textStyle: context.chromeKissText.status.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     letterSpacing: 0,
                   ),
                 ),
                 iconAlignment: IconAlignment.end,
-                icon: const Icon(Icons.chevron_right_rounded, size: 17),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 13),
                 label: Text(l10n.allLooks),
               ),
             ],
@@ -210,10 +222,13 @@ final class _CompactWardrobeRail extends StatelessWidget {
                 ? math.max(74.0, scaledLabelSize * 6.8)
                 : math.min(74.0, (constraints.maxWidth - gap * 3) / 4);
             final previewDiameter = math.min(58.0, tileWidth);
-            final labelHeight = scaledLabelSize * 1.1 * 2;
+            final labelHeight = scaledLabelSize > 13
+                ? scaledLabelSize * 1.27 * 2
+                : 16.0;
+            final previewGap = scaledLabelSize > 13 ? 5.0 : 2.0;
 
             return SizedBox(
-              height: previewDiameter + 5 + labelHeight,
+              height: previewDiameter + previewGap + labelHeight,
               child: ListView.separated(
                 key: const Key('wardrobe_list'),
                 scrollDirection: Axis.horizontal,
@@ -246,6 +261,8 @@ final class _CompactWardrobeRail extends StatelessWidget {
                     enabled: enabled,
                     onSelected: () => onSceneSelected(scene.id),
                     compact: true,
+                    labelOverride: labels[index],
+                    compactPreviewAssetPath: previewAssets[index],
                   );
                 },
               ),
@@ -268,6 +285,8 @@ final class LookTile extends StatelessWidget {
     required this.onSelected,
     this.isHighlighted = false,
     this.compact = false,
+    this.labelOverride,
+    this.compactPreviewAssetPath,
     super.key,
   });
 
@@ -280,10 +299,13 @@ final class LookTile extends StatelessWidget {
   final bool enabled;
   final VoidCallback onSelected;
   final bool compact;
+  final String? labelOverride;
+  final String? compactPreviewAssetPath;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
+    final home = context.companionHome;
     final motion = context.chromeKissMotion;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final l10n = AppLocalizations.of(context);
@@ -308,7 +330,7 @@ final class LookTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 AnimatedScale(
-                  scale: reduceMotion || isSelected || isHighlighted
+                  scale: compact || reduceMotion || isSelected || isHighlighted
                       ? 1
                       : 0.965,
                   duration: reduceMotion
@@ -322,19 +344,30 @@ final class LookTile extends StatelessWidget {
                     isActive: isActive,
                     isHighlighted: isHighlighted,
                     compact: compact,
+                    compactPreviewAssetPath: compactPreviewAssetPath,
                   ),
                 ),
-                SizedBox(height: compact ? 4 : 8),
+                SizedBox(
+                  height: compact
+                      ? MediaQuery.textScalerOf(context).scale(11) > 14
+                            ? 5
+                            : 2
+                      : 8,
+                ),
                 Text(
-                  scene.name,
+                  labelOverride ?? scene.name,
                   textAlign: TextAlign.center,
                   style: context.chromeKissText.body.copyWith(
-                    color: isSelected
+                    color: compact
+                        ? home.textPrimary
+                        : isSelected
                         ? colors.textPrimary
                         : colors.textSecondary,
-                    fontSize: compact ? 10 : 13,
-                    height: compact ? 1.1 : 1.28,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: compact ? 11 : 13,
+                    height: compact ? 1.27 : 1.28,
+                    fontWeight: compact || !isSelected
+                        ? FontWeight.w500
+                        : FontWeight.w700,
                     letterSpacing: compact ? 0 : null,
                   ),
                 ),
@@ -356,6 +389,7 @@ final class LookPreview extends StatelessWidget {
     this.animateScene = false,
     this.isHighlighted = false,
     this.compact = false,
+    this.compactPreviewAssetPath,
     super.key,
   });
 
@@ -366,12 +400,21 @@ final class LookPreview extends StatelessWidget {
   final bool animateScene;
   final bool isHighlighted;
   final bool compact;
+  final String? compactPreviewAssetPath;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
     final motion = context.chromeKissMotion;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    if (compactPreviewAssetPath != null) {
+      return _FigmaHomeLookImage(
+        diameter: diameter,
+        assetPath: compactPreviewAssetPath!,
+        sourceDimension: 75,
+      );
+    }
 
     return AnimatedContainer(
       duration: reduceMotion ? Duration.zero : motion.interaction.duration,
@@ -485,6 +528,7 @@ final class AddLookTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
+    final home = context.companionHome;
     final l10n = AppLocalizations.of(context);
 
     return Semantics(
@@ -521,25 +565,73 @@ final class AddLookTile extends StatelessWidget {
                             strokeWidth: 2,
                           ),
                         )
+                      : compact
+                      ? const _FigmaHomeLookImage(
+                          diameter: 58,
+                          assetPath: 'assets/chrome_kiss/home_look_photo.png',
+                          sourceDimension: 58,
+                        )
                       : Icon(
                           Icons.add_rounded,
                           color: colors.textPrimary,
                           size: 27,
                         ),
                 ),
-                SizedBox(height: compact ? 4 : 8),
+                SizedBox(
+                  height: compact
+                      ? MediaQuery.textScalerOf(context).scale(11) > 14
+                            ? 5
+                            : 2
+                      : 8,
+                ),
                 Text(
-                  compact ? l10n.photoLook : l10n.addImage,
+                  compact ? l10n.homeLookPhoto : l10n.addImage,
                   textAlign: TextAlign.center,
                   style: context.chromeKissText.body.copyWith(
-                    color: colors.textSecondary,
-                    fontSize: compact ? 10 : 13,
-                    height: compact ? 1.1 : 1.28,
+                    color: compact ? home.textPrimary : colors.textSecondary,
+                    fontSize: compact ? 11 : 13,
+                    height: compact ? 1.27 : 1.28,
+                    fontWeight: compact ? FontWeight.w500 : null,
                     letterSpacing: compact ? 0 : null,
                   ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final class _FigmaHomeLookImage extends StatelessWidget {
+  const _FigmaHomeLookImage({
+    required this.diameter,
+    required this.assetPath,
+    required this.sourceDimension,
+  });
+
+  final double diameter;
+  final String assetPath;
+  final double sourceDimension;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: diameter,
+      child: ClipOval(
+        child: OverflowBox(
+          alignment: Alignment.center,
+          minWidth: sourceDimension,
+          maxWidth: sourceDimension,
+          minHeight: sourceDimension,
+          maxHeight: sourceDimension,
+          child: Image.asset(
+            assetPath,
+            width: sourceDimension,
+            height: sourceDimension,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.high,
           ),
         ),
       ),

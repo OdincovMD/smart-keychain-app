@@ -324,5 +324,6 @@ String _rendererLabel(EyeRendererVariant renderer) {
     EyeRendererVariant.legacy => 'Legacy',
     EyeRendererVariant.kissCutV2 => 'Kiss Cut V2',
     EyeRendererVariant.kissCutV21 => 'Kiss Cut V2.1',
+    EyeRendererVariant.figmaJewelry => 'Figma Jewelry',
   };
 }

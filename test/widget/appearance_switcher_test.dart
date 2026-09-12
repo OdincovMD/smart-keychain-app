@@ -12,8 +12,12 @@ import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.d
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_repository.dart';
 
 import '../support/fake_app_settings_repository.dart';
+import '../support/load_app_fonts.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadCompanionHomeFonts);
+
   testWidgets('simulator sheet switches and persists Pearl appearance', (
     tester,
   ) async {

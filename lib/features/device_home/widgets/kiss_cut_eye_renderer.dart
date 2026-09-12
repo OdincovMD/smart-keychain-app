@@ -7,7 +7,7 @@ import '../../../domain/device/display_profile.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
 
-enum EyeRendererVariant { legacy, kissCutV2, kissCutV21 }
+enum EyeRendererVariant { legacy, kissCutV2, kissCutV21, figmaJewelry }
 
 enum KissCutRendererStyle { v2, v21Pure, v21OpticalGlint }
 

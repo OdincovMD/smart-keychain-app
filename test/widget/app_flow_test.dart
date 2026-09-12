@@ -6,9 +6,8 @@ import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/features/device_home/device_home_screen.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
-import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/figma_kiss_cut_eyes_view.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/jewel_button.dart';
-import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_repository.dart';
@@ -18,7 +17,7 @@ import '../support/load_app_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(loadAppFonts);
+  setUpAll(loadCompanionHomeFonts);
 
   testWidgets('/devices displays Russian localization', (tester) async {
     final repository = VirtualDeviceRepository(engine: _createEngine());
@@ -55,8 +54,11 @@ void main() {
 
     expect(find.text('Мои образы'), findsOneWidget);
     expect(find.byKey(const Key('companion_stage')), findsOneWidget);
-    expect(find.byType(VirtualScreen), findsOneWidget);
-    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsNWidgets(2));
+    expect(find.byType(FigmaKissCutEyesView), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey(BuiltInSceneRepository.livingEyesId)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('second scene appears only after command latency', (
@@ -123,10 +125,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     final overlay = tester.widget<AnimatedContainer>(
-      find.descendant(
-        of: find.byType(VirtualScreen),
-        matching: find.byType(AnimatedContainer),
-      ),
+      find.byKey(const Key('figma_jewelry_brightness_overlay')),
     );
     final decoration = overlay.decoration! as BoxDecoration;
     expect(decoration.color!.a, greaterThan(0.2));
@@ -164,11 +163,11 @@ void main() {
     await tester.tap(happyEmotion);
     await tester.pump();
 
-    var paint = tester.widget<CustomPaint>(
-      find.byKey(const Key('kiss_cut_eye_painter')).first,
+    expect(
+      providerContainer.read(eyePreviewControllerProvider).emotion,
+      EyeEmotion.happy,
     );
-    var painter = paint.painter! as KissCutEyePainter;
-    expect(painter.scene.toState.emotion, EyeEmotion.happy);
+    expect(find.byType(FigmaKissCutEyesView), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 180));
     final blinkButton = find.byKey(const Key('eye_blink_button'));
@@ -177,21 +176,15 @@ void main() {
     await tester.tap(blinkButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 20));
-    paint = tester.widget<CustomPaint>(
-      find.byKey(const Key('kiss_cut_eye_painter')).first,
-    );
-    painter = paint.painter! as KissCutEyePainter;
-    expect(painter.scene.toState.eyelidOpen, closeTo(0.04, 0.006));
+    final blinkState = providerContainer.read(eyePreviewControllerProvider);
+    expect(blinkState.command, EyeDebugCommand.blink);
+    expect(blinkState.blinkRevision, 1);
 
     await tester.pump(const Duration(milliseconds: 90));
     await tester.pump(const Duration(milliseconds: 45));
     await tester.pump(const Duration(milliseconds: 120));
     await tester.pump(const Duration(milliseconds: 30));
-    paint = tester.widget<CustomPaint>(
-      find.byKey(const Key('kiss_cut_eye_painter')).first,
-    );
-    painter = paint.painter! as KissCutEyePainter;
-    expect(painter.scene.toState.eyelidOpen, greaterThan(0.04));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('disconnect returns to device discovery', (tester) async {

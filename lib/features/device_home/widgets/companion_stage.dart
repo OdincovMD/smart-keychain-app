@@ -7,6 +7,8 @@ import '../../../domain/content/scene.dart';
 import '../../../domain/device/device_snapshot.dart';
 import '../../../domain/device/display_profile.dart';
 import '../../../l10n/app_localizations.dart';
+import 'kiss_cut_eye_renderer.dart';
+import 'procedural_eyes_view.dart';
 import 'virtual_screen.dart';
 
 final class CompanionStage extends StatelessWidget {
@@ -202,26 +204,21 @@ final class _JewelryCompanionStage extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     RepaintBoundary(
-                      child:
-                          visualStudyOverride ??
-                          VirtualScreen(
-                            scene: scene,
-                            displayProfile: displayProfile,
-                            snapshot: snapshot,
-                          ),
+                      child: visualStudyOverride ?? _jewelryScreen(context),
                     ),
                     const IgnorePointer(child: _LensDepthOverlay()),
-                    IgnorePointer(
-                      child: CustomPaint(
-                        painter: _CompanionMakeupPainter(
-                          _CompanionMakeupScene(
-                            liner: colors.accentOptical,
-                            sparkle: colors.materialChampagne,
-                            heart: colors.accentPrimary,
+                    if (scene.content is! ProceduralEyesContent)
+                      IgnorePointer(
+                        child: CustomPaint(
+                          painter: _CompanionMakeupPainter(
+                            _CompanionMakeupScene(
+                              liner: colors.accentOptical,
+                              sparkle: colors.materialChampagne,
+                              heart: colors.accentPrimary,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     _StageConfirmationGlint(
                       sceneId: scene.id,
                       enabled: confirmationEnabled,
@@ -296,26 +293,58 @@ final class _JewelryCompanionStage extends StatelessWidget {
             Positioned(
               left: x(248),
               top: x(118),
-              child: Text(
-                '♡',
-                style: TextStyle(
-                  color: colors.accentPrimary,
-                  fontSize: x(18),
-                  height: 1,
-                  fontWeight: FontWeight.w600,
-                  shadows: [
-                    Shadow(
-                      color: colors.accentPrimary.withValues(alpha: 0.72),
-                      blurRadius: x(8),
-                    ),
-                  ],
-                ),
+              width: x(17),
+              height: x(16),
+              child: Icon(
+                Icons.favorite_rounded,
+                color: colors.accentPrimary,
+                size: x(16.27),
+                shadows: [
+                  Shadow(
+                    color: colors.accentPrimary.withValues(alpha: 0.72),
+                    blurRadius: x(8),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _jewelryScreen(BuildContext context) {
+    return switch (scene.content) {
+      final ProceduralEyesContent content => Stack(
+        fit: StackFit.expand,
+        children: [
+          KeyedSubtree(
+            key: ValueKey(scene.id),
+            child: ProceduralEyesView(
+              initialEmotion: content.defaultEmotion,
+              displayProfile: displayProfile,
+              rendererVariant: EyeRendererVariant.figmaJewelry,
+            ),
+          ),
+          IgnorePointer(
+            child: AnimatedContainer(
+              key: const Key('figma_jewelry_brightness_overlay'),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 250),
+              color: context.chromeKiss.lens.withValues(
+                alpha: ((0.8 - snapshot.brightness) / 0.8).clamp(0, 1),
+              ),
+            ),
+          ),
+        ],
+      ),
+      _ => VirtualScreen(
+        scene: scene,
+        displayProfile: displayProfile,
+        snapshot: snapshot,
+      ),
+    };
   }
 
   Widget _asset(

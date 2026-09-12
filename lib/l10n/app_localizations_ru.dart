@@ -46,7 +46,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get connected => 'Подключено';
 
   @override
-  String get online => 'Онлайн';
+  String get online => 'На связи';
 
   @override
   String get disconnected => 'Отключено';
@@ -284,7 +284,91 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoLook => 'Фото';
 
   @override
+  String get homeLookOriginal => 'Оригинал';
+
+  @override
+  String get homeLookMint => 'Мятный';
+
+  @override
+  String get homeLookLilac => 'Лиловый';
+
+  @override
+  String get homeLookPhoto => 'Моё фото';
+
+  @override
   String get myContent => 'Мои образы';
+
+  @override
+  String get wardrobeAccent => 'hot girl closet';
+
+  @override
+  String get wardrobeLooksTab => 'Образы';
+
+  @override
+  String get wardrobePhotosTab => 'Мои фото';
+
+  @override
+  String get wardrobeOnDevice => 'НА БРЕЛОКЕ';
+
+  @override
+  String get wardrobeCurrentLookMeta => 'feeling flirty';
+
+  @override
+  String get wardrobeWorn => 'НА МНЕ';
+
+  @override
+  String get addLookShort => 'Добавить';
+
+  @override
+  String get createLookStep => 'CREATE A LOOK · 1/3';
+
+  @override
+  String get createLookTitle => 'Твоя история';
+
+  @override
+  String get createLookAccent => 'make it yours';
+
+  @override
+  String get choosePhoto => 'Выбрать фото';
+
+  @override
+  String get photoFormatsHint => 'JPG / PNG · лицо или любимый кадр';
+
+  @override
+  String get photoFantasyAccent => 'your face, your fantasy';
+
+  @override
+  String get inspiration => 'Вдохновение';
+
+  @override
+  String get inspirationOriginal => 'glossy';
+
+  @override
+  String get inspirationMint => 'mint kiss';
+
+  @override
+  String get inspirationLilac => 'dreamy';
+
+  @override
+  String get inspirationPhoto => 'my photo';
+
+  @override
+  String get prepareForScreen => 'Подготовим для экрана';
+
+  @override
+  String get circularCrop => 'Круглая\nобрезка';
+
+  @override
+  String get lightAndColor => 'Свет и\nцвет';
+
+  @override
+  String get chromeKissFeature => 'Chrome\nKiss';
+
+  @override
+  String get continueAction => 'Продолжить';
+
+  @override
+  String get choosePhotoToContinue => 'Выбери фото, чтобы продолжить.';
 
   @override
   String get homeTab => 'Главная';
