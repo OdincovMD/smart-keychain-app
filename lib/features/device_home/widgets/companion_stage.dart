@@ -207,9 +207,10 @@ final class _JewelryCompanionStage extends StatelessWidget {
                       child: visualStudyOverride ?? _jewelryScreen(context),
                     ),
                     const IgnorePointer(child: _LensDepthOverlay()),
-                    if (scene.content is! ProceduralEyesContent)
+                    if (scene.content is StaticImageContent)
                       IgnorePointer(
                         child: CustomPaint(
+                          key: const Key('companion_stage_makeup'),
                           painter: _CompanionMakeupPainter(
                             _CompanionMakeupScene(
                               liner: colors.accentOptical,

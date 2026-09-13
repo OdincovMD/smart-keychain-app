@@ -195,6 +195,39 @@ void main() {
       isNot(EyeMotionPhase.idle),
     );
   });
+
+  testWidgets('study surface remains usable on compact accessibility view', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(320, 640)
+      ..devicePixelRatio = 1
+      ..padding = const FakeViewPadding(top: 24, bottom: 24)
+      ..viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildAppTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(3)),
+            child: child!,
+          ),
+          home: const CharacterStudyScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('character_study_preview')), findsOneWidget);
+    final finalControl = find.byKey(const Key('study_seed_42'));
+    await tester.ensureVisible(finalControl);
+    await tester.pump();
+    expect(tester.getRect(finalControl).bottom, lessThanOrEqualTo(616));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<ProviderContainer> _pumpAnimatedKissCut(WidgetTester tester) async {

@@ -18,37 +18,45 @@ import '../support/load_app_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(loadAppFonts);
+  setUpAll(loadCompanionHomeFonts);
 
   late Uint8List imageBytes;
+  late Uint8List figmaImageBytes;
   setUpAll(() async {
     imageBytes = await File('assets/scenes/sunny_friend_static_v1.png')
         .readAsBytes();
+    figmaImageBytes = await File('assets/chrome_kiss/wardrobe_user_photo.jpeg')
+        .readAsBytes();
   });
 
-  testWidgets('Image editor create Obsidian', (tester) async {
+  testWidgets('Create Look crop matches Figma 102:287', (tester) async {
     await _pumpEditor(
       tester,
-      imageBytes,
-      appearance: ResolvedAppAppearance.obsidian,
-    );
-
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('baselines/image_editor_obsidian_390x844.png'),
-    );
-  });
-
-  testWidgets('Image editor create Pearl', (tester) async {
-    await _pumpEditor(
-      tester,
-      imageBytes,
+      figmaImageBytes,
       appearance: ResolvedAppAppearance.pearl,
+      size: const Size(393, 852),
     );
 
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('baselines/image_editor_pearl_390x844.png'),
+      matchesGoldenFile('baselines/create_look_crop_figma_102_287.png'),
+    );
+  });
+
+  testWidgets('Create Look beauty matches Figma 114:290', (tester) async {
+    await _pumpEditor(
+      tester,
+      figmaImageBytes,
+      appearance: ResolvedAppAppearance.pearl,
+      size: const Size(393, 852),
+    );
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/create_look_beauty_figma_114_290.png'),
     );
   });
 
@@ -81,6 +89,12 @@ void main() {
       onSave: (_) => save.future,
     );
 
+    await tester.ensureVisible(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('image_editor_save')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('image_editor_save')));
     await tester.pump();
 
@@ -98,10 +112,11 @@ Future<void> _pumpEditor(
   ImageEditorMode mode = ImageEditorMode.create,
   CropSpec initialCropSpec = CropSpec.centered,
   ImageEditorSaveCallback? onSave,
+  Size size = const Size(390, 844),
 }) async {
   tester.view
     ..devicePixelRatio = 1
-    ..physicalSize = const Size(390, 844);
+    ..physicalSize = size;
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(

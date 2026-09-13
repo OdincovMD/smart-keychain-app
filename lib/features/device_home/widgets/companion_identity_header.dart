@@ -55,8 +55,10 @@ final class CompanionIdentityHeader extends StatelessWidget {
                     Semantics(
                       label: '${l10n.companionName}, ${l10n.heartSymbolLabel}',
                       child: ExcludeSemantics(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 2,
                           children: [
                             Text(
                               l10n.companionName,
@@ -69,7 +71,6 @@ final class CompanionIdentityHeader extends StatelessWidget {
                                 letterSpacing: 0,
                               ),
                             ),
-                            const SizedBox(width: 4),
                             Icon(
                               Icons.favorite_border_rounded,
                               color: colors.accentPrimary,

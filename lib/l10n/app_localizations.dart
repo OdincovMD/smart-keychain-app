@@ -706,6 +706,138 @@ abstract class AppLocalizations {
   /// **'make it yours'**
   String get createLookAccent;
 
+  /// No description provided for @createLookCropStep.
+  ///
+  /// In ru, this message translates to:
+  /// **'CREATE A LOOK · 2/3'**
+  String get createLookCropStep;
+
+  /// No description provided for @createLookCropTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Круглая обрезка'**
+  String get createLookCropTitle;
+
+  /// No description provided for @createLookCropAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'center your fantasy'**
+  String get createLookCropAccent;
+
+  /// No description provided for @movePhotoInsideCircle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перемещай фото внутри круга'**
+  String get movePhotoInsideCircle;
+
+  /// No description provided for @pinchZoomAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'pinch, zoom, kiss'**
+  String get pinchZoomAccent;
+
+  /// No description provided for @zoomLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'МАСШТАБ'**
+  String get zoomLabel;
+
+  /// No description provided for @autoCenter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автоцентр'**
+  String get autoCenter;
+
+  /// No description provided for @nextAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дальше'**
+  String get nextAction;
+
+  /// No description provided for @nextLightColorHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дальше настроим свет и цвет'**
+  String get nextLightColorHint;
+
+  /// No description provided for @createLookBeautyStep.
+  ///
+  /// In ru, this message translates to:
+  /// **'CREATE A LOOK · 3/3'**
+  String get createLookBeautyStep;
+
+  /// No description provided for @createLookBeautyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свет и цвет'**
+  String get createLookBeautyTitle;
+
+  /// No description provided for @createLookBeautyAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'make it iconic'**
+  String get createLookBeautyAccent;
+
+  /// No description provided for @liveLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'LIVE'**
+  String get liveLabel;
+
+  /// No description provided for @glowingAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'she’s glowing'**
+  String get glowingAccent;
+
+  /// No description provided for @moodLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'НАСТРОЕНИЕ'**
+  String get moodLabel;
+
+  /// No description provided for @candyGloss.
+  ///
+  /// In ru, this message translates to:
+  /// **'Candy Gloss'**
+  String get candyGloss;
+
+  /// No description provided for @pearlDoll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Pearl Doll'**
+  String get pearlDoll;
+
+  /// No description provided for @clubKiss.
+  ///
+  /// In ru, this message translates to:
+  /// **'Club Kiss'**
+  String get clubKiss;
+
+  /// No description provided for @fineTuneLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ТОНКАЯ НАСТРОЙКА'**
+  String get fineTuneLabel;
+
+  /// No description provided for @glowLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сияние'**
+  String get glowLabel;
+
+  /// No description provided for @warmthLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тепло'**
+  String get warmthLabel;
+
+  /// No description provided for @lookAppearsInWardrobe.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образ появится в «Моих образах»'**
+  String get lookAppearsInWardrobe;
+
   /// No description provided for @choosePhoto.
   ///
   /// In ru, this message translates to:

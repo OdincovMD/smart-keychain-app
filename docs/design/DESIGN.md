@@ -449,6 +449,8 @@ image-flow:
 |---|---|---:|---|
 | Wardrobe / Pearl | `74:83` | `393×852` | `UserContentScreen`, `SceneRepository`, `UserContentController` |
 | Create Look / Upload Photo | `94:248` | `393×852` | `CreateLookScreen`; после выбора — `UserImageController` |
+| Create Look / Round Crop | `102:287` | `393×852` | `ImageEditorScreen`, `ImageEditorController` |
+| Create Look / Light & Color | `114:290` | `393×852` | create-ветка `ImageEditorScreen`; сохранение — `UserImageController` |
 
 Общий canvas — `#F4F2F6`, frame radius — `48`, content inset — `24`, ключевые
 карточки имеют radius `32`. На reference viewport экран повторяет координаты
@@ -457,6 +459,11 @@ image-flow:
 Wardrobe остаётся единой библиотекой built-in и пользовательских образов, а
 `CreateLookScreen` возвращает только намерение `pickPhoto`: picker, crop,
 сохранение и ошибки по-прежнему принадлежат существующему application workflow.
+Шаги 2/3 и 3/3 живут в одном editor route, поэтому Back с финальной настройки
+возвращает к crop с сохранённым положением фото, а Save остаётся единственной
+точкой входа в текущую транзакцию processing/persistence. Mood и fine-tune
+controls являются preview-настройкой presentation-слоя до появления отдельного
+domain/persistence-контракта для цветокоррекции; они не меняют `CropSpec`.
 
 ## Open Design Questions
 

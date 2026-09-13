@@ -111,6 +111,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.byType(ImageEditorScreen), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('image_editor_save')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('image_editor_save')));
     await tester.pump();
     await tester.pump();

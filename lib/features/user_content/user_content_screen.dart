@@ -270,7 +270,11 @@ final class _WardrobeCollection extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
-        final exact = constraints.maxWidth >= 380 && textScale <= 1.15;
+        final exact =
+            constraints.maxWidth >= 380 &&
+            constraints.maxHeight >= 844 &&
+            textScale <= 1.15 &&
+            MediaQuery.viewPaddingOf(context) == EdgeInsets.zero;
         return exact
             ? _WardrobeReferenceLayout(
                 scenes: scenes,
@@ -373,6 +377,7 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
                 child: _CurrentLookCard(
                   scene: active,
                   enabled: enabled,
+                  adaptive: false,
                   onPressed: () => onOpenLook(active),
                 ),
               ),
@@ -474,6 +479,7 @@ final class _WardrobeAdaptiveLayout extends StatelessWidget {
                   child: _CurrentLookCard(
                     scene: active,
                     enabled: enabled,
+                    adaptive: true,
                     onPressed: () => onOpenLook(active),
                   ),
                 ),
@@ -570,9 +576,16 @@ final class _WardrobeTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final largeText = MediaQuery.textScalerOf(context).scale(12) > 18;
+    final width = math.min(345.0, MediaQuery.sizeOf(context).width - 48);
+    final referenceLayout =
+        MediaQuery.sizeOf(context).width >= 380 &&
+        MediaQuery.sizeOf(context).height >= 844 &&
+        !largeText &&
+        MediaQuery.viewPaddingOf(context) == EdgeInsets.zero;
     return Container(
-      width: math.min(345, MediaQuery.sizeOf(context).width - 48),
-      height: 44,
+      width: width,
+      height: largeText ? 72 : 44,
       decoration: BoxDecoration(
         color: const Color(0x52FFFFFF),
         borderRadius: BorderRadius.circular(24),
@@ -605,7 +618,9 @@ final class _WardrobeTabs extends StatelessWidget {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            left: photosOnly ? 236 : 63,
+            left: referenceLayout
+                ? (photosOnly ? 236 : 63)
+                : (photosOnly ? 236 : 63) * width / 345,
             bottom: 1,
             child: const DecoratedBox(
               decoration: BoxDecoration(
@@ -637,39 +652,72 @@ final class _WardrobeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final largeText = MediaQuery.textScalerOf(context).scale(12) > 18;
     return Semantics(
       button: true,
       selected: selected,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(24),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: selected
-                      ? ChromeKissFidelityTokens.ink
-                      : ChromeKissFidelityTokens.mutedInk,
-                  fontFamily: 'Manrope',
-                  fontSize: 12,
-                  height: 16 / 12,
-                  fontWeight: FontWeight.w400,
+        child: largeText
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: selected
+                              ? ChromeKissFidelityTokens.ink
+                              : ChromeKissFidelityTokens.mutedInk,
+                          fontFamily: 'Manrope',
+                          fontSize: 12,
+                          height: 16 / 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    if (showHeart) ...[
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.favorite_border_rounded,
+                        size: 12,
+                        color: ChromeKissFidelityTokens.ink,
+                      ),
+                    ],
+                  ],
+                ),
+              )
+            : Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: selected
+                            ? ChromeKissFidelityTokens.ink
+                            : ChromeKissFidelityTokens.mutedInk,
+                        fontFamily: 'Manrope',
+                        fontSize: 12,
+                        height: 16 / 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    if (showHeart) ...[
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.favorite_border_rounded,
+                        size: 12,
+                        color: ChromeKissFidelityTokens.ink,
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              if (showHeart) ...[
-                const SizedBox(width: 2),
-                const Icon(
-                  Icons.favorite_border_rounded,
-                  size: 12,
-                  color: ChromeKissFidelityTokens.ink,
-                ),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -679,17 +727,122 @@ final class _CurrentLookCard extends StatelessWidget {
   const _CurrentLookCard({
     required this.scene,
     required this.enabled,
+    required this.adaptive,
     required this.onPressed,
   });
 
   final Scene scene;
   final bool enabled;
+  final bool adaptive;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final width = math.min(345.0, MediaQuery.sizeOf(context).width - 48);
+    if (adaptive) {
+      return Container(
+        width: width,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xD9FFFFFF), Color(0x66FFFFFF), Color(0x55EADDE8)],
+          ),
+          border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _CurrentLookPreview(scene: scene),
+            const SizedBox(height: 8),
+            Text(
+              l10n.wardrobeOnDevice,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: ChromeKissFidelityTokens.mutedInk,
+                fontFamily: 'Manrope',
+                fontSize: 11,
+                height: 15 / 11,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _sceneLabel(l10n, scene),
+              textAlign: TextAlign.center,
+              style: ChromeKissFidelityTokens.titleStyle.copyWith(
+                fontSize: 26,
+                height: 32 / 26,
+              ),
+            ),
+            ChromeKissScriptHeartText(
+              text: l10n.wardrobeCurrentLookMeta,
+              fontSize: 19,
+              centered: true,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                Container(
+                  constraints: const BoxConstraints(minHeight: 28),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 17,
+                    vertical: 6,
+                  ),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0x70FFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: ChromeKissFidelityTokens.chromeLine,
+                    ),
+                  ),
+                  child: Text(
+                    l10n.wardrobeWorn,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: ChromeKissFidelityTokens.accentInk,
+                      fontFamily: 'Manrope',
+                      fontSize: 11,
+                      height: 15 / 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Semantics(
+                  button: true,
+                  enabled: enabled,
+                  label: _sceneLabel(l10n, scene),
+                  child: SizedBox.square(
+                    dimension: 48,
+                    child: Material(
+                      color: ChromeKissFidelityTokens.lens,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        key: const Key('wardrobe_current_look_button'),
+                        customBorder: const CircleBorder(),
+                        onTap: enabled ? onPressed : null,
+                        child: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: ChromeKissFidelityTokens.lacquer,
+                          size: 25,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       width: width,
       height: 160,
@@ -883,10 +1036,30 @@ final class _WardrobeGrid extends StatelessWidget {
         onPressed: onAddLook,
       ),
     ];
-    return SizedBox(
-      key: const Key('my_content_list'),
-      width: 345,
-      child: Wrap(spacing: 35, runSpacing: 35, children: entries),
+    if (referenceLayout) {
+      return SizedBox(
+        key: const Key('my_content_list'),
+        width: 345,
+        child: Wrap(spacing: 35, runSpacing: 35, children: entries),
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final tileWidth = (constraints.maxWidth - spacing) / 2;
+        return SizedBox(
+          key: const Key('my_content_list'),
+          width: constraints.maxWidth,
+          child: Wrap(
+            spacing: spacing,
+            runSpacing: 16,
+            children: [
+              for (final entry in entries)
+                SizedBox(width: tileWidth, child: entry),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -912,6 +1085,10 @@ final class _WardrobeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final adaptiveHeight = math.max(
+      178.0,
+      142 + MediaQuery.textScalerOf(context).scale(18) * 2,
+    );
     return Semantics(
       button: true,
       enabled: enabled,
@@ -919,7 +1096,7 @@ final class _WardrobeTile extends StatelessWidget {
       label: _sceneLabel(l10n, scene),
       child: SizedBox(
         width: 155,
-        height: referenceLayout ? 149 : 178,
+        height: referenceLayout ? 149 : adaptiveHeight,
         child: InkWell(
           onTap: enabled ? onPressed : null,
           borderRadius: BorderRadius.circular(20),
@@ -947,6 +1124,8 @@ final class _WardrobeTile extends StatelessWidget {
                 Text(
                   _sceneLabel(l10n, scene),
                   textAlign: TextAlign.center,
+                  maxLines: referenceLayout ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: ChromeKissFidelityTokens.ink,
                     fontFamily: 'Manrope',
@@ -1047,6 +1226,10 @@ final class _AddWardrobeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final adaptiveHeight = math.max(
+      178.0,
+      142 + MediaQuery.textScalerOf(context).scale(18) * 2,
+    );
     return Semantics(
       button: true,
       enabled: enabled,
@@ -1054,7 +1237,7 @@ final class _AddWardrobeTile extends StatelessWidget {
       child: SizedBox(
         key: const Key('wardrobe_add_look_tile'),
         width: 155,
-        height: referenceLayout ? 149 : 178,
+        height: referenceLayout ? 149 : adaptiveHeight,
         child: InkWell(
           key: hasUserLooks
               ? const Key('my_content_add_button')
@@ -1085,6 +1268,9 @@ final class _AddWardrobeTile extends StatelessWidget {
                 const SizedBox(height: 9),
                 Text(
                   l10n.addLookShort,
+                  textAlign: referenceLayout ? null : TextAlign.center,
+                  maxLines: referenceLayout ? null : 2,
+                  overflow: referenceLayout ? null : TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: ChromeKissFidelityTokens.ink,
                     fontFamily: 'Manrope',

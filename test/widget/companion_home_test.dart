@@ -15,17 +15,57 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(loadCompanionHomeFonts);
 
-  for (final testCase in <({String name, Size size, double textScale})>[
-    (name: 'small', size: const Size(360, 800), textScale: 1),
-    (name: 'reference', size: const Size(390, 844), textScale: 1),
-    (name: 'medium', size: const Size(412, 915), textScale: 1),
-    (name: 'large text', size: const Size(360, 800), textScale: 1.8),
-  ]) {
+  for (final testCase
+      in <({String name, Size size, double textScale, EdgeInsets viewPadding})>[
+        (
+          name: 'compact',
+          size: const Size(320, 640),
+          textScale: 1,
+          viewPadding: EdgeInsets.zero,
+        ),
+        (
+          name: 'small',
+          size: const Size(360, 800),
+          textScale: 1,
+          viewPadding: EdgeInsets.zero,
+        ),
+        (
+          name: 'reference',
+          size: const Size(390, 844),
+          textScale: 1,
+          viewPadding: EdgeInsets.zero,
+        ),
+        (
+          name: 'Android insets',
+          size: const Size(390, 844),
+          textScale: 1,
+          viewPadding: const EdgeInsets.only(top: 24, bottom: 24),
+        ),
+        (
+          name: 'medium',
+          size: const Size(412, 915),
+          textScale: 1,
+          viewPadding: EdgeInsets.zero,
+        ),
+        (
+          name: 'large text',
+          size: const Size(360, 800),
+          textScale: 1.8,
+          viewPadding: EdgeInsets.zero,
+        ),
+        (
+          name: 'accessibility text',
+          size: const Size(390, 844),
+          textScale: 3,
+          viewPadding: EdgeInsets.zero,
+        ),
+      ]) {
     testWidgets('Companion Home fits ${testCase.name}', (tester) async {
       await _pumpConnectedHome(
         tester,
         size: testCase.size,
         textScale: testCase.textScale,
+        viewPadding: testCase.viewPadding,
       );
 
       expect(find.byKey(const Key('companion_stage')), findsOneWidget);
@@ -121,6 +161,47 @@ void main() {
     expect(find.byKey(const Key('brightness_slider')), findsOneWidget);
   });
 
+  testWidgets('utility sheets remain usable on compact accessibility view', (
+    tester,
+  ) async {
+    await _pumpConnectedHome(
+      tester,
+      size: const Size(320, 640),
+      textScale: 3,
+      viewPadding: const EdgeInsets.only(top: 24, bottom: 24),
+    );
+
+    final brightnessButton = find.byKey(
+      const Key('brightness_settings_button'),
+    );
+    await tester.ensureVisible(brightnessButton);
+    await tester.pump();
+    await tester.tap(brightnessButton);
+    await tester.pump();
+    expect(find.byKey(const Key('brightness_sheet')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    Navigator.of(tester.element(find.byKey(const Key('brightness_sheet'))))
+        .pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final profileButton = find.byKey(const Key('simulator_settings_button'));
+    await tester.ensureVisible(profileButton);
+    await tester.pump();
+    await tester.tap(profileButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final settingsScroll = find.byKey(const Key('simulator_settings_scroll'));
+    expect(settingsScroll, findsOneWidget);
+    final finalAction = find.byKey(const Key('eye_special_action_button'));
+    await tester.ensureVisible(finalAction);
+    await tester.pump();
+    expect(tester.getRect(finalAction).bottom, lessThanOrEqualTo(616));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('full wardrobe opens look details and installs a look', (
     tester,
   ) async {
@@ -156,11 +237,20 @@ Future<void> _pumpConnectedHome(
   WidgetTester tester, {
   Size size = const Size(390, 844),
   double textScale = 1,
+  EdgeInsets viewPadding = EdgeInsets.zero,
 }) async {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.resetPhysicalSize);
-  addTearDown(tester.view.resetDevicePixelRatio);
+  tester.view
+    ..physicalSize = size
+    ..devicePixelRatio = 1
+    ..padding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    )
+    ..viewPadding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    );
+  addTearDown(tester.view.reset);
 
   final scenes = BuiltInSceneRepository();
   final device = VirtualDeviceRepository(

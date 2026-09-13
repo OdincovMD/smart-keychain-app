@@ -8,6 +8,7 @@ import '../../app/chrome_kiss_theme.dart';
 import '../../domain/image/crop_spec.dart';
 import '../../l10n/app_localizations.dart';
 import '../device_home/widgets/jewel_button.dart';
+import 'create_look_editor_flow.dart';
 import 'image_editor_controller.dart';
 
 enum ImageEditorMode { create, edit }
@@ -49,16 +50,22 @@ final class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.mode == ImageEditorMode.create) {
+      return CreateLookEditorFlow(
+        session: _session,
+        originalBytes: widget.originalBytes,
+        processing: _processing,
+        onCancel: () => Navigator.of(context).pop(),
+        onSave: _save,
+      );
+    }
+
     final l10n = AppLocalizations.of(context);
     final colors = context.chromeKiss;
     final motion = context.chromeKissMotion;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final title = widget.mode == ImageEditorMode.create
-        ? l10n.createLook
-        : l10n.adjustLookCrop;
-    final saveLabel = widget.mode == ImageEditorMode.create
-        ? l10n.saveLook
-        : l10n.saveLookChanges;
+    final title = l10n.adjustLookCrop;
+    final saveLabel = l10n.saveLookChanges;
 
     return Scaffold(
       key: const Key('image_editor_screen'),

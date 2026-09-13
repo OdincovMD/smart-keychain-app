@@ -329,6 +329,72 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createLookAccent => 'make it yours';
 
   @override
+  String get createLookCropStep => 'CREATE A LOOK · 2/3';
+
+  @override
+  String get createLookCropTitle => 'Круглая обрезка';
+
+  @override
+  String get createLookCropAccent => 'center your fantasy';
+
+  @override
+  String get movePhotoInsideCircle => 'Перемещай фото внутри круга';
+
+  @override
+  String get pinchZoomAccent => 'pinch, zoom, kiss';
+
+  @override
+  String get zoomLabel => 'МАСШТАБ';
+
+  @override
+  String get autoCenter => 'Автоцентр';
+
+  @override
+  String get nextAction => 'Дальше';
+
+  @override
+  String get nextLightColorHint => 'Дальше настроим свет и цвет';
+
+  @override
+  String get createLookBeautyStep => 'CREATE A LOOK · 3/3';
+
+  @override
+  String get createLookBeautyTitle => 'Свет и цвет';
+
+  @override
+  String get createLookBeautyAccent => 'make it iconic';
+
+  @override
+  String get liveLabel => 'LIVE';
+
+  @override
+  String get glowingAccent => 'she’s glowing';
+
+  @override
+  String get moodLabel => 'НАСТРОЕНИЕ';
+
+  @override
+  String get candyGloss => 'Candy Gloss';
+
+  @override
+  String get pearlDoll => 'Pearl Doll';
+
+  @override
+  String get clubKiss => 'Club Kiss';
+
+  @override
+  String get fineTuneLabel => 'ТОНКАЯ НАСТРОЙКА';
+
+  @override
+  String get glowLabel => 'Сияние';
+
+  @override
+  String get warmthLabel => 'Тепло';
+
+  @override
+  String get lookAppearsInWardrobe => 'Образ появится в «Моих образах»';
+
+  @override
   String get choosePhoto => 'Выбрать фото';
 
   @override

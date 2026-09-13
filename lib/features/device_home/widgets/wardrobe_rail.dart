@@ -162,6 +162,7 @@ final class _CompactWardrobeRail extends StatelessWidget {
     final colors = context.chromeKiss;
     final home = context.companionHome;
     final visibleScenes = scenes.take(3).toList(growable: false);
+    final largeText = MediaQuery.textScalerOf(context).scale(12) > 16;
     final labels = [
       l10n.homeLookOriginal,
       l10n.homeLookMint,
@@ -177,42 +178,81 @@ final class _CompactWardrobeRail extends StatelessWidget {
       key: const Key('wardrobe_rail'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 26,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.myContent,
-                  style: context.chromeKissText.body.copyWith(
-                    color: home.textPrimary,
-                    fontSize: 18,
-                    height: 1.45,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-              TextButton.icon(
-                key: const Key('open_all_looks_button'),
-                onPressed: onOpenAll,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(64, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  foregroundColor: colors.accentPrimary,
-                  textStyle: context.chromeKissText.status.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0,
-                  ),
-                ),
-                iconAlignment: IconAlignment.end,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 13),
-                label: Text(l10n.allLooks),
-              ),
-            ],
+        if (largeText) ...[
+          Text(
+            l10n.myContent,
+            style: context.chromeKissText.body.copyWith(
+              color: home.textPrimary,
+              fontSize: 18,
+              height: 1.45,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
           ),
-        ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              key: const Key('open_all_looks_button'),
+              onPressed: onOpenAll,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(64, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                foregroundColor: colors.accentPrimary,
+                textStyle: context.chromeKissText.status.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0,
+                ),
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  Text(l10n.allLooks),
+                  const Icon(Icons.arrow_forward_rounded, size: 13),
+                ],
+              ),
+            ),
+          ),
+        ] else
+          SizedBox(
+            height: 26,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.myContent,
+                    style: context.chromeKissText.body.copyWith(
+                      color: home.textPrimary,
+                      fontSize: 18,
+                      height: 1.45,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  key: const Key('open_all_looks_button'),
+                  onPressed: onOpenAll,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(64, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    foregroundColor: colors.accentPrimary,
+                    textStyle: context.chromeKissText.status.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  iconAlignment: IconAlignment.end,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 13),
+                  label: Text(l10n.allLooks),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 6),
         LayoutBuilder(
           builder: (context, constraints) {

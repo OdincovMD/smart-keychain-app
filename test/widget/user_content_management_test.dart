@@ -188,9 +188,41 @@ void main() {
   );
 
   for (final testCase in const [
-    (name: 'compact 320x640', size: Size(320, 640), scale: 1.0),
-    (name: 'large 430x932', size: Size(430, 932), scale: 1.0),
-    (name: 'text scale 180%', size: Size(390, 844), scale: 1.8),
+    (
+      name: 'compact 320x640',
+      size: Size(320, 640),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'Android insets',
+      size: Size(390, 844),
+      scale: 1.0,
+      top: 24.0,
+      bottom: 24.0,
+    ),
+    (
+      name: 'large 430x932',
+      size: Size(430, 932),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'text scale 180%',
+      size: Size(390, 844),
+      scale: 1.8,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'text scale 300%',
+      size: Size(390, 844),
+      scale: 3.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
   ]) {
     testWidgets('Wardrobe remains usable at ${testCase.name}', (tester) async {
       final rig = await _UserContentRig.create(tester);
@@ -199,13 +231,78 @@ void main() {
         rig,
         size: testCase.size,
         textScaler: TextScaler.linear(testCase.scale),
+        viewPadding: EdgeInsets.only(
+          top: testCase.top,
+          bottom: testCase.bottom,
+        ),
       );
 
-      expect(find.text('Мои образы'), findsOneWidget);
-      expect(find.byKey(const Key('my_content_list')), findsOneWidget);
+      expect(find.text('Гардероб'), findsOneWidget);
+      final scrollable = find.byKey(const Key('wardrobe_scroll'));
+      final contentList = find.byKey(const Key('my_content_list'));
+      await _dragUntilBuilt(
+        tester,
+        target: contentList,
+        scrollable: scrollable,
+      );
       expect(find.byKey(const Key('my_content_add_button')), findsOneWidget);
+
+      final firstTile = find.byKey(
+        const Key('my_content_scene_${BuiltInSceneRepository.livingEyesId}'),
+      );
+      final secondTile = find.byKey(
+        const Key('my_content_scene_${BuiltInSceneRepository.mintEyesId}'),
+      );
+      expect(firstTile, findsOneWidget);
+      expect(secondTile, findsOneWidget);
+      expect(
+        (tester.getTopLeft(firstTile).dy - tester.getTopLeft(secondTile).dy)
+            .abs(),
+        lessThan(1),
+      );
+      expect(
+        tester.getTopLeft(secondTile).dx,
+        greaterThan(tester.getTopLeft(firstTile).dx),
+      );
+      final navigation = find.byKey(const Key('chrome_kiss_bottom_navigation'));
+      await _dragUntilBuilt(tester, target: navigation, scrollable: scrollable);
+      expect(
+        tester.getRect(navigation).width,
+        lessThanOrEqualTo(testCase.size.width),
+      );
+      expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('look details remains usable on compact accessibility view', (
+    tester,
+  ) async {
+    final rig = await _UserContentRig.create(tester);
+    await _pumpScreen(
+      tester,
+      rig,
+      size: const Size(320, 640),
+      textScaler: const TextScaler.linear(3),
+      viewPadding: const EdgeInsets.only(top: 24, bottom: 24),
+    );
+    final sceneId = UserImageSceneRepository.sceneIdForAsset(rig.asset!.id);
+    final tile = find.byKey(Key('my_content_scene_$sceneId'));
+    await _dragUntilBuilt(
+      tester,
+      target: tile,
+      scrollable: find.byKey(const Key('wardrobe_scroll')),
+    );
+    await tester.tap(tile);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('look_details_scroll')), findsOneWidget);
+    final edit = find.byKey(Key('edit_$sceneId'));
+    await tester.ensureVisible(edit);
+    await tester.pump();
+    expect(tester.getRect(edit).bottom, lessThanOrEqualTo(616));
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('built-in look details do not expose edit or delete', (
     tester,
@@ -312,17 +409,41 @@ final class _UserContentRig {
   }
 }
 
+Future<void> _dragUntilBuilt(
+  WidgetTester tester, {
+  required Finder target,
+  required Finder scrollable,
+}) async {
+  for (var attempt = 0; attempt < 10 && target.evaluate().isEmpty; attempt++) {
+    await tester.drag(scrollable, const Offset(0, -420));
+    await tester.pump();
+  }
+  expect(target, findsOneWidget);
+  await tester.ensureVisible(target);
+  await tester.pump();
+}
+
 Future<void> _pumpScreen(
   WidgetTester tester,
   _UserContentRig rig, {
   Size size = const Size(390, 844),
   TextScaler textScaler = TextScaler.noScaling,
+  EdgeInsets viewPadding = EdgeInsets.zero,
 }) async {
   final connection = rig.device.connect(VirtualDeviceEngine.deviceId);
   await _pumpCommandFrames(tester, 6);
   await connection;
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1;
+  tester.view
+    ..physicalSize = size
+    ..devicePixelRatio = 1
+    ..padding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    )
+    ..viewPadding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    );
   addTearDown(() async {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();

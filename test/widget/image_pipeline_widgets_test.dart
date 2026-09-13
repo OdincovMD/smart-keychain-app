@@ -21,7 +21,7 @@ import '../support/load_app_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(loadAppFonts);
+  setUpAll(loadCompanionHomeFonts);
 
   testWidgets('image editor supports gesture, rotate, reset, and save', (
     tester,
@@ -42,16 +42,20 @@ void main() {
     await tester.pump();
 
     expect(find.byType(ImageEditorScreen), findsOneWidget);
-    expect(find.text('Создать образ'), findsOneWidget);
-    expect(find.text('Сохранить образ'), findsOneWidget);
+    expect(find.text('Круглая обрезка'), findsOneWidget);
+    expect(find.text('Дальше'), findsOneWidget);
     expect(find.byKey(const Key('image_crop_gesture')), findsOneWidget);
     await tester.tap(find.byKey(const Key('image_editor_rotate')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('image_editor_reset')));
     await tester.pump();
 
-    expect(find.byKey(const Key('image_editor_save')), findsOneWidget);
+    expect(find.byKey(const Key('image_editor_next')), findsOneWidget);
     expect(find.byKey(const Key('image_editor_cancel')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    expect(find.text('Свет и цвет'), findsOneWidget);
+    expect(find.byKey(const Key('image_editor_save')), findsOneWidget);
   });
 
   testWidgets('existing look uses edit copy and keeps the restored crop', (
@@ -80,6 +84,53 @@ void main() {
     expect(find.text('Сохранить изменения'), findsOneWidget);
   });
 
+  testWidgets('beauty stage presets, tuning, reset, and back stay functional', (
+    tester,
+  ) async {
+    final bytes = await _readFixture(tester);
+    await _pumpEditor(
+      tester,
+      bytes,
+      size: const Size(393, 852),
+      appearance: ResolvedAppAppearance.pearl,
+    );
+
+    await tester.tap(find.byKey(const Key('image_editor_rotate')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+
+    expect(find.text('Свет и цвет'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('beauty_preset_pearlDoll')));
+    await tester.pump();
+    expect(find.text('PEARL DOLL · 48%'), findsOneWidget);
+
+    final glowTrack = tester.getRect(
+      find.byKey(const Key('beauty_glow_slider')),
+    );
+    await tester.tapAt(Offset(glowTrack.left + 20, glowTrack.bottom - 5));
+    await tester.pump();
+    expect(find.text('48%'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('beauty_reset')));
+    await tester.pump();
+    expect(find.text('CANDY GLOSS · 72%'), findsOneWidget);
+
+    expect(
+      tester.getSize(find.byKey(const Key('image_editor_cancel'))),
+      const Size(44, 44),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('image_editor_save'))).height,
+      greaterThanOrEqualTo(48),
+    );
+
+    await tester.tap(find.byKey(const Key('image_editor_cancel')));
+    await tester.pump();
+    expect(find.text('Круглая обрезка'), findsOneWidget);
+    expect(find.byType(ImageEditorScreen), findsOneWidget);
+  });
+
   testWidgets(
     'processing is stable and save returns only after work completes',
     (tester) async {
@@ -103,14 +154,28 @@ void main() {
       await tester.tap(find.byKey(const Key('open_editor')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+      await _dragUntilBuilt(
+        tester,
+        target: find.byKey(const Key('image_editor_rotate')),
+        scrollable: find.byKey(const Key('image_editor_crop_scroll')),
+      );
       await tester.tap(find.byKey(const Key('image_editor_rotate')));
       await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('image_editor_next')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('image_editor_next')));
+      await tester.pump();
+      await _dragUntilBuilt(
+        tester,
+        target: find.byKey(const Key('image_editor_save')),
+        scrollable: find.byKey(const Key('image_editor_beauty_scroll')),
+      );
       await tester.tap(find.byKey(const Key('image_editor_save')));
       await tester.pump();
 
       expect(submittedCrop, isNotNull);
       expect(submittedCrop!.rotation, isNot(0));
-      expect(find.text('Подготавливаем…'), findsNWidgets(2));
+      expect(find.text('Подготавливаем…'), findsOneWidget);
       expect(find.byType(ImageEditorScreen), findsOneWidget);
 
       save.complete(true);
@@ -152,10 +217,48 @@ void main() {
   });
 
   for (final testCase in const [
-    (name: 'compact 320x640', size: Size(320, 640), scale: 1.0),
-    (name: 'standard 390x844', size: Size(390, 844), scale: 1.0),
-    (name: 'large 430x932', size: Size(430, 932), scale: 1.0),
-    (name: 'text scale 180%', size: Size(390, 844), scale: 1.8),
+    (
+      name: 'compact 320x640',
+      size: Size(320, 640),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'standard 390x844',
+      size: Size(390, 844),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'Android insets',
+      size: Size(390, 844),
+      scale: 1.0,
+      top: 24.0,
+      bottom: 24.0,
+    ),
+    (
+      name: 'large 430x932',
+      size: Size(430, 932),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'text scale 180%',
+      size: Size(390, 844),
+      scale: 1.8,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'text scale 300%',
+      size: Size(390, 844),
+      scale: 3.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
   ]) {
     testWidgets('image editor remains usable at ${testCase.name}', (
       tester,
@@ -166,10 +269,26 @@ void main() {
         bytes,
         size: testCase.size,
         textScaler: testCase.scale,
+        viewPadding: EdgeInsets.only(
+          top: testCase.top,
+          bottom: testCase.bottom,
+        ),
       );
 
       expect(tester.takeException(), isNull);
       expect(find.byKey(const Key('image_crop_gesture')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('image_editor_next')),
+        220,
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('image_editor_next')));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('image_editor_save')),
+        220,
+      );
+      await tester.pump();
       expect(find.byKey(const Key('image_editor_save')), findsOneWidget);
       final saveSize = tester.getSize(
         find.byKey(const Key('image_editor_save')),
@@ -184,6 +303,10 @@ void main() {
 
     expect(find.byKey(const Key('image_editor_screen')), findsOneWidget);
     expect(find.byKey(const Key('image_crop_gesture')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
     expect(find.text('Сохранить образ'), findsOneWidget);
   });
 
@@ -246,18 +369,41 @@ Future<Uint8List> _readFixture(WidgetTester tester) async {
   ))!;
 }
 
+Future<void> _dragUntilBuilt(
+  WidgetTester tester, {
+  required Finder target,
+  required Finder scrollable,
+}) async {
+  for (var attempt = 0; attempt < 8 && target.evaluate().isEmpty; attempt++) {
+    await tester.drag(scrollable, const Offset(0, -360));
+    await tester.pump();
+  }
+  expect(target, findsOneWidget);
+  await tester.ensureVisible(target);
+  await tester.pump();
+}
+
 Future<void> _pumpEditor(
   WidgetTester tester,
   Uint8List bytes, {
   Size size = const Size(390, 844),
   double textScaler = 1,
+  EdgeInsets viewPadding = EdgeInsets.zero,
   ResolvedAppAppearance appearance = ResolvedAppAppearance.obsidian,
   ImageEditorMode mode = ImageEditorMode.create,
   CropSpec initialCropSpec = CropSpec.centered,
 }) async {
   tester.view
     ..physicalSize = size
-    ..devicePixelRatio = 1;
+    ..devicePixelRatio = 1
+    ..padding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    )
+    ..viewPadding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    );
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(

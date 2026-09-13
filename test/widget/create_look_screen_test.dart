@@ -37,8 +37,34 @@ void main() {
   });
 
   for (final testCase in const [
-    (name: 'compact 320x640', size: Size(320, 640), scale: 1.0),
-    (name: 'large text 390x844', size: Size(390, 844), scale: 1.8),
+    (
+      name: 'compact 320x640',
+      size: Size(320, 640),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'Android insets',
+      size: Size(390, 844),
+      scale: 1.0,
+      top: 24.0,
+      bottom: 24.0,
+    ),
+    (
+      name: 'large text 390x844',
+      size: Size(390, 844),
+      scale: 1.8,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'accessibility text',
+      size: Size(390, 844),
+      scale: 3.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
   ]) {
     testWidgets('Create Look remains usable at ${testCase.name}', (
       tester,
@@ -54,6 +80,14 @@ void main() {
             data: MediaQueryData(
               size: testCase.size,
               textScaler: TextScaler.linear(testCase.scale),
+              padding: EdgeInsets.only(
+                top: testCase.top,
+                bottom: testCase.bottom,
+              ),
+              viewPadding: EdgeInsets.only(
+                top: testCase.top,
+                bottom: testCase.bottom,
+              ),
             ),
             child: const CreateLookScreen(),
           ),
@@ -62,14 +96,26 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(const Key('create_look_pick_photo')), findsOneWidget);
-      await tester.drag(
-        find.byKey(const Key('create_look_scroll')),
-        const Offset(0, -700),
+      final scroll = find.byKey(const Key('create_look_scroll'));
+      final continueButton = find.byKey(
+        const Key('create_look_continue_button'),
       );
+      for (
+        var attempt = 0;
+        attempt < 8 && continueButton.evaluate().isEmpty;
+        attempt++
+      ) {
+        await tester.drag(scroll, const Offset(0, -500));
+        await tester.pump();
+      }
+      await tester.ensureVisible(continueButton);
       await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(continueButton, findsOneWidget);
+      expect(tester.getRect(continueButton).height, greaterThanOrEqualTo(48));
       expect(
-        find.byKey(const Key('create_look_continue_button')),
-        findsOneWidget,
+        tester.getRect(continueButton).bottom,
+        lessThanOrEqualTo(testCase.size.height),
       );
     });
   }

@@ -389,6 +389,7 @@ final class _ConnectedConfirmation extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.chromeKiss;
+    final largeText = MediaQuery.textScalerOf(context).scale(15.5) > 21;
     return Semantics(
       liveRegion: true,
       label: l10n.pairingConnectedAction,
@@ -409,20 +410,38 @@ final class _ConnectedConfirmation extends StatelessWidget {
               color: colors.materialChrome.withValues(alpha: 0.74),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.done_rounded, color: colors.success, size: 20),
-              const SizedBox(width: 9),
-              Text(
-                l10n.pairingConnectedAction,
-                style: context.chromeKissText.label.copyWith(
-                  color: colors.textPrimary,
-                  fontSize: 15.5,
+          child: largeText
+              ? Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 9,
+                  runSpacing: 4,
+                  children: [
+                    Icon(Icons.done_rounded, color: colors.success, size: 20),
+                    Text(
+                      l10n.pairingConnectedAction,
+                      textAlign: TextAlign.center,
+                      style: context.chromeKissText.label.copyWith(
+                        color: colors.textPrimary,
+                        fontSize: 15.5,
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.done_rounded, color: colors.success, size: 20),
+                    const SizedBox(width: 9),
+                    Text(
+                      l10n.pairingConnectedAction,
+                      style: context.chromeKissText.label.copyWith(
+                        color: colors.textPrimary,
+                        fontSize: 15.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );

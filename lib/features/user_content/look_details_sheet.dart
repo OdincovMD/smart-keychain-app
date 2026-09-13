@@ -66,6 +66,7 @@ final class _LookDetailsSheetState extends ConsumerState<LookDetailsSheet>
           maxHeight: MediaQuery.sizeOf(context).height * 0.82,
         ),
         child: SingleChildScrollView(
+          key: const Key('look_details_scroll'),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 430),

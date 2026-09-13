@@ -102,22 +102,50 @@ void main() {
     }
   });
 
-  testWidgets('pairing remains reachable at supported compact sizes', (
-    tester,
-  ) async {
-    const scenarios = [
-      (Size(320, 640), 1.0),
-      (Size(390, 844), 1.0),
-      (Size(430, 932), 1.0),
-      (Size(390, 844), 1.8),
-    ];
-
-    for (final (size, textScale) in scenarios) {
+  for (final scenario in const [
+    (name: 'compact', size: Size(320, 640), scale: 1.0, top: 0.0, bottom: 0.0),
+    (
+      name: 'iPhone 13',
+      size: Size(390, 844),
+      scale: 1.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: 'Android insets',
+      size: Size(390, 844),
+      scale: 1.0,
+      top: 24.0,
+      bottom: 24.0,
+    ),
+    (name: 'large', size: Size(430, 932), scale: 1.0, top: 0.0, bottom: 0.0),
+    (
+      name: '180% text',
+      size: Size(390, 844),
+      scale: 1.8,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+    (
+      name: '300% text',
+      size: Size(390, 844),
+      scale: 3.0,
+      top: 0.0,
+      bottom: 0.0,
+    ),
+  ]) {
+    testWidgets('pairing remains reachable at ${scenario.name}', (
+      tester,
+    ) async {
       await _pumpPairing(
         tester,
         state: PairingPresentationState.found,
-        size: size,
-        textScale: textScale,
+        size: scenario.size,
+        textScale: scenario.scale,
+        viewPadding: EdgeInsets.only(
+          top: scenario.top,
+          bottom: scenario.bottom,
+        ),
       );
       final cta = find.byKey(const Key('connect_button'));
       await tester.ensureVisible(cta);
@@ -125,9 +153,10 @@ void main() {
       final rect = tester.getRect(cta);
       expect(rect.height, greaterThanOrEqualTo(48));
       expect(rect.top, greaterThanOrEqualTo(0));
-      expect(rect.bottom, lessThanOrEqualTo(size.height));
-    }
-  });
+      expect(rect.bottom, lessThanOrEqualTo(scenario.size.height));
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 Future<void> _pumpPairing(
@@ -136,12 +165,21 @@ Future<void> _pumpPairing(
   ResolvedAppAppearance appearance = ResolvedAppAppearance.obsidian,
   Size size = const Size(390, 844),
   double textScale = 1,
+  EdgeInsets viewPadding = EdgeInsets.zero,
   bool disableAnimations = true,
   VoidCallback? onPrimaryAction,
 }) async {
   tester.view
     ..devicePixelRatio = 1
-    ..physicalSize = size;
+    ..physicalSize = size
+    ..padding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    )
+    ..viewPadding = FakeViewPadding(
+      top: viewPadding.top,
+      bottom: viewPadding.bottom,
+    );
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(

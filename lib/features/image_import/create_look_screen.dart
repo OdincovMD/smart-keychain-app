@@ -21,7 +21,11 @@ final class CreateLookScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
-            final exact = constraints.maxWidth >= 380 && textScale <= 1.15;
+            final exact =
+                constraints.maxWidth >= 380 &&
+                constraints.maxHeight >= 844 &&
+                textScale <= 1.15 &&
+                MediaQuery.viewPaddingOf(context) == EdgeInsets.zero;
             return exact
                 ? const _CreateLookReferenceLayout()
                 : const _CreateLookAdaptiveLayout();
@@ -304,6 +308,154 @@ final class _UploadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final adaptive =
+        MediaQuery.sizeOf(context).width < 380 ||
+        textScale > 1.15 ||
+        MediaQuery.viewPaddingOf(context) != EdgeInsets.zero;
+    if (adaptive) {
+      return Semantics(
+        button: true,
+        label: l10n.choosePhoto,
+        hint: l10n.photoFormatsHint,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 345),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const Key('create_look_pick_photo'),
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(32),
+              child: Ink(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(32),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xE8FFFFFF),
+                      Color(0x88FFFFFF),
+                      Color(0x44ECDDE8),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: ChromeKissFidelityTokens.chromeLine,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 188,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          const Positioned.fill(
+                            child: Image(
+                              image: AssetImage(
+                                'assets/chrome_kiss/create_upload_blush.png',
+                              ),
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                          const Image(
+                            image: AssetImage(
+                              'assets/chrome_kiss/create_upload_halo.png',
+                            ),
+                            width: 202,
+                            height: 202,
+                            filterQuality: FilterQuality.high,
+                          ),
+                          const Image(
+                            image: AssetImage(
+                              'assets/chrome_kiss/create_photo_target.png',
+                            ),
+                            width: 158,
+                            height: 158,
+                            filterQuality: FilterQuality.high,
+                          ),
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFF171122),
+                                  ChromeKissFidelityTokens.lens,
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0x33470533),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: SizedBox.square(
+                              dimension: 56,
+                              child: Icon(
+                                Icons.add_rounded,
+                                color: Colors.white,
+                                size: 29,
+                              ),
+                            ),
+                          ),
+                          const Positioned(
+                            right: 16,
+                            top: 2,
+                            child: Image(
+                              image: AssetImage(
+                                'assets/chrome_kiss/create_upload_bow.png',
+                              ),
+                              width: 40,
+                              height: 28,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      l10n.choosePhoto,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: ChromeKissFidelityTokens.ink,
+                        fontFamily: 'Manrope',
+                        fontSize: 18,
+                        height: 25 / 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.photoFormatsHint,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: ChromeKissFidelityTokens.mutedInk,
+                        fontFamily: 'Manrope',
+                        fontSize: 11,
+                        height: 15 / 11,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ChromeKissScriptHeartText(
+                      text: l10n.photoFantasyAccent,
+                      fontSize: 20,
+                      centered: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Semantics(
       button: true,
       label: l10n.choosePhoto,
@@ -646,6 +798,10 @@ final class _ContinueButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = math.min(335.0, MediaQuery.sizeOf(context).width - 48);
+    final adaptive =
+        MediaQuery.sizeOf(context).width < 380 ||
+        MediaQuery.textScalerOf(context).scale(18) > 21 ||
+        MediaQuery.viewPaddingOf(context) != EdgeInsets.zero;
     return Semantics(
       button: true,
       enabled: false,
@@ -654,8 +810,12 @@ final class _ContinueButton extends StatelessWidget {
         child: Container(
           key: const Key('create_look_continue_button'),
           width: width,
-          height: 72,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          height: adaptive ? null : 72,
+          constraints: const BoxConstraints(minHeight: 72),
+          padding: EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: adaptive ? 16 : 0,
+          ),
           decoration: BoxDecoration(
             color: const Color(0xBFFFFFFF),
             borderRadius: BorderRadius.circular(36),

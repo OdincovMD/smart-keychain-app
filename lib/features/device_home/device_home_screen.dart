@@ -305,8 +305,10 @@ final class _DeviceHomeContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    height: largeText ? 80 : 50,
+                  ConstrainedBox(
+                    constraints: largeText
+                        ? const BoxConstraints(minHeight: 80)
+                        : const BoxConstraints.tightFor(height: 50),
                     child: Semantics(
                       container: true,
                       child: Column(
@@ -411,6 +413,8 @@ final class _DeviceHomeContent extends StatelessWidget {
     final colors = context.chromeKiss;
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: colors.surfaceSecondary,
       showDragHandle: false,
       clipBehavior: Clip.antiAlias,
@@ -420,42 +424,46 @@ final class _DeviceHomeContent extends StatelessWidget {
       ),
       builder: (context) => SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colors.materialChrome.withValues(alpha: 0.48),
-                    borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          key: const Key('brightness_sheet_scroll'),
+          child: Padding(
+            key: const Key('brightness_sheet'),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.materialChrome.withValues(alpha: 0.48),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: const SizedBox(width: 38, height: 3),
                   ),
-                  child: const SizedBox(width: 38, height: 3),
                 ),
-              ),
-              const SizedBox(height: 20),
-              BrightnessControl(
-                value: snapshot.brightness,
-                enabled: !isBusy,
-                onChangeEnd: onBrightnessChanged,
-              ),
-              const SizedBox(height: 12),
-              Divider(color: colors.divider),
-              const SizedBox(height: 4),
-              TextButton.icon(
-                key: const Key('disconnect_button'),
-                onPressed: isBusy
-                    ? null
-                    : () {
-                        Navigator.of(context).pop();
-                        onDisconnect();
-                      },
-                icon: const Icon(Icons.link_off_rounded, size: 20),
-                label: Text(AppLocalizations.of(context).disconnect),
-              ),
-            ],
+                const SizedBox(height: 20),
+                BrightnessControl(
+                  value: snapshot.brightness,
+                  enabled: !isBusy,
+                  onChangeEnd: onBrightnessChanged,
+                ),
+                const SizedBox(height: 12),
+                Divider(color: colors.divider),
+                const SizedBox(height: 4),
+                TextButton.icon(
+                  key: const Key('disconnect_button'),
+                  onPressed: isBusy
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                          onDisconnect();
+                        },
+                  icon: const Icon(Icons.link_off_rounded, size: 20),
+                  label: Text(AppLocalizations.of(context).disconnect),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -505,6 +513,7 @@ final class _SimulatorSettingsSheet extends ConsumerWidget {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
+        key: const Key('simulator_settings_scroll'),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: Column(
