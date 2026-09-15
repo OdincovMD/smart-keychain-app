@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../app/chrome_kiss_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import 'chrome_kiss_sparkle.dart';
-import 'companion_home_tokens.dart';
 
 enum ChromeKissNavDestination { home, looks, rituals, profile }
 
@@ -28,7 +27,7 @@ final class ChromeKissBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
-    final home = context.companionHome;
+    final fidelity = context.chromeKissFidelity;
     final l10n = AppLocalizations.of(context);
     final largeText = MediaQuery.textScalerOf(context).scale(11) > 14;
 
@@ -74,7 +73,7 @@ final class ChromeKissBottomNavigation extends StatelessWidget {
         final indicator = IgnorePointer(
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: home.textPrimary,
+              color: fidelity.ink,
               borderRadius: BorderRadius.circular(2),
             ),
             child: const SizedBox(width: 116, height: 4),
@@ -87,9 +86,9 @@ final class ChromeKissBottomNavigation extends StatelessWidget {
           constraints: adaptive ? const BoxConstraints(minHeight: 86) : null,
           padding: const EdgeInsets.fromLTRB(6, 4, 6, 10),
           decoration: BoxDecoration(
-            color: home.glass,
+            color: fidelity.glass,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: home.borderSubtle),
+            border: Border.all(color: fidelity.chromeLine),
             boxShadow: [
               BoxShadow(
                 color: colors.lens.withValues(alpha: 0.14),
@@ -150,12 +149,12 @@ final class _NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final home = context.companionHome;
+    final fidelity = context.chromeKissFidelity;
     final largeText = MediaQuery.textScalerOf(context).scale(11) > 14;
     final enabled = selected || onPressed != null;
     final foreground = selected
-        ? selectedForeground ?? home.ctaForeground
-        : home.textSecondary;
+        ? selectedForeground ?? fidelity.specular
+        : fidelity.mutedInk;
 
     return Semantics(
       button: true,
@@ -169,19 +168,7 @@ final class _NavigationItem extends StatelessWidget {
           constraints: adaptive ? const BoxConstraints(minHeight: 64) : null,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
-            gradient: selected
-                ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      home.lacquerHighlight,
-                      home.lacquerPrimary,
-                      home.lacquerMid,
-                      home.lacquerDepth,
-                    ],
-                    stops: const [0, 0.34, 0.7, 1],
-                  )
-                : null,
+            gradient: selected ? fidelity.lacquerGradient : null,
           ),
           child: Material(
             color: Colors.transparent,

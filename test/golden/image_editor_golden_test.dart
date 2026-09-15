@@ -43,6 +43,22 @@ void main() {
     );
   });
 
+  testWidgets('Create Look crop matches Obsidian Figma 226:1493', (
+    tester,
+  ) async {
+    await _pumpEditor(
+      tester,
+      figmaImageBytes,
+      appearance: ResolvedAppAppearance.obsidian,
+      size: const Size(393, 852),
+    );
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/create_look_crop_obsidian_226_1493.png'),
+    );
+  });
+
   testWidgets('Create Look beauty matches Figma 114:290', (tester) async {
     await _pumpEditor(
       tester,
@@ -57,6 +73,25 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('baselines/create_look_beauty_figma_114_290.png'),
+    );
+  });
+
+  testWidgets('Create Look beauty matches Obsidian Figma 226:1552', (
+    tester,
+  ) async {
+    await _pumpEditor(
+      tester,
+      figmaImageBytes,
+      appearance: ResolvedAppAppearance.obsidian,
+      size: const Size(393, 852),
+    );
+    await tester.tap(find.byKey(const Key('image_editor_next')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/create_look_beauty_obsidian_226_1552.png'),
     );
   });
 
@@ -103,6 +138,36 @@ void main() {
       matchesGoldenFile('baselines/image_editor_processing_obsidian.png'),
     );
   });
+
+  const responsiveSizes = <Size>[
+    Size(360, 800),
+    Size(390, 844),
+    Size(412, 915),
+  ];
+  for (final appearance in ResolvedAppAppearance.values) {
+    for (final size in responsiveSizes) {
+      testWidgets(
+        'Create Look editor ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()}',
+        (tester) async {
+          await _pumpEditor(
+            tester,
+            figmaImageBytes,
+            appearance: appearance,
+            size: size,
+          );
+          expect(tester.takeException(), isNull);
+
+          await tester.ensureVisible(
+            find.byKey(const Key('image_editor_next')),
+          );
+          await tester.tap(find.byKey(const Key('image_editor_next')));
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          expect(find.byKey(const Key('image_editor_save')), findsOneWidget);
+        },
+      );
+    }
+  }
 }
 
 Future<void> _pumpEditor(

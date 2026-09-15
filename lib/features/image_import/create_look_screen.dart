@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../app/chrome_kiss_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
 import '../shared/chrome_kiss_fidelity_tokens.dart';
@@ -14,9 +15,10 @@ final class CreateLookScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return Scaffold(
       key: const Key('create_look_screen'),
-      backgroundColor: ChromeKissFidelityTokens.outside,
+      backgroundColor: fidelity.outside,
       body: ChromeKissFidelityFrame(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -42,6 +44,7 @@ final class _CreateLookReferenceLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     return SingleChildScrollView(
       key: const Key('create_look_scroll'),
       child: SizedBox(
@@ -66,8 +69,8 @@ final class _CreateLookReferenceLayout extends StatelessWidget {
               top: 53,
               child: Text(
                 l10n.createLookStep,
-                style: const TextStyle(
-                  color: ChromeKissFidelityTokens.mutedInk,
+                style: TextStyle(
+                  color: fidelity.mutedInk,
                   fontFamily: 'Manrope',
                   fontSize: 12,
                   height: 16 / 12,
@@ -78,10 +81,7 @@ final class _CreateLookReferenceLayout extends StatelessWidget {
             Positioned(
               left: 84,
               top: 71,
-              child: Text(
-                l10n.createLookTitle,
-                style: ChromeKissFidelityTokens.titleStyle,
-              ),
+              child: Text(l10n.createLookTitle, style: fidelity.titleStyle),
             ),
             Positioned(
               left: 85,
@@ -110,8 +110,8 @@ final class _CreateLookReferenceLayout extends StatelessWidget {
               top: 448,
               child: Text(
                 l10n.inspiration,
-                style: const TextStyle(
-                  color: ChromeKissFidelityTokens.ink,
+                style: TextStyle(
+                  color: fidelity.ink,
                   fontFamily: 'Manrope',
                   fontSize: 17,
                   height: 24 / 17,
@@ -129,8 +129,8 @@ final class _CreateLookReferenceLayout extends StatelessWidget {
               top: 600,
               child: Text(
                 l10n.prepareForScreen,
-                style: const TextStyle(
-                  color: ChromeKissFidelityTokens.ink,
+                style: TextStyle(
+                  color: fidelity.ink,
                   fontFamily: 'Manrope',
                   fontSize: 15,
                   height: 21 / 15,
@@ -151,8 +151,8 @@ final class _CreateLookReferenceLayout extends StatelessWidget {
               child: Text(
                 l10n.choosePhotoToContinue,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: ChromeKissFidelityTokens.mutedInk,
+                style: TextStyle(
+                  color: fidelity.mutedInk,
                   fontFamily: 'Manrope',
                   fontSize: 11,
                   height: 15 / 11,
@@ -177,6 +177,7 @@ final class _CreateLookAdaptiveLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     return CustomScrollView(
       key: const Key('create_look_scroll'),
       slivers: [
@@ -195,10 +196,7 @@ final class _CreateLookAdaptiveLayout extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(l10n.createLookStep),
-                        Text(
-                          l10n.createLookTitle,
-                          style: ChromeKissFidelityTokens.titleStyle,
-                        ),
+                        Text(l10n.createLookTitle, style: fidelity.titleStyle),
                         ChromeKissScriptHeartText(text: l10n.createLookAccent),
                       ],
                     ),
@@ -250,19 +248,22 @@ final class _CreateLookAtmosphere extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Stack(
-      children: [
-        Positioned(
-          left: 0,
-          top: 0,
-          child: Image(
-            image: AssetImage('assets/chrome_kiss/create_story_blush.png'),
-            width: 108,
-            height: 190,
-            filterQuality: FilterQuality.high,
+    return Opacity(
+      opacity: context.chromeKissFidelity.atmosphereOpacity,
+      child: const Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            child: Image(
+              image: AssetImage('assets/chrome_kiss/create_story_blush.png'),
+              width: 108,
+              height: 190,
+              filterQuality: FilterQuality.high,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -274,23 +275,22 @@ final class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return Semantics(
       button: true,
       label: MaterialLocalizations.of(context).backButtonTooltip,
       child: SizedBox.square(
         dimension: 44,
         child: Material(
-          color: const Color(0xCCFFFFFF),
-          shape: const CircleBorder(
-            side: BorderSide(color: ChromeKissFidelityTokens.chromeLine),
-          ),
+          color: fidelity.controlSurface,
+          shape: CircleBorder(side: BorderSide(color: fidelity.chromeLine)),
           child: InkWell(
             key: const Key('create_look_back_button'),
             customBorder: const CircleBorder(),
             onTap: onPressed,
-            child: const Icon(
+            child: Icon(
               Icons.chevron_left_rounded,
-              color: ChromeKissFidelityTokens.accentInk,
+              color: fidelity.accentInk,
               size: 27,
             ),
           ),
@@ -308,6 +308,7 @@ final class _UploadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final adaptive =
         MediaQuery.sizeOf(context).width < 380 ||
@@ -330,18 +331,8 @@ final class _UploadCard extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xE8FFFFFF),
-                      Color(0x88FFFFFF),
-                      Color(0x44ECDDE8),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: ChromeKissFidelityTokens.chromeLine,
-                  ),
+                  gradient: fidelity.satinGradient,
+                  border: Border.all(color: fidelity.chromeLine),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -352,13 +343,16 @@ final class _UploadCard extends StatelessWidget {
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
                         children: [
-                          const Positioned.fill(
-                            child: Image(
-                              image: AssetImage(
-                                'assets/chrome_kiss/create_upload_blush.png',
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: fidelity.atmosphereOpacity,
+                              child: const Image(
+                                image: AssetImage(
+                                  'assets/chrome_kiss/create_upload_blush.png',
+                                ),
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.high,
                               ),
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
                             ),
                           ),
                           const Image(
@@ -369,28 +363,20 @@ final class _UploadCard extends StatelessWidget {
                             height: 202,
                             filterQuality: FilterQuality.high,
                           ),
-                          const Image(
-                            image: AssetImage(
-                              'assets/chrome_kiss/create_photo_target.png',
-                            ),
-                            width: 158,
-                            height: 158,
-                            filterQuality: FilterQuality.high,
-                          ),
-                          const DecoratedBox(
+                          DecoratedBox(
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color(0xFF171122),
-                                  ChromeKissFidelityTokens.lens,
-                                ],
-                              ),
+                              gradient: fidelity.uploadTargetGradient,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const SizedBox.square(dimension: 158),
+                          ),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: fidelity.lensGradient,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Color(0x33470533),
+                                  color: fidelity.shadow,
                                   blurRadius: 12,
                                   offset: Offset(0, 5),
                                 ),
@@ -400,7 +386,7 @@ final class _UploadCard extends StatelessWidget {
                               dimension: 56,
                               child: Icon(
                                 Icons.add_rounded,
-                                color: Colors.white,
+                                color: fidelity.specular,
                                 size: 29,
                               ),
                             ),
@@ -423,8 +409,8 @@ final class _UploadCard extends StatelessWidget {
                     Text(
                       l10n.choosePhoto,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: ChromeKissFidelityTokens.ink,
+                      style: TextStyle(
+                        color: fidelity.ink,
                         fontFamily: 'Manrope',
                         fontSize: 18,
                         height: 25 / 18,
@@ -435,8 +421,8 @@ final class _UploadCard extends StatelessWidget {
                     Text(
                       l10n.photoFormatsHint,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: ChromeKissFidelityTokens.mutedInk,
+                      style: TextStyle(
+                        color: fidelity.mutedInk,
                         fontFamily: 'Manrope',
                         fontSize: 11,
                         height: 15 / 11,
@@ -472,30 +458,25 @@ final class _UploadCard extends StatelessWidget {
             child: Ink(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xE8FFFFFF),
-                    Color(0x88FFFFFF),
-                    Color(0x44ECDDE8),
-                  ],
-                ),
-                border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+                gradient: fidelity.satinGradient,
+                border: Border.all(color: fidelity.chromeLine),
               ),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  const Positioned(
+                  Positioned(
                     left: 0,
                     top: 0,
-                    child: Image(
-                      image: AssetImage(
-                        'assets/chrome_kiss/create_upload_blush.png',
+                    child: Opacity(
+                      opacity: fidelity.atmosphereOpacity,
+                      child: const Image(
+                        image: AssetImage(
+                          'assets/chrome_kiss/create_upload_blush.png',
+                        ),
+                        width: 260,
+                        height: 220,
+                        filterQuality: FilterQuality.high,
                       ),
-                      width: 260,
-                      height: 220,
-                      filterQuality: FilterQuality.high,
                     ),
                   ),
                   const Positioned(
@@ -510,35 +491,27 @@ final class _UploadCard extends StatelessWidget {
                       filterQuality: FilterQuality.high,
                     ),
                   ),
-                  const Positioned(
+                  Positioned(
                     left: 85,
                     top: 27,
-                    child: Image(
-                      image: AssetImage(
-                        'assets/chrome_kiss/create_photo_target.png',
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: fidelity.uploadTargetGradient,
+                        shape: BoxShape.circle,
                       ),
-                      width: 174,
-                      height: 174,
-                      filterQuality: FilterQuality.high,
+                      child: const SizedBox.square(dimension: 174),
                     ),
                   ),
-                  const Positioned(
+                  Positioned(
                     left: 145,
                     top: 65,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF171122),
-                            ChromeKissFidelityTokens.lens,
-                          ],
-                        ),
+                        gradient: fidelity.lensGradient,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0x33470533),
+                            color: fidelity.shadow,
                             blurRadius: 12,
                             offset: Offset(0, 5),
                           ),
@@ -548,7 +521,7 @@ final class _UploadCard extends StatelessWidget {
                         dimension: 56,
                         child: Icon(
                           Icons.add_rounded,
-                          color: Colors.white,
+                          color: fidelity.specular,
                           size: 29,
                         ),
                       ),
@@ -561,8 +534,8 @@ final class _UploadCard extends StatelessWidget {
                     child: Text(
                       l10n.choosePhoto,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: ChromeKissFidelityTokens.ink,
+                      style: TextStyle(
+                        color: fidelity.ink,
                         fontFamily: 'Manrope',
                         fontSize: 18,
                         height: 25 / 18,
@@ -577,8 +550,8 @@ final class _UploadCard extends StatelessWidget {
                     child: Text(
                       l10n.photoFormatsHint,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: ChromeKissFidelityTokens.mutedInk,
+                      style: TextStyle(
+                        color: fidelity.mutedInk,
                         fontFamily: 'Manrope',
                         fontSize: 11,
                         height: 15 / 11,
@@ -636,6 +609,7 @@ final class _InspirationStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     final items = <(String?, String)>[
       (
         'assets/chrome_kiss/create_preview_original.png',
@@ -662,24 +636,23 @@ final class _InspirationStrip extends StatelessWidget {
                       filterQuality: FilterQuality.high,
                     )
                   else
-                    const SizedBox(
+                    SizedBox(
                       width: 82,
                       height: 82,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          Image(
-                            image: AssetImage(
-                              'assets/chrome_kiss/create_photo_target.png',
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: fidelity.uploadTargetGradient,
+                              shape: BoxShape.circle,
                             ),
-                            width: 64,
-                            height: 64,
-                            filterQuality: FilterQuality.high,
+                            child: const SizedBox.square(dimension: 64),
                           ),
                           Icon(
                             Icons.add_rounded,
                             size: 22,
-                            color: ChromeKissFidelityTokens.lacquer,
+                            color: fidelity.lacquer,
                           ),
                         ],
                       ),
@@ -703,8 +676,8 @@ final class _InspirationStrip extends StatelessWidget {
                 child: Text(
                   label,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: ChromeKissFidelityTokens.mutedInk,
+                  style: TextStyle(
+                    color: fidelity.mutedInk,
                     fontFamily: 'Manrope',
                     fontSize: 12,
                     height: 16 / 12,
@@ -766,18 +739,19 @@ final class _Feature extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return SizedBox(
       width: 83,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 19, color: ChromeKissFidelityTokens.mutedInk),
+          Icon(icon, size: 19, color: fidelity.mutedInk),
           const SizedBox(width: 5),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: ChromeKissFidelityTokens.mutedInk,
+              style: TextStyle(
+                color: fidelity.mutedInk,
                 fontFamily: 'Manrope',
                 fontSize: 12,
                 height: 15 / 12,
@@ -797,6 +771,7 @@ final class _ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     final width = math.min(335.0, MediaQuery.sizeOf(context).width - 48);
     final adaptive =
         MediaQuery.sizeOf(context).width < 380 ||
@@ -817,23 +792,23 @@ final class _ContinueButton extends StatelessWidget {
             vertical: adaptive ? 16 : 0,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xBFFFFFFF),
+            color: fidelity.controlSurface,
             borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+            border: Border.all(color: fidelity.chromeLine),
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.auto_awesome_rounded,
-                color: ChromeKissFidelityTokens.mutedInk,
+                color: fidelity.mutedInk,
                 size: 23,
               ),
               Expanded(
                 child: Text(
                   label,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: ChromeKissFidelityTokens.mutedInk,
+                  style: TextStyle(
+                    color: fidelity.mutedInk,
                     fontFamily: 'Manrope',
                     fontSize: 18,
                     height: 24 / 18,
@@ -841,9 +816,9 @@ final class _ContinueButton extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: ChromeKissFidelityTokens.mutedInk,
+                color: fidelity.mutedInk,
                 size: 26,
               ),
             ],

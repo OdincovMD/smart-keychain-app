@@ -29,42 +29,50 @@ void main() {
   });
 
   group('Chrome Kiss semantic colors', () {
-    test('Obsidian resolves the DESIGN.md values', () {
+    test('Obsidian resolves the current Figma foundation values', () {
       const colors = ChromeKissColors.obsidian;
 
-      expect(colors.canvas, const Color(0xFF0B0A0F));
+      expect(colors.canvas, const Color(0xFF09080D));
       expect(colors.lens, const Color(0xFF020205));
-      expect(colors.textPrimary, const Color(0xFFF8F4FA));
-      expect(colors.textSecondary, const Color(0xFFAAA5B3));
+      expect(colors.textPrimary, const Color(0xFFF7F3F8));
+      expect(colors.textSecondary, const Color(0xFFB9B0BE));
+      expect(colors.textAccent, const Color(0xFFFF4FB8));
       expect(colors.accentPrimary, const Color(0xFFFF4FB8));
       expect(colors.accentOptical, const Color(0xFFC9BEFF));
-      expect(colors.materialChrome, const Color(0xFFD9D8E2));
-      expect(colors.materialChampagne, const Color(0xFFE7C98B));
-      expect(colors.surfaceSecondary, const Color(0xFF17161C));
+      expect(colors.chromeLight, const Color(0xFFE5E2EA));
+      expect(colors.chromeMid, const Color(0xFFAAA4B0));
+      expect(colors.chromeDark, const Color(0xFF6A6470));
+      expect(colors.materialChrome, const Color(0xFFE5E2EA));
+      expect(colors.materialChampagne, const Color(0xFFD9B56D));
+      expect(colors.surfaceSecondary, const Color(0xFF171222));
       expect(colors.divider, const Color(0xFF34313A));
       expect(colors.success, const Color(0xFF67DFB2));
       expect(colors.warning, const Color(0xFFF2C66D));
       expect(colors.danger, const Color(0xFFFF647C));
-      expect(colors.onAccent, const Color(0xFF0B0A0F));
+      expect(colors.onAccent, const Color(0xFF09080D));
     });
 
-    test('Pearl resolves the DESIGN.md values', () {
+    test('Pearl resolves the current Figma variables', () {
       const colors = ChromeKissColors.pearl;
 
-      expect(colors.canvas, const Color(0xFFF8F2F6));
+      expect(colors.canvas, const Color(0xFFF4F2F6));
       expect(colors.lens, const Color(0xFF020205));
-      expect(colors.textPrimary, const Color(0xFF241A22));
-      expect(colors.textSecondary, const Color(0xFF655A63));
+      expect(colors.textPrimary, const Color(0xFF211823));
+      expect(colors.textSecondary, const Color(0xFF6F5C72));
+      expect(colors.textAccent, const Color(0xFFB70A6D));
       expect(colors.accentPrimary, const Color(0xFFFF4FB8));
       expect(colors.accentOptical, const Color(0xFFC9BEFF));
+      expect(colors.chromeLight, const Color(0xFFF8F3FF));
+      expect(colors.chromeMid, const Color(0xFFD9D8E2));
+      expect(colors.chromeDark, const Color(0xFF8F8893));
       expect(colors.materialChrome, const Color(0xFF8F8893));
       expect(colors.materialChampagne, const Color(0xFF9A6F36));
       expect(colors.surfaceSecondary, const Color(0xFFEEE6EC));
-      expect(colors.divider, const Color(0xFFCFC5CD));
+      expect(colors.divider, const Color(0xFFD9D8E2));
       expect(colors.success, const Color(0xFF187A65));
       expect(colors.warning, const Color(0xFF805E00));
       expect(colors.danger, const Color(0xFFC23455));
-      expect(colors.onAccent, const Color(0xFF241A22));
+      expect(colors.onAccent, const Color(0xFF211823));
     });
 
     test('the glossy companion lens is black in both appearances', () {
@@ -100,6 +108,21 @@ void main() {
         );
       },
     );
+  });
+
+  test('fidelity recipes resolve distinct Obsidian and Pearl materials', () {
+    const obsidian = ChromeKissFidelityTheme.obsidian;
+    const pearl = ChromeKissFidelityTheme.pearl;
+
+    expect(obsidian.canvas, ChromeKissColors.obsidian.canvas);
+    expect(pearl.canvas, ChromeKissColors.pearl.canvas);
+    expect(obsidian.lens, pearl.lens);
+    expect(obsidian.satinGradient, isNot(pearl.satinGradient));
+    expect(obsidian.glass, isNot(pearl.glass));
+    expect(obsidian.atmosphereOpacity, lessThan(pearl.atmosphereOpacity));
+    expect(obsidian.titleStyle.fontFamily, 'CormorantGaramond');
+    expect(obsidian.bodyStyle.fontFamily, 'Manrope');
+    expect(obsidian.scriptStyle.fontFamily, 'GreatVibes');
   });
 }
 

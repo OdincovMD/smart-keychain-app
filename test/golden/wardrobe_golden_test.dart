@@ -49,47 +49,46 @@ void main() {
     );
   });
 
-  testWidgets('Create Look Pearl matches Figma node 94:248', (tester) async {
-    tester.view
-      ..devicePixelRatio = 1
-      ..physicalSize = const Size(393, 852);
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: buildAppTheme(ResolvedAppAppearance.pearl),
-        locale: const Locale('ru'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        home: const CreateLookScreen(),
-      ),
+  testWidgets('Wardrobe Obsidian matches Figma node 226:1120', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+    await _pumpWardrobe(
+      tester,
+      rig,
+      ResolvedAppAppearance.obsidian,
+      size: const Size(393, 852),
     );
-    await tester.pump();
-    await tester.runAsync(() async {
-      final context = tester.element(find.byType(CreateLookScreen));
-      await Future.wait([
-        for (final asset in <String>[
-          'assets/chrome_kiss/create_story_blush.png',
-          'assets/chrome_kiss/create_progress_jewels.png',
-          'assets/chrome_kiss/create_upload_blush.png',
-          'assets/chrome_kiss/create_upload_halo.png',
-          'assets/chrome_kiss/create_photo_target.png',
-          'assets/chrome_kiss/create_upload_bow.png',
-          'assets/chrome_kiss/create_champagne_sparkle.png',
-          'assets/chrome_kiss/create_preview_original.png',
-          'assets/chrome_kiss/create_preview_mint.png',
-          'assets/chrome_kiss/create_preview_lilac.png',
-          'assets/chrome_kiss/create_preview_sparkle.png',
-        ])
-          precacheImage(AssetImage(asset), context),
-      ]);
-    });
-    await tester.pump();
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_obsidian_figma_226_1120.png'),
+    );
+  });
+
+  testWidgets('Create Look Pearl matches Figma node 94:248', (tester) async {
+    await _pumpCreateLook(
+      tester,
+      ResolvedAppAppearance.pearl,
+      size: const Size(393, 852),
+    );
 
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('baselines/create_look_pearl_figma_94_248.png'),
+    );
+  });
+
+  testWidgets('Create Look Obsidian matches Figma node 226:1316', (
+    tester,
+  ) async {
+    await _pumpCreateLook(
+      tester,
+      ResolvedAppAppearance.obsidian,
+      size: const Size(393, 852),
+    );
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/create_look_obsidian_figma_226_1316.png'),
     );
   });
 
@@ -171,6 +170,78 @@ void main() {
       matchesGoldenFile('baselines/create_look_success_wardrobe_obsidian.png'),
     );
   });
+
+  const responsiveSizes = <Size>[
+    Size(360, 800),
+    Size(390, 844),
+    Size(412, 915),
+  ];
+  for (final appearance in ResolvedAppAppearance.values) {
+    for (final size in responsiveSizes) {
+      testWidgets(
+        'Wardrobe ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()}',
+        (tester) async {
+          final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
+          await _pumpWardrobe(tester, rig, appearance, size: size);
+
+          expect(tester.takeException(), isNull);
+          expect(find.byKey(const Key('user_content_screen')), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Create Look ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()}',
+        (tester) async {
+          await _pumpCreateLook(tester, appearance, size: size);
+
+          expect(tester.takeException(), isNull);
+          expect(find.byType(CreateLookScreen), findsOneWidget);
+        },
+      );
+    }
+  }
+}
+
+Future<void> _pumpCreateLook(
+  WidgetTester tester,
+  ResolvedAppAppearance appearance, {
+  required Size size,
+}) async {
+  tester.view
+    ..devicePixelRatio = 1
+    ..physicalSize = size;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: buildAppTheme(appearance),
+      locale: const Locale('ru'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      home: const CreateLookScreen(),
+    ),
+  );
+  await tester.pump();
+  await tester.runAsync(() async {
+    final context = tester.element(find.byType(CreateLookScreen));
+    await Future.wait([
+      for (final asset in <String>[
+        'assets/chrome_kiss/create_story_blush.png',
+        'assets/chrome_kiss/create_progress_jewels.png',
+        'assets/chrome_kiss/create_upload_blush.png',
+        'assets/chrome_kiss/create_upload_halo.png',
+        'assets/chrome_kiss/create_upload_bow.png',
+        'assets/chrome_kiss/create_champagne_sparkle.png',
+        'assets/chrome_kiss/create_preview_original.png',
+        'assets/chrome_kiss/create_preview_mint.png',
+        'assets/chrome_kiss/create_preview_lilac.png',
+        'assets/chrome_kiss/create_preview_sparkle.png',
+      ])
+        precacheImage(AssetImage(asset), context),
+    ]);
+  });
+  await tester.pump();
 }
 
 final class _WardrobeGoldenRig {

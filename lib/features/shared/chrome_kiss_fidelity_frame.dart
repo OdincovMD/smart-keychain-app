@@ -2,9 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../app/chrome_kiss_theme.dart';
 import 'chrome_kiss_fidelity_tokens.dart';
 
-/// Phone-shaped pearl canvas used by the Figma fidelity screens.
+/// Phone-shaped theme-aware canvas used by the Figma fidelity screens.
 final class ChromeKissFidelityFrame extends StatelessWidget {
   const ChromeKissFidelityFrame({required this.child, super.key});
 
@@ -12,25 +13,26 @@ final class ChromeKissFidelityFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return ColoredBox(
-      color: ChromeKissFidelityTokens.outside,
+      color: fidelity.outside,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = math.min(
             constraints.maxWidth,
             ChromeKissFidelityTokens.referenceSize.width,
           );
-          final radius = width >= 380 ? 48.0 : 36.0;
+          final radius = width >= 380
+              ? ChromeKissFidelityTokens.screenRadius
+              : ChromeKissFidelityTokens.compactScreenRadius;
           return Center(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(radius),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: ChromeKissFidelityTokens.canvas,
+                  color: fidelity.canvas,
                   borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(
-                    color: ChromeKissFidelityTokens.chromeLine,
-                  ),
+                  border: Border.all(color: fidelity.chromeLine),
                 ),
                 child: SizedBox(
                   width: width,
@@ -55,7 +57,8 @@ final class ChromeKissReferenceStatusBar extends StatelessWidget {
     if (MediaQuery.viewPaddingOf(context).top > 0) {
       return const SizedBox(height: 44);
     }
-    return const SizedBox(
+    final fidelity = context.chromeKissFidelity;
+    return SizedBox(
       height: 44,
       child: Stack(
         children: [
@@ -65,7 +68,7 @@ final class ChromeKissReferenceStatusBar extends StatelessWidget {
             child: Text(
               '9:41',
               style: TextStyle(
-                color: ChromeKissFidelityTokens.ink,
+                color: fidelity.ink,
                 fontFamily: 'Manrope',
                 fontSize: 14,
                 height: 18 / 14,
@@ -73,8 +76,8 @@ final class ChromeKissReferenceStatusBar extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(left: 127, top: 10, child: _DynamicIsland()),
-          Positioned(right: 24, top: 17, child: _StatusGlyphs()),
+          const Positioned(left: 127, top: 10, child: _DynamicIsland()),
+          const Positioned(right: 24, top: 17, child: _StatusGlyphs()),
         ],
       ),
     );
@@ -86,12 +89,12 @@ final class _DynamicIsland extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: ChromeKissFidelityTokens.lens,
-        borderRadius: BorderRadius.all(Radius.circular(13)),
+        color: context.chromeKissFidelity.lens,
+        borderRadius: const BorderRadius.all(Radius.circular(13)),
       ),
-      child: SizedBox(width: 104, height: 24),
+      child: const SizedBox(width: 104, height: 24),
     );
   }
 }
@@ -101,29 +104,26 @@ final class _StatusGlyphs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final height in <double>[10, 11, 12]) ...[
           DecoratedBox(
-            decoration: const BoxDecoration(
-              color: ChromeKissFidelityTokens.ink,
-              borderRadius: BorderRadius.all(Radius.circular(1)),
+            decoration: BoxDecoration(
+              color: fidelity.ink,
+              borderRadius: const BorderRadius.all(Radius.circular(1)),
             ),
             child: SizedBox(width: 3, height: height),
           ),
           const SizedBox(width: 6),
         ],
-        const Icon(
-          Icons.bolt_rounded,
-          size: 11,
-          color: ChromeKissFidelityTokens.ink,
-        ),
+        Icon(Icons.bolt_rounded, size: 11, color: fidelity.ink),
         const SizedBox(width: 4),
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
-            color: ChromeKissFidelityTokens.ink,
-            borderRadius: BorderRadius.all(Radius.circular(2)),
+            color: fidelity.ink,
+            borderRadius: const BorderRadius.all(Radius.circular(2)),
           ),
           child: SizedBox(width: 13, height: 7),
         ),
@@ -140,12 +140,12 @@ final class ChromeKissHomeIndicator extends StatelessWidget {
     if (MediaQuery.viewPaddingOf(context).bottom > 0) {
       return const SizedBox.shrink();
     }
-    return const DecoratedBox(
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: ChromeKissFidelityTokens.ink,
-        borderRadius: BorderRadius.all(Radius.circular(2)),
+        color: context.chromeKissFidelity.ink,
+        borderRadius: const BorderRadius.all(Radius.circular(2)),
       ),
-      child: SizedBox(width: 116, height: 4),
+      child: const SizedBox(width: 116, height: 4),
     );
   }
 }
@@ -164,6 +164,7 @@ final class ChromeKissScriptHeartText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return Text.rich(
       TextSpan(
         children: [
@@ -174,14 +175,14 @@ final class ChromeKissScriptHeartText extends StatelessWidget {
             child: Icon(
               Icons.favorite_border_rounded,
               size: fontSize * 0.72,
-              color: ChromeKissFidelityTokens.accentInk,
+              color: fidelity.accentInk,
             ),
           ),
         ],
       ),
       textAlign: centered ? TextAlign.center : TextAlign.start,
       softWrap: true,
-      style: ChromeKissFidelityTokens.scriptStyle.copyWith(fontSize: fontSize),
+      style: fidelity.scriptStyle.copyWith(fontSize: fontSize),
     );
   }
 }

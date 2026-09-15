@@ -12,6 +12,7 @@ ThemeData buildAppTheme([
   };
   final base = ThemeData(brightness: brightness, useMaterial3: true);
   final typography = ChromeKissTypography.fromColors(colors);
+  final fidelity = ChromeKissFidelityTheme.forAppearance(appearance);
   final colorScheme =
       ColorScheme.fromSeed(
         seedColor: colors.accentPrimary,
@@ -37,6 +38,7 @@ ThemeData buildAppTheme([
     extensions: <ThemeExtension<dynamic>>[
       colors,
       typography,
+      fidelity,
       ChromeKissMotion.standard,
     ],
     textTheme: base.textTheme

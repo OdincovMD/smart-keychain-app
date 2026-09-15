@@ -10,19 +10,19 @@ void main() {
         ChromeKissColors.obsidian,
       );
 
-      expect(typography.display.fontFamily, 'Unbounded');
-      expect(typography.title.fontFamily, 'Unbounded');
+      expect(typography.display.fontFamily, 'CormorantGaramond');
+      expect(typography.title.fontFamily, 'CormorantGaramond');
       expect(typography.body.fontFamily, 'Manrope');
       expect(typography.label.fontFamily, 'Manrope');
       expect(typography.status.fontFamily, 'Manrope');
     },
   );
 
-  test('generic Material title roles stay readable Manrope UI', () {
+  test('Material editorial and functional roles use approved families', () {
     final theme = buildAppTheme();
 
-    expect(theme.textTheme.displaySmall?.fontFamily, 'Unbounded');
-    expect(theme.textTheme.headlineMedium?.fontFamily, 'Unbounded');
+    expect(theme.textTheme.displaySmall?.fontFamily, 'CormorantGaramond');
+    expect(theme.textTheme.headlineMedium?.fontFamily, 'CormorantGaramond');
     expect(theme.textTheme.titleLarge?.fontFamily, 'Manrope');
     expect(theme.textTheme.bodyLarge?.fontFamily, 'Manrope');
     expect(theme.textTheme.labelLarge?.fontFamily, 'Manrope');

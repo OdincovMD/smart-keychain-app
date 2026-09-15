@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/chrome_kiss_theme.dart';
 import '../../domain/image/crop_spec.dart';
 import '../../l10n/app_localizations.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
@@ -70,9 +71,10 @@ final class _CreateLookEditorFlowState
   @override
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final fidelity = context.chromeKissFidelity;
     return Scaffold(
       key: const Key('image_editor_screen'),
-      backgroundColor: ChromeKissFidelityTokens.outside,
+      backgroundColor: fidelity.outside,
       body: ChromeKissFidelityFrame(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -176,6 +178,7 @@ final class _CropReferenceLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     final crop = ref.watch(imageEditorControllerProvider(session));
     return SingleChildScrollView(
       key: const Key('image_editor_crop_scroll'),
@@ -191,6 +194,7 @@ final class _CropReferenceLayout extends ConsumerWidget {
                 path: 'assets/chrome_kiss/create_crop_blush.png',
                 width: 190,
                 height: 190,
+                atmosphere: true,
               ),
             ),
             const Positioned(
@@ -229,15 +233,11 @@ final class _CropReferenceLayout extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.zoomLabel,
-                      style: _labelStyle(
-                        color: ChromeKissFidelityTokens.mutedInk,
-                      ),
+                      style: _labelStyle(color: fidelity.mutedInk),
                     ),
                     Text(
                       _zoomLabel(crop.scale),
-                      style: _labelStyle(
-                        color: ChromeKissFidelityTokens.accentInk,
-                      ),
+                      style: _labelStyle(color: fidelity.accentInk),
                     ),
                   ],
                 ),
@@ -269,7 +269,7 @@ final class _CropReferenceLayout extends ConsumerWidget {
               child: Text(
                 l10n.nextLightColorHint,
                 textAlign: TextAlign.center,
-                style: _hintStyle,
+                style: _hintStyle(context),
               ),
             ),
             const Positioned(
@@ -300,6 +300,7 @@ final class _CropAdaptiveLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     final crop = ref.watch(imageEditorControllerProvider(session));
     return CustomScrollView(
       key: const Key('image_editor_crop_scroll'),
@@ -331,12 +332,11 @@ final class _CropAdaptiveLayout extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(l10n.zoomLabel, style: _adaptiveLabelStyle),
+                  Text(l10n.zoomLabel, style: _adaptiveLabelStyle(context)),
                   Text(
                     _zoomLabel(crop.scale),
-                    style: _adaptiveLabelStyle.copyWith(
-                      color: ChromeKissFidelityTokens.accentInk,
-                    ),
+                    style: _adaptiveLabelStyle(context)
+                        .copyWith(color: fidelity.accentInk),
                   ),
                 ],
               ),
@@ -359,7 +359,7 @@ final class _CropAdaptiveLayout extends ConsumerWidget {
               Text(
                 l10n.nextLightColorHint,
                 textAlign: TextAlign.center,
-                style: _hintStyle,
+                style: _hintStyle(context),
               ),
               const SizedBox(height: 30),
               const Center(child: ChromeKissHomeIndicator()),
@@ -417,6 +417,7 @@ final class _BeautyReferenceLayout extends StatelessWidget {
                 path: 'assets/chrome_kiss/create_beauty_blush.png',
                 width: 190,
                 height: 190,
+                atmosphere: true,
               ),
             ),
             const Positioned(
@@ -486,7 +487,7 @@ final class _BeautyReferenceLayout extends StatelessWidget {
               child: Text(
                 l10n.lookAppearsInWardrobe,
                 textAlign: TextAlign.center,
-                style: _hintStyle,
+                style: _hintStyle(context),
               ),
             ),
             const Positioned(
@@ -591,7 +592,7 @@ final class _BeautyAdaptiveLayout extends StatelessWidget {
               Text(
                 l10n.lookAppearsInWardrobe,
                 textAlign: TextAlign.center,
-                style: _hintStyle,
+                style: _hintStyle(context),
               ),
               const SizedBox(height: 30),
               const Center(child: ChromeKissHomeIndicator()),
@@ -620,17 +621,22 @@ final class _CreateLookHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return SizedBox(
       width: 345,
       height: 84,
       child: Stack(
         children: [
           Positioned(top: 6, child: _BackButton(onPressed: onBack)),
-          Positioned(left: 60, top: 0, child: Text(step, style: _stepStyle)),
+          Positioned(
+            left: 60,
+            top: 0,
+            child: Text(step, style: _stepStyle(context)),
+          ),
           Positioned(
             left: 60,
             top: 17,
-            child: Text(title, style: ChromeKissFidelityTokens.titleStyle),
+            child: Text(title, style: fidelity.titleStyle),
           ),
           Positioned(
             left: 61,
@@ -665,6 +671,7 @@ final class _CreateLookAdaptiveHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -674,9 +681,9 @@ final class _CreateLookAdaptiveHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(step, style: _stepStyle),
+              Text(step, style: _stepStyle(context)),
               const SizedBox(height: 2),
-              Text(title, style: ChromeKissFidelityTokens.titleStyle),
+              Text(title, style: fidelity.titleStyle),
               ChromeKissScriptHeartText(text: accent, fontSize: 20),
             ],
           ),
@@ -699,26 +706,25 @@ final class _BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     return Semantics(
       button: true,
       label: l10n.cancel,
       child: ExcludeSemantics(
         child: Material(
-          color: const Color(0xD1FFFFFF),
-          shape: const CircleBorder(
-            side: BorderSide(color: ChromeKissFidelityTokens.chromeLine),
-          ),
+          color: fidelity.controlSurface,
+          shape: CircleBorder(side: BorderSide(color: fidelity.chromeLine)),
           child: InkWell(
             key: const Key('image_editor_cancel'),
             onTap: onPressed,
             customBorder: const CircleBorder(),
-            child: const SizedBox.square(
+            child: SizedBox.square(
               dimension: 44,
               child: Center(
                 child: Text(
                   '‹',
                   style: TextStyle(
-                    color: ChromeKissFidelityTokens.accentInk,
+                    color: fidelity.accentInk,
                     fontFamily: 'Manrope',
                     fontSize: 27,
                     height: 30 / 27,
@@ -748,11 +754,12 @@ final class _CropStage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     if (reference) {
       return Container(
         width: 345,
         height: 372,
-        decoration: _pearlPanelDecoration(radius: 32),
+        decoration: _panelDecoration(fidelity, radius: 32),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -763,6 +770,7 @@ final class _CropStage extends ConsumerWidget {
                 path: 'assets/chrome_kiss/create_crop_cloud.png',
                 width: 330,
                 height: 300,
+                atmosphere: true,
               ),
             ),
             const Positioned(
@@ -800,7 +808,7 @@ final class _CropStage extends ConsumerWidget {
               child: Text(
                 l10n.movePhotoInsideCircle,
                 textAlign: TextAlign.center,
-                style: ChromeKissFidelityTokens.bodyStyle,
+                style: fidelity.bodyStyle,
               ),
             ),
             Positioned(
@@ -827,7 +835,7 @@ final class _CropStage extends ConsumerWidget {
         return Container(
           constraints: const BoxConstraints(minHeight: 360),
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-          decoration: _pearlPanelDecoration(radius: 32),
+          decoration: _panelDecoration(fidelity, radius: 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -861,7 +869,7 @@ final class _CropStage extends ConsumerWidget {
               Text(
                 l10n.movePhotoInsideCircle,
                 textAlign: TextAlign.center,
-                style: ChromeKissFidelityTokens.bodyStyle,
+                style: fidelity.bodyStyle,
               ),
               ChromeKissScriptHeartText(
                 text: l10n.pinchZoomAccent,
@@ -903,6 +911,7 @@ final class _EditablePortraitState extends ConsumerState<_EditablePortrait> {
   Widget build(BuildContext context) {
     final crop = ref.watch(imageEditorControllerProvider(widget.session));
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     Widget photo = Transform.rotate(
       angle: crop.rotation,
       child: Transform.scale(
@@ -939,9 +948,9 @@ final class _EditablePortraitState extends ConsumerState<_EditablePortrait> {
           width: widget.diameter,
           height: widget.diameter,
           decoration: BoxDecoration(
-            color: ChromeKissFidelityTokens.lens,
+            color: fidelity.lens,
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF302A3C)),
+            border: Border.all(color: fidelity.lensBorder),
           ),
           clipBehavior: Clip.antiAlias,
           child: GestureDetector(
@@ -978,7 +987,7 @@ final class _CropGuides extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const line = ChromeKissFidelityTokens.specular;
+    final line = context.chromeKissFidelity.specular;
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1042,6 +1051,7 @@ final class _ZoomControl extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final crop = ref.watch(imageEditorControllerProvider(session));
+    final fidelity = context.chromeKissFidelity;
     final width = adaptive
         ? math.min(345.0, MediaQuery.sizeOf(context).width - 36)
         : 345.0;
@@ -1058,7 +1068,7 @@ final class _ZoomControl extends ConsumerWidget {
         child: Container(
           width: width,
           height: 44,
-          decoration: _pearlPanelDecoration(radius: 999),
+          decoration: _panelDecoration(fidelity, radius: 999),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final trackWidth = constraints.maxWidth - 92;
@@ -1079,7 +1089,7 @@ final class _ZoomControl extends ConsumerWidget {
                     width: 44,
                     child: _SliderStepButton(
                       label: '−',
-                      color: ChromeKissFidelityTokens.mutedInk,
+                      color: fidelity.mutedInk,
                       onPressed: () => _setScale(
                         ref,
                         crop,
@@ -1094,7 +1104,7 @@ final class _ZoomControl extends ConsumerWidget {
                     width: 44,
                     child: _SliderStepButton(
                       label: '+',
-                      color: ChromeKissFidelityTokens.accentInk,
+                      color: fidelity.accentInk,
                       onPressed: () =>
                           _setScale(ref, crop, _changedScale(crop.scale, 0.12)),
                     ),
@@ -1119,7 +1129,7 @@ final class _ZoomControl extends ConsumerWidget {
                       width: trackWidth,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: ChromeKissFidelityTokens.chromeLine,
+                        color: fidelity.chromeLine,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1131,7 +1141,7 @@ final class _ZoomControl extends ConsumerWidget {
                       width: activeWidth,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: ChromeKissFidelityTokens.lacquer,
+                        color: fidelity.lacquer,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1211,11 +1221,12 @@ final class _CropQuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     final actions = [
       _QuickAction(
         key: const Key('image_editor_rotate'),
         icon: Icons.rotate_left_rounded,
-        symbolColor: ChromeKissFidelityTokens.ink,
+        symbolColor: fidelity.ink,
         label: l10n.rotate,
         onPressed: () => ref
             .read(imageEditorControllerProvider(session).notifier)
@@ -1224,7 +1235,7 @@ final class _CropQuickActions extends ConsumerWidget {
       _QuickAction(
         key: const Key('image_editor_reset'),
         icon: Icons.flare_rounded,
-        symbolColor: ChromeKissFidelityTokens.accentInk,
+        symbolColor: fidelity.accentInk,
         label: l10n.autoCenter,
         onPressed: () => _centerCrop(ref),
       ),
@@ -1283,12 +1294,13 @@ final class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final largeText = MediaQuery.textScalerOf(context).scale(13) > 17;
+    final fidelity = context.chromeKissFidelity;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(999),
       child: Ink(
         height: largeText ? null : 48,
-        decoration: _pearlPanelDecoration(radius: 999),
+        decoration: _panelDecoration(fidelity, radius: 999),
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(999),
@@ -1306,8 +1318,8 @@ final class _QuickAction extends StatelessWidget {
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: ChromeKissFidelityTokens.ink,
+                    style: TextStyle(
+                      color: fidelity.ink,
                       fontFamily: 'Manrope',
                       fontSize: 13,
                       height: 20 / 13,
@@ -1344,6 +1356,7 @@ final class _BeautyPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     final status =
         '${_presetLabel(l10n, preset).toUpperCase()} · '
         '${(glow * 100).round()}%';
@@ -1351,7 +1364,7 @@ final class _BeautyPreview extends StatelessWidget {
       return Container(
         width: 345,
         height: 246,
-        decoration: _pearlPanelDecoration(radius: 32),
+        decoration: _panelDecoration(fidelity, radius: 32),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -1362,6 +1375,7 @@ final class _BeautyPreview extends StatelessWidget {
                 path: 'assets/chrome_kiss/create_beauty_cloud.png',
                 width: 266,
                 height: 246,
+                atmosphere: true,
               ),
             ),
             const Positioned(
@@ -1418,7 +1432,7 @@ final class _BeautyPreview extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-      decoration: _pearlPanelDecoration(radius: 32),
+      decoration: _panelDecoration(fidelity, radius: 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1469,6 +1483,7 @@ final class _LiveBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     final largeText = MediaQuery.textScalerOf(context).scale(11) > 15;
     return Container(
       width: largeText ? null : 72,
@@ -1480,7 +1495,7 @@ final class _LiveBadge extends StatelessWidget {
       ),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+        border: Border.all(color: fidelity.chromeLine),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1488,8 +1503,8 @@ final class _LiveBadge extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: ChromeKissFidelityTokens.ink,
+            style: TextStyle(
+              color: fidelity.ink,
               fontFamily: 'Manrope',
               fontSize: 11,
               height: 16 / 11,
@@ -1498,11 +1513,7 @@ final class _LiveBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 3),
-          const Icon(
-            Icons.flare_rounded,
-            color: ChromeKissFidelityTokens.ink,
-            size: 10,
-          ),
+          Icon(Icons.flare_rounded, color: fidelity.ink, size: 10),
         ],
       ),
     );
@@ -1516,6 +1527,7 @@ final class _BeautyStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     final largeText = MediaQuery.textScalerOf(context).scale(11) > 15;
     return Container(
       width: largeText ? null : 162,
@@ -1527,14 +1539,14 @@ final class _BeautyStatus extends StatelessWidget {
       ),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        gradient: _lensGradient,
-        border: Border.all(color: const Color(0xFF302A3C), width: 0.8),
+        gradient: fidelity.lensGradient,
+        border: Border.all(color: fidelity.lensBorder, width: 0.8),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: ChromeKissFidelityTokens.specular,
+        style: TextStyle(
+          color: fidelity.specular,
           fontFamily: 'Manrope',
           fontSize: 11,
           height: 16 / 11,
@@ -1575,7 +1587,7 @@ final class _MoodPresets extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.moodLabel, style: _sectionLabelStyle),
+          Text(l10n.moodLabel, style: _sectionLabelStyle(context)),
           const SizedBox(height: 8),
           if (reference)
             Row(
@@ -1625,6 +1637,7 @@ final class _PresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     return Semantics(
       button: true,
       selected: selected,
@@ -1640,11 +1653,9 @@ final class _PresetCard extends StatelessWidget {
                 : 68,
             decoration: BoxDecoration(
               color: selected ? null : Colors.transparent,
-              gradient: selected ? _lensGradient : null,
+              gradient: selected ? fidelity.lensGradient : null,
               border: Border.all(
-                color: selected
-                    ? const Color(0xFF302A3C)
-                    : ChromeKissFidelityTokens.chromeLine,
+                color: selected ? fidelity.lensBorder : fidelity.chromeLine,
                 width: selected ? 1.5 : 1,
               ),
               borderRadius: BorderRadius.circular(24),
@@ -1667,9 +1678,7 @@ final class _PresetCard extends StatelessWidget {
                     Text(
                       label,
                       style: TextStyle(
-                        color: selected
-                            ? ChromeKissFidelityTokens.specular
-                            : ChromeKissFidelityTokens.ink,
+                        color: selected ? fidelity.specular : fidelity.ink,
                         fontFamily: 'Manrope',
                         fontSize: 11,
                         height: 16 / 11,
@@ -1707,6 +1716,7 @@ final class _FineTunePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final fidelity = context.chromeKissFidelity;
     return SizedBox(
       width: reference ? 345 : double.infinity,
       child: Padding(
@@ -1722,7 +1732,7 @@ final class _FineTunePanel extends StatelessWidget {
                     Expanded(
                       child: Text(
                         l10n.fineTuneLabel,
-                        style: _sectionLabelStyle,
+                        style: _sectionLabelStyle(context),
                       ),
                     ),
                     InkWell(
@@ -1736,9 +1746,7 @@ final class _FineTunePanel extends StatelessWidget {
                         ),
                         child: Text(
                           l10n.reset,
-                          style: _labelStyle(
-                            color: ChromeKissFidelityTokens.accentInk,
-                          ),
+                          style: _labelStyle(color: fidelity.accentInk),
                         ),
                       ),
                     ),
@@ -1749,7 +1757,10 @@ final class _FineTunePanel extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(l10n.fineTuneLabel, style: _sectionLabelStyle),
+                    child: Text(
+                      l10n.fineTuneLabel,
+                      style: _sectionLabelStyle(context),
+                    ),
                   ),
                   InkWell(
                     key: const Key('beauty_reset'),
@@ -1762,9 +1773,7 @@ final class _FineTunePanel extends StatelessWidget {
                       ),
                       child: Text(
                         l10n.reset,
-                        style: _labelStyle(
-                          color: ChromeKissFidelityTokens.accentInk,
-                        ),
+                        style: _labelStyle(color: fidelity.accentInk),
                       ),
                     ),
                   ),
@@ -1776,7 +1785,7 @@ final class _FineTunePanel extends StatelessWidget {
               label: l10n.glowLabel,
               valueLabel: '${(glow * 100).round()}%',
               value: glow,
-              activeColor: ChromeKissFidelityTokens.accentInk,
+              activeColor: fidelity.accentInk,
               onChanged: onGlowChanged,
               adaptive: !reference,
             ),
@@ -1786,7 +1795,7 @@ final class _FineTunePanel extends StatelessWidget {
               label: l10n.warmthLabel,
               valueLabel: _warmthLabel(warmth),
               value: warmth,
-              activeColor: const Color(0xFFE7C98B),
+              activeColor: context.chromeKiss.materialChampagne,
               onChanged: onWarmthChanged,
               adaptive: !reference,
             ),
@@ -1817,6 +1826,7 @@ final class _FineTuneSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     if (adaptive) {
       return Semantics(
         slider: true,
@@ -1833,15 +1843,15 @@ final class _FineTuneSlider extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: Text(label, style: _tuneStyle)),
+                  Expanded(child: Text(label, style: _tuneStyle(context))),
                   const SizedBox(width: 12),
                   Text(
                     valueLabel,
                     textAlign: TextAlign.end,
-                    style: _tuneStyle.copyWith(
-                      color: activeColor == ChromeKissFidelityTokens.accentInk
-                          ? ChromeKissFidelityTokens.accentInk
-                          : ChromeKissFidelityTokens.ink,
+                    style: _tuneStyle(context).copyWith(
+                      color: activeColor == fidelity.accentInk
+                          ? fidelity.accentInk
+                          : fidelity.ink,
                     ),
                   ),
                 ],
@@ -1872,7 +1882,7 @@ final class _FineTuneSlider extends StatelessWidget {
                             child: Container(
                               height: 4,
                               decoration: BoxDecoration(
-                                color: ChromeKissFidelityTokens.chromeLine,
+                                color: fidelity.chromeLine,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1931,17 +1941,17 @@ final class _FineTuneSlider extends StatelessWidget {
                   Positioned(
                     left: 0,
                     top: 0,
-                    child: Text(label, style: _tuneStyle),
+                    child: Text(label, style: _tuneStyle(context)),
                   ),
                   Positioned(
                     right: 0,
                     top: 0,
                     child: Text(
                       valueLabel,
-                      style: _tuneStyle.copyWith(
-                        color: activeColor == ChromeKissFidelityTokens.accentInk
-                            ? ChromeKissFidelityTokens.accentInk
-                            : ChromeKissFidelityTokens.ink,
+                      style: _tuneStyle(context).copyWith(
+                        color: activeColor == fidelity.accentInk
+                            ? fidelity.accentInk
+                            : fidelity.ink,
                       ),
                     ),
                   ),
@@ -1964,7 +1974,7 @@ final class _FineTuneSlider extends StatelessWidget {
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
-                        color: ChromeKissFidelityTokens.chromeLine,
+                        color: fidelity.chromeLine,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -2016,6 +2026,7 @@ final class _PrimaryFidelityButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fidelity = context.chromeKissFidelity;
     final width = adaptive
         ? math.min(336.0, MediaQuery.sizeOf(context).width - 56)
         : 336.0;
@@ -2032,20 +2043,11 @@ final class _PrimaryFidelityButton extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 72),
           decoration: BoxDecoration(
             gradient: onPressed == null
-                ? const LinearGradient(
-                    colors: [Color(0xFFCB9AB8), Color(0xFF84536F)],
-                  )
-                : ChromeKissFidelityTokens.lacquerGradient,
-            border: Border.all(color: ChromeKissFidelityTokens.lacquer),
+                ? fidelity.disabledActionGradient
+                : fidelity.lacquerGradient,
+            border: Border.all(color: fidelity.lacquer),
             borderRadius: BorderRadius.circular(999),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x387D45FF),
-                offset: Offset(0, 14),
-                blurRadius: 36,
-              ),
-              BoxShadow(color: Color(0x57FF4FB8), blurRadius: 24),
-            ],
+            boxShadow: fidelity.primaryActionShadows,
           ),
           child: Material(
             color: Colors.transparent,
@@ -2063,16 +2065,16 @@ final class _PrimaryFidelityButton extends StatelessWidget {
                     SizedBox(
                       width: 24,
                       child: busy
-                          ? const SizedBox.square(
+                          ? SizedBox.square(
                               dimension: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: ChromeKissFidelityTokens.specular,
+                                color: fidelity.specular,
                               ),
                             )
-                          : const Icon(
+                          : Icon(
                               Icons.flare_rounded,
-                              color: ChromeKissFidelityTokens.specular,
+                              color: fidelity.specular,
                               size: 22,
                             ),
                     ),
@@ -2080,8 +2082,8 @@ final class _PrimaryFidelityButton extends StatelessWidget {
                       child: Text(
                         label,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: ChromeKissFidelityTokens.specular,
+                        style: TextStyle(
+                          color: fidelity.specular,
                           fontFamily: 'Manrope',
                           fontSize: 18,
                           height: 24 / 18,
@@ -2089,13 +2091,13 @@ final class _PrimaryFidelityButton extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(
+                    SizedBox(
                       width: 24,
                       child: Text(
                         '›',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: ChromeKissFidelityTokens.specular,
+                          color: fidelity.specular,
                           fontFamily: 'Manrope',
                           fontSize: 30,
                           height: 36 / 30,
@@ -2118,28 +2120,38 @@ final class _FidelityAsset extends StatelessWidget {
     required this.path,
     required this.width,
     required this.height,
+    this.atmosphere = false,
   });
 
   final String path;
   final double width;
   final double height;
+  final bool atmosphere;
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
+    final image = Image.asset(
       path,
       width: width,
       height: height,
       filterQuality: FilterQuality.high,
       excludeFromSemantics: true,
     );
+    if (!atmosphere) return image;
+    return Opacity(
+      opacity: context.chromeKissFidelity.atmosphereOpacity,
+      child: image,
+    );
   }
 }
 
-BoxDecoration _pearlPanelDecoration({required double radius}) {
+BoxDecoration _panelDecoration(
+  ChromeKissFidelityTheme fidelity, {
+  required double radius,
+}) {
   return BoxDecoration(
-    gradient: ChromeKissFidelityTokens.pearlGradient,
-    border: Border.all(color: ChromeKissFidelityTokens.chromeLine),
+    gradient: fidelity.satinGradient,
+    border: Border.all(color: fidelity.chromeLine),
     borderRadius: BorderRadius.circular(radius),
   );
 }
@@ -2201,44 +2213,32 @@ String _warmthLabel(double value) {
   return warmth >= 0 ? '+$warmth' : '$warmth';
 }
 
-const _lensGradient = LinearGradient(
-  begin: Alignment(-0.7, -1),
-  end: Alignment(0.8, 1),
-  colors: [
-    Color(0xFF291F3D),
-    Color(0xFF030308),
-    Color(0xFF0D081A),
-    Color(0xFF381433),
-  ],
-  stops: [0.146, 0.344, 0.656, 0.854],
-);
-
-const _stepStyle = TextStyle(
-  color: ChromeKissFidelityTokens.mutedInk,
+TextStyle _stepStyle(BuildContext context) => TextStyle(
+  color: context.chromeKissFidelity.mutedInk,
   fontFamily: 'Manrope',
   fontSize: 12,
   height: 16 / 12,
   fontWeight: FontWeight.w400,
 );
 
-const _hintStyle = TextStyle(
-  color: ChromeKissFidelityTokens.mutedInk,
+TextStyle _hintStyle(BuildContext context) => TextStyle(
+  color: context.chromeKissFidelity.mutedInk,
   fontFamily: 'Manrope',
   fontSize: 12,
   height: 18 / 12,
   fontWeight: FontWeight.w400,
 );
 
-const _adaptiveLabelStyle = TextStyle(
-  color: ChromeKissFidelityTokens.mutedInk,
+TextStyle _adaptiveLabelStyle(BuildContext context) => TextStyle(
+  color: context.chromeKissFidelity.mutedInk,
   fontFamily: 'Manrope',
   fontSize: 12,
   height: 16 / 12,
   fontWeight: FontWeight.w500,
 );
 
-const _sectionLabelStyle = TextStyle(
-  color: ChromeKissFidelityTokens.mutedInk,
+TextStyle _sectionLabelStyle(BuildContext context) => TextStyle(
+  color: context.chromeKissFidelity.mutedInk,
   fontFamily: 'Manrope',
   fontSize: 12,
   height: 18 / 12,
@@ -2246,8 +2246,8 @@ const _sectionLabelStyle = TextStyle(
   letterSpacing: 0.84,
 );
 
-const _tuneStyle = TextStyle(
-  color: ChromeKissFidelityTokens.ink,
+TextStyle _tuneStyle(BuildContext context) => TextStyle(
+  color: context.chromeKissFidelity.ink,
   fontFamily: 'Manrope',
   fontSize: 12,
   height: 16 / 12,

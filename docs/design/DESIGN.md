@@ -1,6 +1,6 @@
 # Chrome Kiss Design Foundation
 
-> Статус: direction approved, Companion Home fidelity pass implemented
+> Статус: direction approved, theme fidelity foundation implemented
 >
 > Primary direction: Chrome Kiss
 >
@@ -91,7 +91,7 @@ wall.
 ### Pearl
 
 Светлая подача той же Chrome Kiss identity. Canvas — мягкий rose-pearl
-`#F8F2F6`, не pure `#FFFFFF`. Он сохраняет лёгкое тепло рядом с холодным chrome,
+`#F4F2F6`, не pure `#FFFFFF`. Он сохраняет лёгкое тепло рядом с холодным chrome,
 но достаточно нейтрален для Hot Orchid и пользовательских looks. Glossy black
 lens остаётся неизменной и создаёт главный optical contrast.
 
@@ -177,16 +177,18 @@ interaction или material sheet. Нельзя превращать кажды�
 
 ## Typography Roles
 
-Окончательные font files на этом этапе не выбираются. Любой кандидат обязан
-качественно поддерживать кириллицу, цифры и системные accessibility-настройки.
+Runtime typography закреплена за Cormorant Garamond, Manrope и Great Vibes.
+Bundled font files поддерживают кириллицу и загружаются без сетевого запроса;
+системный text scaling продолжает определять фактический размер текста.
 
 | Role | Character | Use | Avoid |
 |---|---|---|---|
-| Display | Fashion-oriented extended или condensed grotesk; уверенный, немного острый | Короткие hero-заголовки и имя companion | Детские округлые буквы, длинные абзацы, all caps повсюду |
-| Title | Выразительный, но спокойнее Display | Названия зон, look и material sheet | Одинаковый вес с body и status |
-| Body | Нейтральный современный grotesk с высокой читаемостью | Инструкции, сообщения, описание действия | Fashion-эффекты, узкий шрифт, низкий контраст |
-| Label | Компактный и уверенный | Buttons, tabs, actions | Избыточный letter spacing и технический uppercase |
-| Micro / Status | Табулярные цифры, ясные формы, повышенная точность | Батарея, связь, secondary metadata | Доминирование над character или primary action |
+| Display | Cormorant Garamond 500 | Короткие hero-заголовки и имя companion | Длинные абзацы, all caps повсюду |
+| Title | Cormorant Garamond 500 | Названия зон, look и material sheet | Одинаковый вес с body и status |
+| Body | Manrope 500 | Инструкции, сообщения, описание действия | Fashion-эффекты, низкий контраст |
+| Label | Manrope 700 | Buttons, tabs, actions | Избыточный letter spacing и технический uppercase |
+| Micro / Status | Manrope 600 | Батарея, связь, secondary metadata | Доминирование над character или primary action |
+| Script accent | Great Vibes 400 | Редкая эмоциональная подпись рядом с title/look | Body copy, controls, длинные строки |
 
 Display создаёт fashion posture, но Body и Label сохраняют скорость чтения и
 понятность. Типографика не должна имитировать логотипы конкретных брендов.
@@ -229,17 +231,21 @@ Tokens описывают намерение и не привязаны к `Them
 
 | Token | Obsidian | Pearl | Meaning |
 |---|---:|---:|---|
-| `color.canvas` | `#0B0A0F` | `#F8F2F6` | Основной app canvas |
+| `color.canvas` | `#09080D` | `#F4F2F6` | Основной app canvas |
 | `color.lens` | `#020205` | `#020205` | Неизменная glossy companion lens |
-| `color.text.primary` | `#F8F4FA` | `#241A22` | Заголовки и основной текст |
-| `color.text.secondary` | `#AAA5B3` | `#655A63` | Подписи и secondary information |
-| `color.text.onAccent` | `#0B0A0F` | `#241A22` | Текст и glyph поверх Hot Orchid |
+| `color.text.primary` | `#F7F3F8` | `#211823` | Заголовки и основной текст |
+| `color.text.secondary` | `#B9B0BE` | `#6F5C72` | Подписи и secondary information |
+| `color.text.accent` | `#FF4FB8` | `#B70A6D` | Script accent и читаемый accent text |
+| `color.text.onAccent` | `#09080D` | `#211823` | Текст и glyph поверх Hot Orchid |
 | `color.accent.primary` | `#FF4FB8` | `#FF4FB8` | Главный glam action / active look |
 | `color.accent.optical` | `#C9BEFF` | `#C9BEFF` | Холодная optical связь и highlight |
-| `color.material.chrome` | `#D9D8E2` | `#8F8893` | Базовый chrome edge/material detail |
-| `color.material.champagne` | `#E7C98B` | `#9A6F36` | Тёплая secondary material нота |
-| `color.surface.secondary` | `#17161C` | `#EEE6EC` | MaterialSheet, grouped utility и временная secondary surface |
-| `color.divider` | `#34313A` | `#CFC5CD` | Тихое структурное разделение без card border |
+| `color.chrome.light` | `#E5E2EA` | `#F8F3FF` | Яркая chrome-линия и specular edge |
+| `color.chrome.mid` | `#AAA4B0` | `#D9D8E2` | Средняя chrome-ступень |
+| `color.chrome.dark` | `#6A6470` | `#8F8893` | Тёмная chrome-ступень и essential edge |
+| `color.material.chrome` | `#E5E2EA` | `#8F8893` | Базовый chrome edge/material detail |
+| `color.material.champagne` | `#D9B56D` | `#9A6F36` | Тёплая secondary material нота |
+| `color.surface.secondary` | `#171222` | `#EEE6EC` | MaterialSheet, grouped utility и временная secondary surface |
+| `color.divider` | `#34313A` | `#D9D8E2` | Тихое структурное разделение без card border |
 | `color.success` | `#67DFB2` | `#187A65` | Подтверждённый успех и ready state |
 | `color.warning` | `#F2C66D` | `#805E00` | Требующее внимания, но не опасное состояние |
 | `color.danger` | `#FF647C` | `#C23455` | Destructive action и критическая ошибка |
@@ -320,15 +326,16 @@ discovery, wardrobe или editor.
 
 | Pair | Obsidian | Pearl | Result |
 |---|---:|---:|---|
-| Primary text / canvas | `18.14:1` | `15.27:1` | AAA normal text |
-| Secondary text / canvas | `8.21:1` | `5.95:1` | AA normal text |
-| Hot Orchid / canvas | `6.63:1` | `2.69:1` | Pearl: не годится как мелкий текст или единственная control boundary |
-| On-accent text / Hot Orchid | `6.63:1` | `5.67:1` | AA normal text |
-| Icy Lilac / canvas | `11.55:1` | `1.55:1` | Pearl: только decorative detail или paired state signal |
-| Chrome / canvas | `13.97:1` | `3.11:1` | Pearl chrome может обозначать essential component edge |
-| Success / canvas | `12.00:1` | `4.74:1` | AA normal text |
-| Warning / canvas | `12.28:1` | `5.41:1` | AA normal text |
-| Danger / canvas | `6.92:1` | `4.86:1` | AA normal text |
+| Primary text / canvas | `18.18:1` | `15.48:1` | AAA normal text |
+| Secondary text / canvas | `9.52:1` | `5.47:1` | AA normal text |
+| Hot Orchid / canvas | `6.71:1` | `2.67:1` | Pearl: не годится как мелкий текст или единственная control boundary |
+| On-accent text / Hot Orchid | `6.71:1` | `5.79:1` | AA normal text |
+| Icy Lilac / canvas | `11.68:1` | `1.54:1` | Pearl: только decorative detail или paired state signal |
+| Chrome / canvas | `15.59:1` | `3.09:1` | Pearl chrome может обозначать essential component edge |
+| Success / canvas | `12.14:1` | `4.71:1` | AA normal text |
+| Warning / canvas | `12.43:1` | `5.36:1` | AA normal text |
+| Danger / canvas | `7.00:1` | `4.82:1` | AA normal text |
+| Accent text / canvas | `6.71:1` | `5.76:1` | AA normal text в обеих appearances |
 | Icy Lilac / lens | `12.13:1` | `12.13:1` | Высокий optical contrast внутри общей black lens |
 
 Hot Orchid сохраняется без затемнения в Pearl ради единой identity. Поэтому
@@ -447,13 +454,20 @@ image-flow:
 
 | Экран | Figma node | Reference viewport | Runtime owner |
 |---|---|---:|---|
-| Wardrobe / Pearl | `74:83` | `393×852` | `UserContentScreen`, `SceneRepository`, `UserContentController` |
-| Create Look / Upload Photo | `94:248` | `393×852` | `CreateLookScreen`; после выбора — `UserImageController` |
-| Create Look / Round Crop | `102:287` | `393×852` | `ImageEditorScreen`, `ImageEditorController` |
-| Create Look / Light & Color | `114:290` | `393×852` | create-ветка `ImageEditorScreen`; сохранение — `UserImageController` |
+| Wardrobe / Obsidian | `226:1120` | `393×852` | `UserContentScreen`, `SceneRepository`, `UserContentController` |
+| Wardrobe / Pearl | `74:83` | `393×852` | тот же runtime owner |
+| Create Look / Upload / Obsidian | `226:1316` | `393×852` | `CreateLookScreen`; после выбора — `UserImageController` |
+| Create Look / Upload / Pearl | `94:248` | `393×852` | тот же runtime owner |
+| Create Look / Round Crop / Obsidian | `226:1493` | `393×852` | `ImageEditorScreen`, `ImageEditorController` |
+| Create Look / Round Crop / Pearl | `102:287` | `393×852` | тот же runtime owner |
+| Create Look / Light & Color / Obsidian | `226:1552` | `393×852` | create-ветка `ImageEditorScreen`; сохранение — `UserImageController` |
+| Create Look / Light & Color / Pearl | `114:290` | `393×852` | тот же runtime owner |
 
-Общий canvas — `#F4F2F6`, frame radius — `48`, content inset — `24`, ключевые
-карточки имеют radius `32`. На reference viewport экран повторяет координаты
+Geometry хранится в `ChromeKissFidelityTokens`, а appearance-dependent color,
+gradient, shadow и text recipes — в `ChromeKissFidelityTheme`, подключённой через
+`ThemeData.extensions`. Product widgets читают только semantic roles и не
+ветвятся по Obsidian/Pearl/System. Frame radius — `48`, content inset — `24`,
+ключевые карточки имеют radius `32`. На reference viewport экран повторяет координаты
 макета; на узком viewport и при enlarged text переходит в независимую
 прокручиваемую композицию без масштабирования всего UI и без скрытия действий.
 Wardrobe остаётся единой библиотекой built-in и пользовательских образов, а
@@ -482,7 +496,7 @@ domain/persistence-контракта для цветокоррекции; он�
    если основной canvas остаётся obsidian?
 8. Какие collectible moments достаточно редки, чтобы не превратить стиль в
    Popstar Pet Club?
-9. Какие typography candidates с сильной кириллицей нужно проверить на реальных
-   строках и enlarged text?
-10. Какие части foundation должны стать обязательными tokens после проверки трёх
-    high-fidelity frames?
+9. Нужен ли отдельный variable-font pass после проверки Cormorant Garamond,
+   Manrope и Great Vibes на enlarged text и всех поддерживаемых платформах?
+10. Какие дополнительные material recipes следует переводить в
+    `ChromeKissFidelityTheme` после текущего Wardrobe/Create Look milestone?
