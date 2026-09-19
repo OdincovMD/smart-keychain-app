@@ -21,6 +21,7 @@ import '../shared/chrome_kiss_material_sheet.dart';
 import '../shared/image_failure_label.dart';
 import 'look_details_sheet.dart';
 import 'user_content_controller.dart';
+import 'wardrobe_states.dart';
 
 enum UserContentScreenResult { addImage }
 
@@ -103,6 +104,7 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
         child: scenes.when(
           data: (items) => _WardrobeCollection(
             scenes: items,
+            loadState: _WardrobeLoadState.ready,
             activeSceneId: snapshot?.activeSceneId,
             highlightedSceneId: _highlightedSceneId,
             enabled: !busy,
@@ -114,12 +116,34 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
             onAddLook: _addImage,
             onOpenLook: (scene) => unawaited(_openLookDetails(scene)),
           ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(
-            child: FilledButton(
-              onPressed: () => ref.invalidate(sceneLibraryProvider),
-              child: Text(l10n.retry),
-            ),
+          loading: () => _WardrobeCollection(
+            scenes: const [],
+            loadState: _WardrobeLoadState.loading,
+            activeSceneId: snapshot?.activeSceneId,
+            highlightedSceneId: _highlightedSceneId,
+            enabled: false,
+            showPhotosOnly: _showPhotosOnly,
+            onShowPhotosOnlyChanged: (value) {
+              setState(() => _showPhotosOnly = value);
+            },
+            onBack: () => Navigator.of(context).pop(),
+            onAddLook: _addImage,
+            onOpenLook: (_) {},
+          ),
+          error: (error, stackTrace) => _WardrobeCollection(
+            scenes: const [],
+            loadState: _WardrobeLoadState.error,
+            activeSceneId: snapshot?.activeSceneId,
+            highlightedSceneId: _highlightedSceneId,
+            enabled: false,
+            showPhotosOnly: _showPhotosOnly,
+            onShowPhotosOnlyChanged: (value) {
+              setState(() => _showPhotosOnly = value);
+            },
+            onBack: () => Navigator.of(context).pop(),
+            onAddLook: _addImage,
+            onOpenLook: (_) {},
+            onRetry: () => ref.invalidate(sceneLibraryProvider),
           ),
         ),
       ),
@@ -243,9 +267,12 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
   }
 }
 
+enum _WardrobeLoadState { ready, loading, error }
+
 final class _WardrobeCollection extends StatelessWidget {
   const _WardrobeCollection({
     required this.scenes,
+    required this.loadState,
     required this.activeSceneId,
     required this.highlightedSceneId,
     required this.enabled,
@@ -254,9 +281,11 @@ final class _WardrobeCollection extends StatelessWidget {
     required this.onBack,
     required this.onAddLook,
     required this.onOpenLook,
+    this.onRetry,
   });
 
   final List<Scene> scenes;
+  final _WardrobeLoadState loadState;
   final String? activeSceneId;
   final String? highlightedSceneId;
   final bool enabled;
@@ -265,6 +294,7 @@ final class _WardrobeCollection extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onAddLook;
   final ValueChanged<Scene> onOpenLook;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -279,6 +309,7 @@ final class _WardrobeCollection extends StatelessWidget {
         return exact
             ? _WardrobeReferenceLayout(
                 scenes: scenes,
+                loadState: loadState,
                 activeSceneId: activeSceneId,
                 highlightedSceneId: highlightedSceneId,
                 enabled: enabled,
@@ -287,9 +318,11 @@ final class _WardrobeCollection extends StatelessWidget {
                 onBack: onBack,
                 onAddLook: onAddLook,
                 onOpenLook: onOpenLook,
+                onRetry: onRetry,
               )
             : _WardrobeAdaptiveLayout(
                 scenes: scenes,
+                loadState: loadState,
                 activeSceneId: activeSceneId,
                 highlightedSceneId: highlightedSceneId,
                 enabled: enabled,
@@ -298,6 +331,7 @@ final class _WardrobeCollection extends StatelessWidget {
                 onBack: onBack,
                 onAddLook: onAddLook,
                 onOpenLook: onOpenLook,
+                onRetry: onRetry,
               );
       },
     );
@@ -307,6 +341,7 @@ final class _WardrobeCollection extends StatelessWidget {
 final class _WardrobeReferenceLayout extends StatelessWidget {
   const _WardrobeReferenceLayout({
     required this.scenes,
+    required this.loadState,
     required this.activeSceneId,
     required this.highlightedSceneId,
     required this.enabled,
@@ -315,9 +350,11 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
     required this.onBack,
     required this.onAddLook,
     required this.onOpenLook,
+    this.onRetry,
   });
 
   final List<Scene> scenes;
+  final _WardrobeLoadState loadState;
   final String? activeSceneId;
   final String? highlightedSceneId;
   final bool enabled;
@@ -326,6 +363,7 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onAddLook;
   final ValueChanged<Scene> onOpenLook;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -336,6 +374,10 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
     final hasUserLooks = scenes.any(
       (scene) => scene.source == SceneSource.userGenerated,
     );
+    final showEmpty =
+        loadState == _WardrobeLoadState.ready &&
+        showPhotosOnly &&
+        !hasUserLooks;
     return SingleChildScrollView(
       key: const Key('wardrobe_scroll'),
       child: SizedBox(
@@ -369,7 +411,63 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
                 onChanged: onShowPhotosOnlyChanged,
               ),
             ),
-            if (active != null)
+            if (loadState == _WardrobeLoadState.loading)
+              Positioned(
+                right: 24,
+                top: 64,
+                child: Text(
+                  l10n.wardrobeLoadingStatus,
+                  style: context.chromeKissText.status.copyWith(
+                    color: fidelity.accentInk,
+                    fontSize: 9,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            if (showEmpty)
+              Positioned(
+                right: 24,
+                top: 64,
+                child: Text(
+                  l10n.wardrobeEmptyCount,
+                  style: context.chromeKissText.status.copyWith(
+                    color: fidelity.mutedInk,
+                    fontSize: 9,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            if (loadState == _WardrobeLoadState.loading)
+              const Positioned(
+                left: 24,
+                top: 178,
+                child: WardrobeLoadingState(
+                  key: Key('wardrobe_loading_state'),
+                  referenceLayout: true,
+                ),
+              )
+            else if (loadState == _WardrobeLoadState.error)
+              Positioned(
+                left: 24,
+                top: 178,
+                width: 345,
+                height: 548,
+                child: WardrobeErrorState(
+                  key: const Key('wardrobe_error_state'),
+                  onRetry: onRetry!,
+                ),
+              )
+            else if (showEmpty)
+              Positioned(
+                left: 24,
+                top: 183,
+                child: WardrobeEmptyState(
+                  key: const Key('wardrobe_empty_state'),
+                  referenceLayout: true,
+                  onCreate: onAddLook,
+                ),
+              )
+            else if (active != null)
               Positioned(
                 left: 24,
                 top: 178,
@@ -380,34 +478,36 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
                   onPressed: () => onOpenLook(active),
                 ),
               ),
-            Positioned(
-              left: 24,
-              top: 355,
-              child: Text(
-                showPhotosOnly ? l10n.wardrobePhotosTab : l10n.myContent,
-                style: TextStyle(
-                  color: fidelity.ink,
-                  fontFamily: 'Manrope',
-                  fontSize: 17,
-                  height: 24 / 17,
-                  fontWeight: FontWeight.w600,
+            if (loadState == _WardrobeLoadState.ready && !showEmpty) ...[
+              Positioned(
+                left: 24,
+                top: 355,
+                child: Text(
+                  showPhotosOnly ? l10n.wardrobePhotosTab : l10n.myContent,
+                  style: TextStyle(
+                    color: fidelity.ink,
+                    fontFamily: 'Manrope',
+                    fontSize: 17,
+                    height: 24 / 17,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 24,
-              top: 386,
-              child: _WardrobeGrid(
-                scenes: tiles,
-                referenceLayout: true,
-                activeSceneId: activeSceneId,
-                highlightedSceneId: highlightedSceneId,
-                enabled: enabled,
-                hasUserLooks: hasUserLooks,
-                onAddLook: onAddLook,
-                onOpenLook: onOpenLook,
+              Positioned(
+                left: 24,
+                top: 386,
+                child: _WardrobeGrid(
+                  scenes: tiles,
+                  referenceLayout: true,
+                  activeSceneId: activeSceneId,
+                  highlightedSceneId: highlightedSceneId,
+                  enabled: enabled,
+                  hasUserLooks: hasUserLooks,
+                  onAddLook: onAddLook,
+                  onOpenLook: onOpenLook,
+                ),
               ),
-            ),
+            ],
             Positioned(
               left: 14,
               top: 752,
@@ -429,6 +529,7 @@ final class _WardrobeReferenceLayout extends StatelessWidget {
 final class _WardrobeAdaptiveLayout extends StatelessWidget {
   const _WardrobeAdaptiveLayout({
     required this.scenes,
+    required this.loadState,
     required this.activeSceneId,
     required this.highlightedSceneId,
     required this.enabled,
@@ -437,9 +538,11 @@ final class _WardrobeAdaptiveLayout extends StatelessWidget {
     required this.onBack,
     required this.onAddLook,
     required this.onOpenLook,
+    this.onRetry,
   });
 
   final List<Scene> scenes;
+  final _WardrobeLoadState loadState;
   final String? activeSceneId;
   final String? highlightedSceneId;
   final bool enabled;
@@ -448,6 +551,7 @@ final class _WardrobeAdaptiveLayout extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onAddLook;
   final ValueChanged<Scene> onOpenLook;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -458,6 +562,10 @@ final class _WardrobeAdaptiveLayout extends StatelessWidget {
     final hasUserLooks = scenes.any(
       (scene) => scene.source == SceneSource.userGenerated,
     );
+    final showEmpty =
+        loadState == _WardrobeLoadState.ready &&
+        showPhotosOnly &&
+        !hasUserLooks;
     return CustomScrollView(
       key: const Key('wardrobe_scroll'),
       slivers: [
@@ -474,30 +582,51 @@ final class _WardrobeAdaptiveLayout extends StatelessWidget {
                 onChanged: onShowPhotosOnlyChanged,
               ),
               const SizedBox(height: 12),
-              if (active != null)
+              if (loadState == _WardrobeLoadState.loading)
+                const WardrobeLoadingState(
+                  key: Key('wardrobe_loading_state'),
+                  referenceLayout: false,
+                )
+              else if (loadState == _WardrobeLoadState.error)
+                SizedBox(
+                  height: 500,
+                  child: WardrobeErrorState(
+                    key: const Key('wardrobe_error_state'),
+                    onRetry: onRetry!,
+                  ),
+                )
+              else if (showEmpty)
+                WardrobeEmptyState(
+                  key: const Key('wardrobe_empty_state'),
+                  referenceLayout: false,
+                  onCreate: onAddLook,
+                )
+              else ...[
+                if (active != null)
+                  Center(
+                    child: _CurrentLookCard(
+                      scene: active,
+                      enabled: enabled,
+                      adaptive: true,
+                      onPressed: () => onOpenLook(active),
+                    ),
+                  ),
+                const SizedBox(height: 14),
+                Text(showPhotosOnly ? l10n.wardrobePhotosTab : l10n.myContent),
+                const SizedBox(height: 8),
                 Center(
-                  child: _CurrentLookCard(
-                    scene: active,
+                  child: _WardrobeGrid(
+                    scenes: tiles,
+                    referenceLayout: false,
+                    activeSceneId: activeSceneId,
+                    highlightedSceneId: highlightedSceneId,
                     enabled: enabled,
-                    adaptive: true,
-                    onPressed: () => onOpenLook(active),
+                    hasUserLooks: hasUserLooks,
+                    onAddLook: onAddLook,
+                    onOpenLook: onOpenLook,
                   ),
                 ),
-              const SizedBox(height: 14),
-              Text(showPhotosOnly ? l10n.wardrobePhotosTab : l10n.myContent),
-              const SizedBox(height: 8),
-              Center(
-                child: _WardrobeGrid(
-                  scenes: tiles,
-                  referenceLayout: false,
-                  activeSceneId: activeSceneId,
-                  highlightedSceneId: highlightedSceneId,
-                  enabled: enabled,
-                  hasUserLooks: hasUserLooks,
-                  onAddLook: onAddLook,
-                  onOpenLook: onOpenLook,
-                ),
-              ),
+              ],
               const SizedBox(height: 28),
               ChromeKissBottomNavigation(
                 selectedDestination: ChromeKissNavDestination.looks,
@@ -625,7 +754,9 @@ final class _WardrobeTabs extends StatelessWidget {
             ],
           ),
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 180),
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
             left: referenceLayout
                 ? (photosOnly ? 236 : 63)

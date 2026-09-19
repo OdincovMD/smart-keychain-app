@@ -95,10 +95,15 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(
-      find.byKey(const Key('my_content_empty_add_button')),
+      find.byKey(
+        const Key('my_content_scene_${BuiltInSceneRepository.livingEyesId}'),
+      ),
       findsOneWidget,
     );
-    final emptyAdd = find.byKey(const Key('my_content_empty_add_button'));
+    await tester.tap(find.byKey(const Key('wardrobe_photos_tab')));
+    await tester.pump(const Duration(milliseconds: 200));
+    final emptyAdd = find.byKey(const Key('wardrobe_empty_create_button'));
+    expect(find.byKey(const Key('wardrobe_empty_state')), findsOneWidget);
     await tester.ensureVisible(emptyAdd);
     await tester.pump();
     await tester.tap(emptyAdd);
@@ -127,9 +132,12 @@ void main() {
     await tester.pump();
     const sceneKey = Key('my_content_scene_user-image:widget-asset');
     expect(find.byKey(const Key('user_content_screen')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('wardrobe_photos_tab')));
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.ensureVisible(find.byKey(sceneKey));
     await tester.pump();
     expect(find.byKey(sceneKey), findsOneWidget);
+    expect(find.byKey(const Key('wardrobe_empty_state')), findsNothing);
     expect(find.byKey(const Key('look_saved_marker')), findsOneWidget);
 
     await tester.tap(find.byKey(sceneKey));

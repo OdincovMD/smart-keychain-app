@@ -12,6 +12,8 @@ import 'package:smart_keychain_app/app/app_theme.dart';
 import 'package:smart_keychain_app/app/chrome_kiss_theme.dart';
 import 'package:smart_keychain_app/domain/image/crop_spec.dart';
 import 'package:smart_keychain_app/features/image_editor/image_editor_screen.dart';
+import 'package:smart_keychain_app/features/image_import/photo_import_error_sheet.dart';
+import 'package:smart_keychain_app/features/shared/chrome_kiss_material_sheet.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
 import '../support/load_app_fonts.dart';
@@ -139,6 +141,34 @@ void main() {
     );
   });
 
+  testWidgets('Photo Import Error Obsidian 390x844', (tester) async {
+    await _pumpEditor(
+      tester,
+      figmaImageBytes,
+      appearance: ResolvedAppAppearance.obsidian,
+    );
+    await _openPhotoImportError(tester);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/photo_import_error_obsidian_390x844.png'),
+    );
+  });
+
+  testWidgets('Photo Import Error Pearl 390x844', (tester) async {
+    await _pumpEditor(
+      tester,
+      figmaImageBytes,
+      appearance: ResolvedAppAppearance.pearl,
+    );
+    await _openPhotoImportError(tester);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/photo_import_error_pearl_390x844.png'),
+    );
+  });
+
   const responsiveSizes = <Size>[
     Size(360, 800),
     Size(390, 844),
@@ -168,6 +198,22 @@ void main() {
       );
     }
   }
+}
+
+Future<void> _openPhotoImportError(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('image_editor_next')));
+  await tester.pump();
+  final context = tester.element(find.byType(ImageEditorScreen));
+  unawaited(
+    showChromeKissMaterialSheet<PhotoImportErrorAction>(
+      context: context,
+      builder: (context) => const PhotoImportErrorSheet(
+        failureLabel:
+            'Файл повреждён или этот формат изображения не поддерживается.',
+      ),
+    ),
+  );
+  await tester.pump();
 }
 
 Future<void> _pumpEditor(

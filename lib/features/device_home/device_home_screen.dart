@@ -20,7 +20,9 @@ import '../../l10n/app_localizations.dart';
 import '../device_discovery/device_discovery_screen.dart';
 import '../image_editor/image_editor_screen.dart';
 import '../image_import/create_look_screen.dart';
+import '../image_import/photo_import_error_sheet.dart';
 import '../image_import/user_image_controller.dart';
+import '../shared/chrome_kiss_material_sheet.dart';
 import '../shared/image_failure_label.dart';
 import '../user_content/user_content_screen.dart';
 import 'eye_preview_controller.dart';
@@ -45,6 +47,7 @@ final class DeviceHomeScreen extends ConsumerStatefulWidget {
 final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   String? _selectedSceneId;
   String? _newLookSceneId;
+  bool _photoImportSheetOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +84,10 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
             });
           }
           ref.read(userImageControllerProvider.notifier).acknowledge();
+        case UserImageFailed(:final failure) when previous is UserImagePicking:
+          if (mounted) {
+            unawaited(_showPhotoImportError(imageFailureLabel(l10n, failure)));
+          }
         case UserImageFailed(:final failure):
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +189,23 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
     if (sceneId == null) return;
     _newLookSceneId = null;
     await _openMyContent(highlightedSceneId: sceneId);
+  }
+
+  Future<void> _showPhotoImportError(String failureLabel) async {
+    if (_photoImportSheetOpen || !mounted) return;
+    _photoImportSheetOpen = true;
+    ref.read(userImageControllerProvider.notifier).acknowledge();
+    PhotoImportErrorAction? action;
+    try {
+      action = await showChromeKissMaterialSheet<PhotoImportErrorAction>(
+        context: context,
+        builder: (context) => PhotoImportErrorSheet(failureLabel: failureLabel),
+      );
+    } finally {
+      _photoImportSheetOpen = false;
+    }
+    if (!mounted || action != PhotoImportErrorAction.retry) return;
+    ref.read(userImageControllerProvider.notifier).startImport();
   }
 
   Future<void> _openMyContent({String? highlightedSceneId}) async {

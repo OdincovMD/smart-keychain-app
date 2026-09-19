@@ -317,6 +317,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get wardrobeWorn => 'НА МНЕ';
 
   @override
+  String get wardrobeLoadingStatus => 'СИНХРОНИЗАЦИЯ';
+
+  @override
+  String get wardrobeLoadingTitle => 'Раскладываем блеск…';
+
+  @override
+  String get wardrobeLoadingMessage => 'Образы появятся через мгновение';
+
+  @override
+  String get wardrobeLoadingSemantics => 'Гардероб загружается';
+
+  @override
+  String get wardrobeEmptyBadge => 'ТВОЙ ПЕРВЫЙ LOOK';
+
+  @override
+  String get wardrobeEmptyCount => '0 ОБРАЗОВ';
+
+  @override
+  String get createFirstLook => 'Создать первый образ';
+
+  @override
+  String get addPhoto => 'Добавить фото';
+
+  @override
+  String get wardrobeEmptyAccent => 'you bring the fantasy';
+
+  @override
+  String get wardrobeSceneErrorTitle => 'Гардероб не открылся';
+
+  @override
+  String get wardrobeSceneErrorMessage =>
+      'Попробуй ещё раз — твои образы останутся на месте.';
+
+  @override
   String get addLookShort => 'Добавить';
 
   @override
@@ -453,11 +487,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выбирайте настроение, примеряйте и создавайте свои образы.';
 
   @override
-  String get myContentEmptyTitle => 'Место для твоего образа';
+  String get myContentEmptyTitle => 'Гардероб пока пуст';
 
   @override
   String get myContentEmptyMessage =>
-      'Добавь фото и настрой его для круглого экрана.';
+      'Создай первый образ — Luna примерит его сразу и сохранит для следующего настроения.';
 
   @override
   String get emptyLookPreview => 'Пустое место для нового образа';
@@ -573,6 +607,21 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get imageDeviceFallbackFailed =>
       'Не удалось безопасно сменить активную сцену.';
+
+  @override
+  String get photoImportLabel => 'PHOTO IMPORT';
+
+  @override
+  String get photoImportErrorTitle => 'Фото не открылось';
+
+  @override
+  String get photoImportUnchanged => 'Файл не изменён · можно выбрать другой';
+
+  @override
+  String get chooseAnotherPhoto => 'Выбрать другое фото';
+
+  @override
+  String get returnBack => 'Вернуться назад';
 
   @override
   String get statusReady => 'НА СВЯЗИ';

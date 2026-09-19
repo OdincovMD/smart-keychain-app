@@ -1,6 +1,7 @@
 @Tags(['golden'])
 library;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:smart_keychain_app/app/app_theme.dart';
 import 'package:smart_keychain_app/app/chrome_kiss_theme.dart';
 import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/core/result.dart';
+import 'package:smart_keychain_app/domain/content/scene.dart';
 import 'package:smart_keychain_app/domain/image/crop_spec.dart';
 import 'package:smart_keychain_app/domain/image/image_picker_gateway.dart';
 import 'package:smart_keychain_app/domain/image/user_image_asset.dart';
@@ -109,6 +111,58 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('baselines/wardrobe_pearl_390x844.png'),
+    );
+  });
+
+  testWidgets('Wardrobe Loading Obsidian 390x844', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 0);
+    await _pumpWardrobe(
+      tester,
+      rig,
+      ResolvedAppAppearance.obsidian,
+      loading: true,
+    );
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_loading_obsidian_390x844.png'),
+    );
+  });
+
+  testWidgets('Wardrobe Loading Pearl 390x844', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 0);
+    await _pumpWardrobe(
+      tester,
+      rig,
+      ResolvedAppAppearance.pearl,
+      loading: true,
+    );
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_loading_pearl_390x844.png'),
+    );
+  });
+
+  testWidgets('Wardrobe Empty Photos Obsidian 390x844', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 0);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.obsidian);
+    await _selectPhotosTab(tester);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_empty_photos_obsidian_390x844.png'),
+    );
+  });
+
+  testWidgets('Wardrobe Empty Photos Pearl 390x844', (tester) async {
+    final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 0);
+    await _pumpWardrobe(tester, rig, ResolvedAppAppearance.pearl);
+    await _selectPhotosTab(tester);
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('baselines/wardrobe_empty_photos_pearl_390x844.png'),
     );
   });
 
@@ -326,6 +380,7 @@ Future<void> _pumpWardrobe(
   ResolvedAppAppearance appearance, {
   String? highlightedSceneId,
   Size size = const Size(390, 844),
+  bool loading = false,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -343,10 +398,13 @@ Future<void> _pumpWardrobe(
   }
   await connection;
 
+  final pendingScenes = Completer<List<Scene>>();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         sceneRepositoryProvider.overrideWithValue(rig.scenes),
+        if (loading)
+          sceneLibraryProvider.overrideWith((ref) => pendingScenes.future),
         deviceRepositoryProvider.overrideWithValue(rig.device),
         appSettingsRepositoryProvider.overrideWithValue(rig.settings),
         localFileStorageProvider.overrideWithValue(rig.storage),
@@ -416,6 +474,13 @@ Future<void> _pumpWardrobe(
   for (var frame = 0; frame < 4; frame++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+}
+
+Future<void> _selectPhotosTab(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('wardrobe_photos_tab')));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 200));
+  expect(find.byKey(const Key('wardrobe_empty_state')), findsOneWidget);
 }
 
 Future<void> _openLivingEyes(WidgetTester tester) async {

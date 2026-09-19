@@ -682,6 +682,72 @@ abstract class AppLocalizations {
   /// **'НА МНЕ'**
   String get wardrobeWorn;
 
+  /// No description provided for @wardrobeLoadingStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'СИНХРОНИЗАЦИЯ'**
+  String get wardrobeLoadingStatus;
+
+  /// No description provided for @wardrobeLoadingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раскладываем блеск…'**
+  String get wardrobeLoadingTitle;
+
+  /// No description provided for @wardrobeLoadingMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образы появятся через мгновение'**
+  String get wardrobeLoadingMessage;
+
+  /// No description provided for @wardrobeLoadingSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гардероб загружается'**
+  String get wardrobeLoadingSemantics;
+
+  /// No description provided for @wardrobeEmptyBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'ТВОЙ ПЕРВЫЙ LOOK'**
+  String get wardrobeEmptyBadge;
+
+  /// No description provided for @wardrobeEmptyCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'0 ОБРАЗОВ'**
+  String get wardrobeEmptyCount;
+
+  /// No description provided for @createFirstLook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать первый образ'**
+  String get createFirstLook;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить фото'**
+  String get addPhoto;
+
+  /// No description provided for @wardrobeEmptyAccent.
+  ///
+  /// In ru, this message translates to:
+  /// **'you bring the fantasy'**
+  String get wardrobeEmptyAccent;
+
+  /// No description provided for @wardrobeSceneErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гардероб не открылся'**
+  String get wardrobeSceneErrorTitle;
+
+  /// No description provided for @wardrobeSceneErrorMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробуй ещё раз — твои образы останутся на месте.'**
+  String get wardrobeSceneErrorMessage;
+
   /// No description provided for @addLookShort.
   ///
   /// In ru, this message translates to:
@@ -955,13 +1021,13 @@ abstract class AppLocalizations {
   /// No description provided for @myContentEmptyTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Место для твоего образа'**
+  /// **'Гардероб пока пуст'**
   String get myContentEmptyTitle;
 
   /// No description provided for @myContentEmptyMessage.
   ///
   /// In ru, this message translates to:
-  /// **'Добавь фото и настрой его для круглого экрана.'**
+  /// **'Создай первый образ — Luna примерит его сразу и сохранит для следующего настроения.'**
   String get myContentEmptyMessage;
 
   /// No description provided for @emptyLookPreview.
@@ -1179,6 +1245,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось безопасно сменить активную сцену.'**
   String get imageDeviceFallbackFailed;
+
+  /// No description provided for @photoImportLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'PHOTO IMPORT'**
+  String get photoImportLabel;
+
+  /// No description provided for @photoImportErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото не открылось'**
+  String get photoImportErrorTitle;
+
+  /// No description provided for @photoImportUnchanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл не изменён · можно выбрать другой'**
+  String get photoImportUnchanged;
+
+  /// No description provided for @chooseAnotherPhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать другое фото'**
+  String get chooseAnotherPhoto;
+
+  /// No description provided for @returnBack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуться назад'**
+  String get returnBack;
 
   /// No description provided for @statusReady.
   ///

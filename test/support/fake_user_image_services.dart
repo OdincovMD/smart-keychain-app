@@ -58,9 +58,13 @@ final class FakeImagePickerGateway implements ImagePickerGateway {
   FakeImagePickerGateway(this.outcome);
 
   ImagePickOutcome outcome;
+  int callCount = 0;
 
   @override
-  Future<ImagePickOutcome> pickFromGallery() async => outcome;
+  Future<ImagePickOutcome> pickFromGallery() async {
+    callCount++;
+    return outcome;
+  }
 }
 
 final class FakeImageProcessor implements ImageProcessor {
