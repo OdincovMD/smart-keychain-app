@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "neutral": {
+    "left": {"width": 48, "height": 62, "x": -31, "y": 0, "angle": 0},
+    "right": {"width": 48, "height": 62, "x": 31, "y": 0, "angle": 0},
+    "spacing": 62
+  },
+  "expressions": {
+    "curious": {
+      "left": {"width": 50, "height": 62, "x": -22, "y": -8, "angle": 4},
+      "right": {"width": 50, "height": 55, "x": 40, "y": -8, "angle": -2},
+      "spacing": 62
+    }
+  },
+  "animations": {
+    "curious_follow": {
+      "mode": "once",
+      "blink": true,
+      "steps": [
+        {"expression": "curious", "hold": 420, "transition": 240, "style": "easeOut"},
+        {"expression": "neutral", "hold": 180, "transition": 360, "style": "easeInOut"}
+      ]
+    }
+  },
+  "body": {"shape": "ignored-by-eye-converter"},
+  "colors": {"primary": "ignored-by-eye-converter"}
+}

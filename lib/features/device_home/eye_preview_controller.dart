@@ -6,6 +6,8 @@ import '../../domain/eyes/eye_emotion.dart';
 
 enum EyeDebugCommand { blink, doubleBlink, lookLeft, lookRight, specialAction }
 
+enum EyePlaybackCommand { play, pause, restart }
+
 final class EyePreviewState {
   const EyePreviewState({
     required this.emotion,
@@ -13,6 +15,10 @@ final class EyePreviewState {
     required this.commandRevision,
     required this.command,
     required this.randomSeed,
+    required this.clipName,
+    required this.playbackRevision,
+    required this.playbackCommand,
+    required this.playbackSpeed,
   });
 
   final EyeEmotion emotion;
@@ -20,12 +26,20 @@ final class EyePreviewState {
   final int commandRevision;
   final EyeDebugCommand? command;
   final int? randomSeed;
+  final String clipName;
+  final int playbackRevision;
+  final EyePlaybackCommand? playbackCommand;
+  final double playbackSpeed;
 
   EyePreviewState copyWith({
     EyeEmotion? emotion,
     int? blinkRevision,
     int? commandRevision,
     EyeDebugCommand? command,
+    String? clipName,
+    int? playbackRevision,
+    EyePlaybackCommand? playbackCommand,
+    double? playbackSpeed,
   }) {
     return EyePreviewState(
       emotion: emotion ?? this.emotion,
@@ -33,6 +47,10 @@ final class EyePreviewState {
       commandRevision: commandRevision ?? this.commandRevision,
       command: command ?? this.command,
       randomSeed: randomSeed,
+      clipName: clipName ?? this.clipName,
+      playbackRevision: playbackRevision ?? this.playbackRevision,
+      playbackCommand: playbackCommand ?? this.playbackCommand,
+      playbackSpeed: playbackSpeed ?? this.playbackSpeed,
     );
   }
 
@@ -44,11 +62,24 @@ final class EyePreviewState {
           blinkRevision == other.blinkRevision &&
           commandRevision == other.commandRevision &&
           command == other.command &&
-          randomSeed == other.randomSeed;
+          randomSeed == other.randomSeed &&
+          clipName == other.clipName &&
+          playbackRevision == other.playbackRevision &&
+          playbackCommand == other.playbackCommand &&
+          playbackSpeed == other.playbackSpeed;
 
   @override
-  int get hashCode =>
-      Object.hash(emotion, blinkRevision, commandRevision, command, randomSeed);
+  int get hashCode => Object.hash(
+    emotion,
+    blinkRevision,
+    commandRevision,
+    command,
+    randomSeed,
+    clipName,
+    playbackRevision,
+    playbackCommand,
+    playbackSpeed,
+  );
 }
 
 final class EyePreviewController extends Notifier<EyePreviewState> {
@@ -60,6 +91,10 @@ final class EyePreviewController extends Notifier<EyePreviewState> {
       commandRevision: 0,
       command: null,
       randomSeed: null,
+      clipName: 'neutral_idle',
+      playbackRevision: 0,
+      playbackCommand: null,
+      playbackSpeed: 1,
     );
   }
 
@@ -96,6 +131,33 @@ final class EyePreviewController extends Notifier<EyePreviewState> {
       commandRevision: state.commandRevision,
       command: state.command,
       randomSeed: seed,
+      clipName: state.clipName,
+      playbackRevision: state.playbackRevision,
+      playbackCommand: state.playbackCommand,
+      playbackSpeed: state.playbackSpeed,
+    );
+  }
+
+  void setClip(String clipName) {
+    if (state.clipName == clipName) return;
+    state = state.copyWith(clipName: clipName);
+  }
+
+  void setPlaybackSpeed(double speed) {
+    if (state.playbackSpeed == speed) return;
+    state = state.copyWith(playbackSpeed: speed);
+  }
+
+  void play() => _requestPlayback(EyePlaybackCommand.play);
+
+  void pause() => _requestPlayback(EyePlaybackCommand.pause);
+
+  void restart() => _requestPlayback(EyePlaybackCommand.restart);
+
+  void _requestPlayback(EyePlaybackCommand command) {
+    state = state.copyWith(
+      playbackRevision: state.playbackRevision + 1,
+      playbackCommand: command,
     );
   }
 

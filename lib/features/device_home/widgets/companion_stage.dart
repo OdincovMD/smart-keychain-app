@@ -324,7 +324,7 @@ final class _JewelryCompanionStage extends StatelessWidget {
             child: ProceduralEyesView(
               initialEmotion: content.defaultEmotion,
               displayProfile: displayProfile,
-              rendererVariant: EyeRendererVariant.figmaJewelry,
+              rendererVariant: EyeRendererVariant.kissCutV21,
             ),
           ),
           IgnorePointer(

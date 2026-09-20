@@ -6,7 +6,6 @@ import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/features/device_home/device_home_screen.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
-import 'package:smart_keychain_app/features/device_home/widgets/figma_kiss_cut_eyes_view.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/jewel_button.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
@@ -54,7 +53,7 @@ void main() {
 
     expect(find.text('Мои образы'), findsOneWidget);
     expect(find.byKey(const Key('companion_stage')), findsOneWidget);
-    expect(find.byType(FigmaKissCutEyesView), findsOneWidget);
+    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
     expect(
       find.byKey(const ValueKey(BuiltInSceneRepository.livingEyesId)),
       findsOneWidget,
@@ -180,7 +179,7 @@ void main() {
       providerContainer.read(eyePreviewControllerProvider).emotion,
       EyeEmotion.happy,
     );
-    expect(find.byType(FigmaKissCutEyesView), findsOneWidget);
+    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 180));
     final blinkButton = find.byKey(const Key('eye_blink_button'));

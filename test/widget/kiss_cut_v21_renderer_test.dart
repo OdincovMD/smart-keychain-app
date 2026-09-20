@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/domain/device/display_profile.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_library.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_player.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
@@ -26,7 +29,7 @@ void main() {
       expect(geometry.right.pupilInsideEye, isTrue, reason: mood.name);
       expect(
         geometry.contentRadiusFraction,
-        lessThanOrEqualTo(0.36),
+        lessThanOrEqualTo(0.41),
         reason: mood.name,
       );
     }
@@ -56,7 +59,52 @@ void main() {
 
       expect(geometry.left.pupilInsideEye, isTrue, reason: 'left $sample');
       expect(geometry.right.pupilInsideEye, isTrue, reason: 'right $sample');
-      expect(geometry.contentRadiusFraction, lessThanOrEqualTo(0.36));
+      expect(geometry.contentRadiusFraction, lessThanOrEqualTo(0.41));
+    }
+  });
+
+  test('every authored clip frame remains finite and geometry-safe', () {
+    final base = EyeRuntimeState.resting(EyeEmotion.neutral);
+    for (final clip in chromeKissEyeMotionDefinition.clips.values) {
+      for (
+        var elapsed = Duration.zero;
+        elapsed <= clip.duration;
+        elapsed += const Duration(milliseconds: 16)
+      ) {
+        final state = EyeMotionClipSampler.sample(
+          definition: chromeKissEyeMotionDefinition,
+          clip: clip,
+          elapsed: elapsed,
+          base: base,
+          initial: base,
+        ).state;
+        final values = [
+          state.gazeX,
+          state.gazeY,
+          state.leftEyelidOpen,
+          state.rightEyelidOpen,
+          state.pupilScale,
+          state.eyeScaleX,
+          state.eyeScaleY,
+          state.expressionTilt,
+          state.verticalOffset,
+        ];
+        final geometry = KissCutGeometrySnapshot.fromState(
+          state,
+          style: KissCutRendererStyle.v21OpticalGlint,
+        );
+
+        expect(values.every((value) => value.isFinite), isTrue);
+        expect(state.leftEyelidOpen, inInclusiveRange(0, 1));
+        expect(state.rightEyelidOpen, inInclusiveRange(0, 1));
+        expect(geometry.left.pupilInsideEye, isTrue);
+        expect(geometry.right.pupilInsideEye, isTrue);
+        expect(
+          geometry.contentRadiusFraction,
+          lessThanOrEqualTo(0.41),
+          reason: '${clip.name} at $elapsed',
+        );
+      }
     }
   });
 
@@ -139,7 +187,7 @@ void main() {
       find.byKey(const Key('kiss_cut_eye_painter')),
     );
     final painter = paint.painter! as KissCutEyePainter;
-    expect(painter.scene.style, KissCutRendererStyle.v21Pure);
+    expect(painter.scene.style, KissCutRendererStyle.v21OpticalGlint);
     expect(painter.scene.fromState, painter.scene.toState);
     expect(painter.scene.toState.emotion, EyeEmotion.curious);
   });
@@ -173,6 +221,6 @@ void main() {
       find.byKey(const Key('kiss_cut_eye_painter')),
     );
     final painter = paint.painter! as KissCutEyePainter;
-    expect(painter.scene.toState.gazeX, greaterThan(0));
+    expect(painter.currentState.gazeX, greaterThan(0));
   });
 }

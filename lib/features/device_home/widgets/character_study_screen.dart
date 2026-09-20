@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/chrome_kiss_theme.dart';
+import '../../../core/result.dart';
 import '../../../domain/eyes/eye_emotion.dart';
+import '../../../domain/eyes/eye_motion_definition.dart';
+import '../../../domain/eyes/eye_motion_library.dart';
 import '../eye_preview_controller.dart';
+import 'eye_motion_ticker.dart';
 import 'kiss_cut_eye_renderer.dart';
 import 'procedural_eyes_view.dart';
 
@@ -23,6 +27,8 @@ final class _CharacterStudyScreenState
   KissCutVisualMood _mood = KissCutVisualMood.neutral;
   KissCutColourway _colourway = KissCutColourway.orchidLilac;
   CharacterStudySize _size = CharacterStudySize.full;
+  EyeMotionDefinition _definition = chromeKissEyeMotionDefinition;
+  EyeMotionTicker? _runtime;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +77,11 @@ final class _CharacterStudyScreenState
                       mood: _mood,
                       colourway: _colourway,
                       size: _size,
+                      definition: _definition,
+                      onRuntimeReady: _captureRuntime,
                     ),
+                    const SizedBox(height: 10),
+                    _MotionReadout(runtime: _runtime),
                     const SizedBox(height: 24),
                     _StudySection(
                       label: 'Renderer',
@@ -88,6 +98,84 @@ final class _CharacterStudyScreenState
                                 setState(() => _renderer = renderer);
                               },
                             ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Motion clip',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final clip in ChromeKissEyeClips.values)
+                            ChoiceChip(
+                              key: Key('study_clip_$clip'),
+                              label: Text(clip),
+                              selected: eyeState.clipName == clip,
+                              onSelected: (_) => ref
+                                  .read(eyePreviewControllerProvider.notifier)
+                                  .setClip(clip),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Playback',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton(
+                            key: const Key('study_play'),
+                            onPressed: ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .play,
+                            child: const Text('Play'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_pause'),
+                            onPressed: ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .pause,
+                            child: const Text('Pause'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_restart'),
+                            onPressed: ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .restart,
+                            child: const Text('Restart'),
+                          ),
+                          FilterChip(
+                            key: const Key('study_slow_motion'),
+                            label: const Text('0.5×'),
+                            selected: eyeState.playbackSpeed == 0.5,
+                            onSelected: (selected) => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .setPlaybackSpeed(selected ? 0.5 : 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Definition import',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton(
+                            key: const Key('study_import_fixture'),
+                            onPressed: _importOwnedFixture,
+                            child: const Text('Import fixture'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_import_converted'),
+                            onPressed: _importConvertedFixture,
+                            child: const Text('Converted definition'),
+                          ),
                         ],
                       ),
                     ),
@@ -224,6 +312,37 @@ final class _CharacterStudyScreenState
         .setEmotion(_runtimeMoodFor(mood));
     setState(() => _mood = mood);
   }
+
+  void _captureRuntime(EyeMotionTicker runtime) {
+    if (identical(_runtime, runtime)) return;
+    setState(() => _runtime = runtime);
+  }
+
+  void _importOwnedFixture() {
+    final decoded = decodeEyeMotionDefinition(
+      chromeKissEyeMotionDefinition.encode(),
+    );
+    if (decoded case Ok(:final value)) {
+      setState(() {
+        _runtime = null;
+        _definition = value;
+      });
+    }
+  }
+
+  void _importConvertedFixture() {
+    setState(() {
+      _runtime = null;
+      _definition = EyeMotionDefinition(
+        poses: chromeKissEyeMotionDefinition.poses,
+        clips: chromeKissEyeMotionDefinition.clips,
+        metadata: const {
+          'sourceFormat': 'avatar-definition-v1',
+          'fixture': 'clean-room',
+        },
+      );
+    });
+  }
 }
 
 final class _CharacterPreview extends StatelessWidget {
@@ -232,12 +351,16 @@ final class _CharacterPreview extends StatelessWidget {
     required this.mood,
     required this.colourway,
     required this.size,
+    required this.definition,
+    required this.onRuntimeReady,
   });
 
   final EyeRendererVariant renderer;
   final KissCutVisualMood mood;
   final KissCutColourway colourway;
   final CharacterStudySize size;
+  final EyeMotionDefinition definition;
+  final ValueChanged<EyeMotionTicker> onRuntimeReady;
 
   @override
   Widget build(BuildContext context) {
@@ -259,10 +382,41 @@ final class _CharacterPreview extends StatelessWidget {
                   kissCutVisualMoodOverride:
                       renderer == EyeRendererVariant.legacy ? null : mood,
                   kissCutColourway: colourway,
+                  motionDefinition: definition,
+                  onRuntimeReady: onRuntimeReady,
                 ),
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+final class _MotionReadout extends StatelessWidget {
+  const _MotionReadout({required this.runtime});
+
+  final EyeMotionTicker? runtime;
+
+  @override
+  Widget build(BuildContext context) {
+    final source = runtime;
+    if (source == null) return const SizedBox.shrink();
+    return AnimatedBuilder(
+      animation: source,
+      builder: (context, child) {
+        final state = source.state;
+        return Text(
+          'phase ${source.phase.name} · '
+          'gaze ${state.gazeX.toStringAsFixed(2)}, '
+          '${state.gazeY.toStringAsFixed(2)} · '
+          'lids ${state.leftEyelidOpen.toStringAsFixed(2)}/'
+          '${state.rightEyelidOpen.toStringAsFixed(2)} · '
+          'pupil ${state.pupilScale.toStringAsFixed(2)}',
+          key: const Key('study_motion_readout'),
+          textAlign: TextAlign.center,
+          style: context.chromeKissText.status,
         );
       },
     );

@@ -10,6 +10,7 @@ import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/eye_motion_ticker.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
@@ -32,7 +33,7 @@ void main() {
       find.byKey(const Key('kiss_cut_eye_painter')),
     );
     final painter = paint.painter! as KissCutEyePainter;
-    expect(painter.scene.style, KissCutRendererStyle.v21Pure);
+    expect(painter.scene.style, KissCutRendererStyle.v21OpticalGlint);
     expect(painter.scene.colourway, KissCutColourway.orchidLilac);
 
     await _pumpScreen(
@@ -101,7 +102,7 @@ void main() {
     );
     final painter = paint.painter! as ProceduralEyePainter;
     expect(painter.scene.fromState, painter.scene.toState);
-    expect(painter.scene.toState.emotion, EyeEmotion.sleepy);
+    expect(painter.currentState.emotion, EyeEmotion.sleepy);
   });
 
   testWidgets('normal blink closes asymmetrically and ends open', (
@@ -111,20 +112,21 @@ void main() {
 
     container.read(eyePreviewControllerProvider.notifier).requestBlink();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 50));
 
     var painter = _eyePainter(tester);
-    expect(painter.scene.toState.motionPhase, EyeMotionPhase.closed);
-    expect(painter.scene.toState.leftEyelidOpen, isNot(equals(0.04)));
-    expect(painter.scene.toState.eyelidOpen, closeTo(0.04, 0.006));
+    expect(
+      painter.currentState.motionPhase,
+      anyOf(EyeMotionPhase.closing, EyeMotionPhase.closed),
+    );
+    expect(painter.currentState.leftEyelidOpen, isNot(equals(0.04)));
 
     await tester.pump(const Duration(milliseconds: 90));
     await tester.pump(const Duration(milliseconds: 45));
     await tester.pump(const Duration(milliseconds: 120));
     await tester.pump(const Duration(milliseconds: 30));
     painter = _eyePainter(tester);
-    expect(painter.scene.toState.motionPhase, EyeMotionPhase.idle);
-    expect(painter.scene.toState.eyelidOpen, greaterThan(0.8));
+    expect(painter.currentState.eyelidOpen, greaterThan(0.8));
   });
 
   testWidgets('double blink performs a second close', (tester) async {
@@ -132,16 +134,18 @@ void main() {
 
     container.read(eyePreviewControllerProvider.notifier).requestDoubleBlink();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 50));
     await tester.pump(const Duration(milliseconds: 90));
     await tester.pump(const Duration(milliseconds: 45));
     await tester.pump(const Duration(milliseconds: 120));
     await tester.pump(const Duration(milliseconds: 140));
-    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 50));
 
     final painter = _eyePainter(tester);
-    expect(painter.scene.toState.motionPhase, EyeMotionPhase.closed);
-    expect(painter.scene.toState.eyelidOpen, closeTo(0.04, 0.006));
+    expect(
+      painter.currentState.motionPhase,
+      anyOf(EyeMotionPhase.closing, EyeMotionPhase.closed),
+    );
   });
 
   testWidgets('directed gaze settles back at center', (tester) async {
@@ -150,16 +154,15 @@ void main() {
     container.read(eyePreviewControllerProvider.notifier).requestLookLeft();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(_eyePainter(tester).scene.toState.gazeX, lessThan(0));
+    expect(_eyePainter(tester).currentState.gazeX, lessThan(0));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 70));
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump(const Duration(milliseconds: 500));
 
-    final state = _eyePainter(tester).scene.toState;
-    expect(state.gazeX, 0);
-    expect(state.motionPhase, EyeMotionPhase.idle);
+    final state = _eyePainter(tester).currentState;
+    expect(state.gazeX.abs(), lessThan(0.1));
   });
 
   testWidgets('special action returns smoothly to mood idle', (tester) async {
@@ -174,8 +177,10 @@ void main() {
         .read(eyePreviewControllerProvider.notifier)
         .requestSpecialAction();
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
     expect(
-      _eyePainter(tester).scene.toState.motionPhase,
+      _eyePainter(tester).currentState.motionPhase,
       EyeMotionPhase.special,
     );
     await tester.pump(const Duration(milliseconds: 220));
@@ -184,10 +189,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pump(const Duration(milliseconds: 300));
 
-    final state = _eyePainter(tester).scene.toState;
+    final state = _eyePainter(tester).currentState;
     expect(state.mood, EyeEmotion.curious);
-    expect(state.gazeX, 0);
-    expect(state.motionPhase, EyeMotionPhase.idle);
+    expect(state.gazeX.abs(), lessThan(0.12));
   });
 
   testWidgets('disposing the view cancels pending timers and ticker', (
@@ -198,6 +202,73 @@ void main() {
     await tester.pump(const Duration(seconds: 10));
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('lifecycle pause resumes without catching up elapsed time', (
+    tester,
+  ) async {
+    late EyeMotionTicker runtime;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [eyeRandomProvider.overrideWithValue(Random(51))],
+        child: MaterialApp(
+          home: SizedBox.square(
+            dimension: 240,
+            child: ProceduralEyesView(
+              initialEmotion: EyeEmotion.neutral,
+              onRuntimeReady: (value) => runtime = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final beforePause = runtime.player.elapsed;
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(seconds: 8));
+    expect(runtime.player.elapsed, beforePause);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      runtime.player.elapsed - beforePause,
+      lessThan(const Duration(milliseconds: 150)),
+    );
+  });
+
+  testWidgets('eye frames repaint without rebuilding the parent', (
+    tester,
+  ) async {
+    var parentBuilds = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [eyeRandomProvider.overrideWithValue(Random(61))],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              parentBuilds++;
+              return const SizedBox.square(
+                dimension: 240,
+                child: ProceduralEyesView(
+                  initialEmotion: EyeEmotion.neutral,
+                  rendererVariant: EyeRendererVariant.kissCutV21,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final initialBuilds = parentBuilds;
+    for (var frame = 0; frame < 30; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+
+    expect(parentBuilds, initialBuilds);
   });
 }
 

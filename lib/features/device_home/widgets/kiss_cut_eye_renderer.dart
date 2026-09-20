@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/device/display_profile.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
+import 'eye_motion_ticker.dart';
 
 enum EyeRendererVariant { legacy, kissCutV2, kissCutV21, figmaJewelry }
 
@@ -199,7 +200,11 @@ final class KissCutGeometrySnapshot {
     return KissCutGeometrySnapshot(
       left: left,
       right: right,
-      contentRadiusFraction: farthest * KissCutEyePainter.faceScale,
+      contentRadiusFraction:
+          farthest *
+          (style == KissCutRendererStyle.v2
+              ? KissCutEyePainter.faceScale
+              : KissCutEyePainter.polishedFaceScale),
     );
   }
 
@@ -352,7 +357,7 @@ final class KissCutEyesView extends StatelessWidget {
 }
 
 final class KissCutEyePainter extends CustomPainter {
-  KissCutEyePainter(this.scene, {required this.progress})
+  KissCutEyePainter(this.scene, {required this.progress, this.stateSource})
     : _edgePaint = Paint()..style = PaintingStyle.fill,
       _fieldPaint = Paint()..style = PaintingStyle.fill,
       _shadePaint = Paint()..style = PaintingStyle.fill,
@@ -367,7 +372,7 @@ final class KissCutEyePainter extends CustomPainter {
       _lensPaint = Paint()
         ..style = PaintingStyle.fill
         ..color = lensColor,
-      super(repaint: progress) {
+      super(repaint: stateSource ?? progress) {
     final palette = KissCutPalette.forColourway(scene.colourway);
     _edgePaint.color = scene.monochrome ? _monochrome : palette.edge;
     _fieldPaint.shader = scene.monochrome
@@ -428,6 +433,7 @@ final class KissCutEyePainter extends CustomPainter {
   }
 
   static const faceScale = 0.86;
+  static const polishedFaceScale = 0.96;
   static const lensColor = Color(0xFF020205);
   static const _monochrome = Color(0xFFF8F4FA);
   static const _unitRect = Rect.fromLTRB(-0.6, -0.62, 0.6, 0.62);
@@ -443,6 +449,7 @@ final class KissCutEyePainter extends CustomPainter {
 
   final KissCutPaintScene scene;
   final Animation<double> progress;
+  final EyeMotionStateSource? stateSource;
   final Paint _edgePaint;
   final Paint _fieldPaint;
   final Paint _shadePaint;
@@ -457,41 +464,55 @@ final class KissCutEyePainter extends CustomPainter {
   final _ResolvedKissCutEye _left = _ResolvedKissCutEye();
   final _ResolvedKissCutEye _right = _ResolvedKissCutEye();
 
+  EyeRuntimeState get currentState =>
+      stateSource?.state ??
+      EyeRuntimeState.lerp(
+        scene.fromState,
+        scene.toState,
+        scene.motionCurve.transform(progress.value),
+      );
+
   @override
   void paint(Canvas canvas, Size size) {
     final availableDiameter = math.min(size.width, size.height);
     final t = scene.motionCurve.transform(progress.value);
-    final gazeX = _lerp(scene.fromState.gazeX, scene.toState.gazeX, t);
-    final gazeY = _lerp(scene.fromState.gazeY, scene.toState.gazeY, t);
+    final liveState = stateSource?.state;
+    final gazeX =
+        liveState?.gazeX ??
+        _lerp(scene.fromState.gazeX, scene.toState.gazeX, t);
+    final gazeY =
+        liveState?.gazeY ??
+        _lerp(scene.fromState.gazeY, scene.toState.gazeY, t);
     final pupilScale = _lerp(
-      scene.fromState.pupilScale,
-      scene.toState.pupilScale,
-      t,
+      liveState?.pupilScale ?? scene.fromState.pupilScale,
+      liveState?.pupilScale ?? scene.toState.pupilScale,
+      liveState == null ? t : 1,
     );
     final eyeScaleX = _lerp(
-      scene.fromState.eyeScaleX,
-      scene.toState.eyeScaleX,
-      t,
+      liveState?.eyeScaleX ?? scene.fromState.eyeScaleX,
+      liveState?.eyeScaleX ?? scene.toState.eyeScaleX,
+      liveState == null ? t : 1,
     );
     final eyeScaleY = _lerp(
-      scene.fromState.eyeScaleY,
-      scene.toState.eyeScaleY,
-      t,
+      liveState?.eyeScaleY ?? scene.fromState.eyeScaleY,
+      liveState?.eyeScaleY ?? scene.toState.eyeScaleY,
+      liveState == null ? t : 1,
     );
     final expressionTilt = _lerp(
-      scene.fromState.expressionTilt,
-      scene.toState.expressionTilt,
-      t,
+      liveState?.expressionTilt ?? scene.fromState.expressionTilt,
+      liveState?.expressionTilt ?? scene.toState.expressionTilt,
+      liveState == null ? t : 1,
     );
     final verticalOffset = _lerp(
-      scene.fromState.verticalOffset,
-      scene.toState.verticalOffset,
-      t,
+      liveState?.verticalOffset ?? scene.fromState.verticalOffset,
+      liveState?.verticalOffset ?? scene.toState.verticalOffset,
+      liveState == null ? t : 1,
     );
     final mood =
         scene.visualMoodOverride ??
         KissCutVisualMood.fromEmotion(
-          t < 0.5 ? scene.fromState.emotion : scene.toState.emotion,
+          liveState?.emotion ??
+              (t < 0.5 ? scene.fromState.emotion : scene.toState.emotion),
         );
     final tuning = _tuningFor(mood, scene.style);
 
@@ -499,9 +520,9 @@ final class KissCutEyePainter extends CustomPainter {
       target: _left,
       isLeft: true,
       openness: _lerp(
-        scene.fromState.leftEyelidOpen,
-        scene.toState.leftEyelidOpen,
-        t,
+        liveState?.leftEyelidOpen ?? scene.fromState.leftEyelidOpen,
+        liveState?.leftEyelidOpen ?? scene.toState.leftEyelidOpen,
+        liveState == null ? t : 1,
       ),
       gazeX: gazeX,
       gazeY: gazeY,
@@ -516,9 +537,9 @@ final class KissCutEyePainter extends CustomPainter {
       target: _right,
       isLeft: false,
       openness: _lerp(
-        scene.fromState.rightEyelidOpen,
-        scene.toState.rightEyelidOpen,
-        t,
+        liveState?.rightEyelidOpen ?? scene.fromState.rightEyelidOpen,
+        liveState?.rightEyelidOpen ?? scene.toState.rightEyelidOpen,
+        liveState == null ? t : 1,
       ),
       gazeX: gazeX,
       gazeY: gazeY,
@@ -533,7 +554,12 @@ final class KissCutEyePainter extends CustomPainter {
     canvas
       ..save()
       ..translate(size.width / 2, size.height / 2)
-      ..scale(availableDiameter * faceScale);
+      ..scale(
+        availableDiameter *
+            (scene.style == KissCutRendererStyle.v2
+                ? faceScale
+                : polishedFaceScale),
+      );
     _paintEye(canvas, _left, isLeft: true, compact: availableDiameter < 96);
     _paintEye(canvas, _right, isLeft: false, compact: availableDiameter < 96);
     canvas.restore();
@@ -683,7 +709,7 @@ final class KissCutEyePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(KissCutEyePainter oldDelegate) {
-    return oldDelegate.scene != scene;
+    return oldDelegate.scene != scene || oldDelegate.stateSource != stateSource;
   }
 
   @override

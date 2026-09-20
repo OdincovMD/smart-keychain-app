@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/eyes/eye_character.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
+import 'eye_motion_ticker.dart';
 
 /// Asset-faithful Kiss Cut renderer for the Home jewelry lens.
 ///
@@ -16,6 +17,7 @@ final class FigmaKissCutEyesView extends StatelessWidget {
     required this.toState,
     required this.motionCurve,
     required this.progress,
+    this.stateSource,
     super.key,
   });
 
@@ -28,48 +30,50 @@ final class FigmaKissCutEyesView extends StatelessWidget {
   final EyeRuntimeState toState;
   final Curve motionCurve;
   final Animation<double> progress;
+  final EyeMotionStateSource? stateSource;
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
       color: _lens,
       child: AnimatedBuilder(
-        animation: progress,
+        animation: stateSource ?? progress,
         builder: (context, child) {
           final t = motionCurve.transform(progress.value);
-          final fromProfile = EyeCharacter.standard.profileFor(
-            fromState.emotion,
-          );
-          final toProfile = EyeCharacter.standard.profileFor(toState.emotion);
-          final gazeX = _lerp(fromState.gazeX, toState.gazeX, t);
+          final liveState = stateSource?.state;
+          final from = liveState ?? fromState;
+          final to = liveState ?? toState;
+          final fromProfile = EyeCharacter.standard.profileFor(from.emotion);
+          final toProfile = EyeCharacter.standard.profileFor(to.emotion);
+          final gazeX = _lerp(from.gazeX, to.gazeX, t);
           final gazeY = _lerp(
-            fromState.gazeY - fromProfile.restingGazeY,
-            toState.gazeY - toProfile.restingGazeY,
+            from.gazeY - fromProfile.restingGazeY,
+            to.gazeY - toProfile.restingGazeY,
             t,
           );
           final eyeScaleX = _lerp(
-            fromState.eyeScaleX / fromProfile.eyeScale,
-            toState.eyeScaleX / toProfile.eyeScale,
+            from.eyeScaleX / fromProfile.eyeScale,
+            to.eyeScaleX / toProfile.eyeScale,
             t,
           );
           final eyeScaleY = _lerp(
-            fromState.eyeScaleY / fromProfile.eyeScale,
-            toState.eyeScaleY / toProfile.eyeScale,
+            from.eyeScaleY / fromProfile.eyeScale,
+            to.eyeScaleY / toProfile.eyeScale,
             t,
           );
           final leftOpen = _lerp(
-            fromState.leftEyelidOpen / fromProfile.openness,
-            toState.leftEyelidOpen / toProfile.openness,
+            from.leftEyelidOpen / fromProfile.openness,
+            to.leftEyelidOpen / toProfile.openness,
             t,
           );
           final rightOpen = _lerp(
-            fromState.rightEyelidOpen / fromProfile.openness,
-            toState.rightEyelidOpen / toProfile.openness,
+            from.rightEyelidOpen / fromProfile.openness,
+            to.rightEyelidOpen / toProfile.openness,
             t,
           );
           final verticalOffset = _lerp(
-            fromState.verticalOffset - fromProfile.verticalOffset,
-            toState.verticalOffset - toProfile.verticalOffset,
+            from.verticalOffset - fromProfile.verticalOffset,
+            to.verticalOffset - toProfile.verticalOffset,
             t,
           );
 

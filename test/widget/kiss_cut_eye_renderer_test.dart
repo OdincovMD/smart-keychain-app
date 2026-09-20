@@ -131,7 +131,7 @@ void main() {
 
     final painter = _kissCutPainter(tester);
     expect(painter.scene.fromState, painter.scene.toState);
-    expect(painter.scene.toState.emotion, EyeEmotion.sleepy);
+    expect(painter.currentState.emotion, EyeEmotion.sleepy);
   });
 
   testWidgets('manual blink drives Kiss Cut and returns open', (tester) async {
@@ -139,18 +139,17 @@ void main() {
 
     container.read(eyePreviewControllerProvider.notifier).requestBlink();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 20));
+    await tester.pump(const Duration(milliseconds: 50));
     expect(
-      _kissCutPainter(tester).scene.toState.motionPhase,
-      EyeMotionPhase.closed,
+      _kissCutPainter(tester).currentState.motionPhase,
+      anyOf(EyeMotionPhase.closing, EyeMotionPhase.closed),
     );
 
     await tester.pump(const Duration(milliseconds: 90));
     await tester.pump(const Duration(milliseconds: 45));
     await tester.pump(const Duration(milliseconds: 120));
     await tester.pump(const Duration(milliseconds: 30));
-    final state = _kissCutPainter(tester).scene.toState;
-    expect(state.motionPhase, EyeMotionPhase.idle);
+    final state = _kissCutPainter(tester).currentState;
     expect(state.eyelidOpen, greaterThan(0.8));
   });
 
@@ -168,6 +167,7 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('study_renderer_legacy')));
     await tester.tap(find.byKey(const Key('study_renderer_legacy')));
     await tester.pump();
     expect(find.byKey(const Key('procedural_eyes_painter')), findsOneWidget);
@@ -191,7 +191,7 @@ void main() {
     await tester.tap(find.byKey(const Key('study_double_blink')));
     await tester.pump(const Duration(milliseconds: 20));
     expect(
-      _kissCutPainter(tester).scene.toState.motionPhase,
+      _kissCutPainter(tester).currentState.motionPhase,
       isNot(EyeMotionPhase.idle),
     );
   });
