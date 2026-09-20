@@ -19,6 +19,7 @@ import '../shared/chrome_kiss_fidelity_frame.dart';
 import '../shared/chrome_kiss_fidelity_tokens.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
 import '../shared/image_failure_label.dart';
+import 'look_delete_confirmation_sheet.dart';
 import 'look_details_sheet.dart';
 import 'user_content_controller.dart';
 import 'wardrobe_states.dart';
@@ -37,6 +38,7 @@ final class UserContentScreen extends ConsumerStatefulWidget {
 final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
   late String? _highlightedSceneId = widget.highlightedSceneId;
   var _showPhotosOnly = false;
+  var _deleteSheetOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,9 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
           unawaited(_openEditor(draft));
         case UserContentEditing():
           break;
+        case UserContentCompleted(operation: UserContentOperation.delete)
+            when _deleteSheetOpen:
+          break;
         case UserContentCompleted(:final operation, :final sceneId):
           if (mounted) {
             if (operation == UserContentOperation.edit) {
@@ -72,6 +77,8 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
                 .showSnackBar(SnackBar(content: Text(message)));
           }
           ref.read(userContentControllerProvider.notifier).acknowledge();
+        case UserContentFailed() when _deleteSheetOpen:
+          break;
         case UserContentFailed(:final failure):
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -86,17 +93,6 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
           break;
       }
     });
-    ref.listen(deviceControllerProvider, (previous, next) {
-      if (!mounted || previous?.isLoading != true) return;
-      if (next.hasError) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.connectionError)));
-      } else if (next.hasValue) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.imageSetAsCurrent)));
-      }
-    });
-
     return Scaffold(
       key: const Key('user_content_screen'),
       backgroundColor: fidelity.outside,
@@ -157,6 +153,8 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
   Future<void> _openLookDetails(Scene scene) async {
     final action = await showChromeKissMaterialSheet<LookDetailsAction>(
       context: context,
+      isDismissible: false,
+      enableDrag: false,
       builder: (context) => LookDetailsSheet(scene: scene),
     );
     if (!mounted) return;
@@ -212,58 +210,15 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
   }
 
   Future<void> _confirmDelete(Scene scene) async {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.chromeKiss;
-    final confirmed = await showChromeKissMaterialSheet<bool>(
+    _deleteSheetOpen = true;
+    await showChromeKissMaterialSheet<bool>(
       context: context,
-      isScrollControlled: false,
-      builder: (context) => ChromeKissMaterialSheet(
-        key: const Key('delete_image_confirmation'),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.deleteImageTitle,
-              style: context.chromeKissText.title.copyWith(fontSize: 22),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              l10n.deleteImageMessage,
-              style: context.chromeKissText.body.copyWith(
-                color: colors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('cancel_delete_image'),
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(l10n.cancel),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    key: const Key('confirm_delete_image'),
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colors.danger,
-                      foregroundColor: colors.canvas,
-                    ),
-                    child: Text(l10n.delete),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      isDismissible: false,
+      enableDrag: false,
+      builder: (context) => LookDeleteConfirmationSheet(scene: scene),
     );
-    if (!mounted || confirmed != true) return;
-    ref.read(userContentControllerProvider.notifier).deleteScene(scene.id);
+    if (!mounted) return;
+    _deleteSheetOpen = false;
   }
 }
 

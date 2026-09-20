@@ -53,7 +53,7 @@ final class ChromeKissMaterialSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              child,
+              Flexible(child: child),
             ],
           ),
         ),
@@ -66,6 +66,8 @@ Future<T?> showChromeKissMaterialSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool isScrollControlled = true,
+  bool isDismissible = true,
+  bool enableDrag = true,
 }) {
   final colors = context.chromeKiss;
   final motion = context.chromeKissMotion;
@@ -73,6 +75,8 @@ Future<T?> showChromeKissMaterialSheet<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: colors.lens.withValues(alpha: 0.72),

@@ -24,9 +24,9 @@ import '../image_import/photo_import_error_sheet.dart';
 import '../image_import/user_image_controller.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
 import '../shared/image_failure_label.dart';
+import '../settings/chrome_kiss_settings_screen.dart';
 import '../user_content/user_content_screen.dart';
 import 'eye_preview_controller.dart';
-import 'widgets/brightness_control.dart';
 import 'widgets/character_study_screen.dart';
 import 'widgets/chrome_kiss_bottom_navigation.dart';
 import 'widgets/companion_home_hero.dart';
@@ -127,14 +127,9 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
                                 .setScene(
                                   _selectedSceneId ?? value.activeSceneId,
                                 ),
-                            onBrightnessChanged: (brightness) => ref
-                                .read(deviceControllerProvider.notifier)
-                                .setBrightness(brightness),
                             onAddImage: () => unawaited(_openCreateLook()),
                             onOpenMyContent: () => unawaited(_openMyContent()),
-                            onDisconnect: () => ref
-                                .read(deviceControllerProvider.notifier)
-                                .disconnect(),
+                            onOpenSettings: () => unawaited(_openSettings()),
                             onOpenSimulatorSettings: () =>
                                 _showSimulatorSettings(context),
                           ),
@@ -232,6 +227,12 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
     ref.invalidate(sceneByIdProvider);
   }
 
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (context) => const ChromeKissSettingsScreen()),
+    );
+  }
+
   Future<void> _showSimulatorSettings(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -252,10 +253,9 @@ final class _DeviceHomeContent extends StatelessWidget {
     required this.isAddingImage,
     required this.onSceneSelected,
     required this.onInstallScene,
-    required this.onBrightnessChanged,
     required this.onAddImage,
     required this.onOpenMyContent,
-    required this.onDisconnect,
+    required this.onOpenSettings,
     required this.onOpenSimulatorSettings,
   });
 
@@ -267,10 +267,9 @@ final class _DeviceHomeContent extends StatelessWidget {
   final bool isAddingImage;
   final ValueChanged<String> onSceneSelected;
   final VoidCallback onInstallScene;
-  final ValueChanged<double> onBrightnessChanged;
   final VoidCallback onAddImage;
   final VoidCallback onOpenMyContent;
-  final VoidCallback onDisconnect;
+  final VoidCallback onOpenSettings;
   final VoidCallback onOpenSimulatorSettings;
 
   @override
@@ -309,7 +308,7 @@ final class _DeviceHomeContent extends StatelessWidget {
                       connectionLabel: connectionLabel,
                       connected: connected,
                       batteryPercent: snapshot.batteryPercent,
-                      onSettings: () => _showBrightness(context),
+                      onSettings: onOpenSettings,
                     ),
                   ),
                   SizedBox(
@@ -430,67 +429,6 @@ final class _DeviceHomeContent extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Future<void> _showBrightness(BuildContext context) async {
-    final colors = context.chromeKiss;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: colors.surfaceSecondary,
-      showDragHandle: false,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        side: BorderSide(color: colors.divider.withValues(alpha: 0.82)),
-      ),
-      builder: (context) => SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          key: const Key('brightness_sheet_scroll'),
-          child: Padding(
-            key: const Key('brightness_sheet'),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colors.materialChrome.withValues(alpha: 0.48),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: const SizedBox(width: 38, height: 3),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                BrightnessControl(
-                  value: snapshot.brightness,
-                  enabled: !isBusy,
-                  onChangeEnd: onBrightnessChanged,
-                ),
-                const SizedBox(height: 12),
-                Divider(color: colors.divider),
-                const SizedBox(height: 4),
-                TextButton.icon(
-                  key: const Key('disconnect_button'),
-                  onPressed: isBusy
-                      ? null
-                      : () {
-                          Navigator.of(context).pop();
-                          onDisconnect();
-                        },
-                  icon: const Icon(Icons.link_off_rounded, size: 20),
-                  label: Text(AppLocalizations.of(context).disconnect),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

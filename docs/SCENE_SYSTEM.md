@@ -72,9 +72,10 @@ Riverpod-провайдер `sceneRepositoryProvider` является DI seam �
 ## Scene selection flow
 
 ```text
-SceneCard(Scene)
+LookDetailsSheet(Scene)
   ↓ scene.id
-DeviceController.setScene(id)
+LookApplicationController: ready → applying
+  ↓ DeviceController.setScene(id)
   ↓
 DeviceRepository.setScene(id)
   ↓
@@ -83,10 +84,14 @@ VirtualDeviceEngine проверяет id через SceneRepository
 VirtualDeviceState.activeSceneId
   ↓
 DeviceSnapshot.activeSceneId
+  ↓ snapshot id == requested id AND command completed
+LookApplicationController: applied
 ```
 
 UI не изменяет состояние устройства напрямую и не имеет отдельных веток выбора
-для разных сцен.
+для разных сцен. Ошибка команды переводит presentation state в `failed`; retry
+повторяет ту же сцену. Успех не выводится из локального нажатия и не публикуется
+до совпадения реального snapshot.
 
 ## Render flow
 

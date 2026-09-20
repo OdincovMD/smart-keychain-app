@@ -128,7 +128,7 @@ final class _SettingsButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: l10n.brightness,
+      label: l10n.settingsTitle,
       child: ExcludeSemantics(
         child: Material(
           color: home.glass,
@@ -136,11 +136,11 @@ final class _SettingsButton extends StatelessWidget {
           child: SizedBox.square(
             dimension: 44,
             child: IconButton(
-              key: const Key('brightness_settings_button'),
+              key: const Key('production_settings_button'),
               constraints: const BoxConstraints.tightFor(width: 44, height: 44),
               padding: EdgeInsets.zero,
               onPressed: onPressed,
-              tooltip: l10n.brightness,
+              tooltip: l10n.settingsTitle,
               icon: const Icon(Icons.settings_outlined, size: 21),
               color: home.textSecondary,
             ),

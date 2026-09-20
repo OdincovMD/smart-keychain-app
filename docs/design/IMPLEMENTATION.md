@@ -1,7 +1,7 @@
 # Chrome Kiss Flutter Implementation
 
-> Статус: design-token foundation implemented. Этот слой не является
-> редизайном существующих экранов.
+> Статус: design-token foundation implemented; основные companion, wardrobe,
+> import/editor и look lifecycle surfaces переведены на Chrome Kiss.
 
 ## Appearance boundary
 
@@ -17,6 +17,35 @@ ThemeMode (Flutter boundary)
   ↓ platform brightness when mode == system
 Obsidian ThemeData | Pearl ThemeData
 ```
+
+## Production Settings and Appearance
+
+Пользовательский entry следует локальной navigation-модели продукта и не
+расширяет app-wide router:
+
+```text
+Companion Home settings trigger
+  ↓ local Navigator route
+Production Settings
+  ↓ ChromeKiss material sheet
+Appearance: Obsidian | Pearl | System
+```
+
+Back из Appearance возвращает в тот же Settings route, а Back из Settings — в
+тот же Home и живую device session. Settings читает существующий
+`DeviceSnapshot`, переиспользует `BrightnessControl` и вызывает существующий
+`DeviceController` для brightness/disconnect. Неизвестные firmware, storage,
+serial и hardware values не моделируются.
+
+`AppearanceController` остаётся единственным presentation owner. Он
+последовательно записывает быстрые selections, публикует theme только после
+успешного `AppSettingsRepository.saveAppearance` и сохраняет последний запрос в
+очереди. Ошибка не меняет confirmed selection и показывается inline рядом с
+вариантами с доступным retry; смена theme не закрывает material sheet.
+
+Production Settings не содержит simulator latency, fake battery, forced states
+или diagnostics. Текущий simulator entry остаётся отдельным debug-only sheet на
+Home и физически отсутствует в release UX.
 
 ## Color token mapping
 
@@ -62,21 +91,23 @@ License; соответствующие `*-OFL.txt` хранятся рядом 
 
 | Design role | Flutter API | Current family |
 |---|---|---|
-| `text.display` | `context.chromeKissText.display` | Unbounded |
-| `text.title` | `context.chromeKissText.title` | Unbounded |
+| `text.display` | `context.chromeKissText.display` | Cormorant Garamond |
+| `text.title` | `context.chromeKissText.title` | Cormorant Garamond |
 | `text.body` | `context.chromeKissText.body` | Manrope |
 | `text.label` | `context.chromeKissText.label` | Manrope |
 | `text.status` | `context.chromeKissText.status` | Manrope |
+| Script accent | локальный акцент в hero composition | Great Vibes |
 
-Unbounded применяется только к коротким hero/section titles. Material settings,
-body copy, buttons, status и captions остаются в Manrope. Legacy font assets не
-удалены, чтобы не менять вне текущего milestone старые visual surfaces.
+Cormorant Garamond применяется только к коротким hero/section titles. Material
+settings, body copy, buttons, status и captions остаются в Manrope. Great Vibes
+допустим только как редкая эмоциональная подпись и не используется в controls.
 
 ## Motion mapping
 
 Tokens choose one representative duration inside each range documented in
-`MOTION.md`. They establish vocabulary only; this milestone does not add new
-complex animation.
+`MOTION.md`. Look application использует `transition` для изменения размера
+material sheet и собственный indeterminate ring; при `disableAnimations` смена
+состояния остаётся мгновенной, а кольцо — статичным и понятным без движения.
 
 | Design token | Flutter API | Current draft |
 |---|---|---:|
@@ -84,6 +115,27 @@ complex animation.
 | `motion.interaction` | `context.chromeKissMotion.interaction` | `180 ms`, `easeOutCubic` |
 | `motion.transition` | `context.chromeKissMotion.transition` | `300 ms`, `easeInOutCubic` |
 | `motion.delight` | `context.chromeKissMotion.delight` | `600 ms`, `easeOutBack` |
+
+## Look application lifecycle
+
+Детали образа и применение используют feature-local presentation state:
+
+```text
+ready → applying ─┬→ applied
+                  └→ failed → retry → applying
+```
+
+`applied` публикуется только после успешного завершения команды
+`DeviceController.setScene` и появления того же `scene.id` в
+`DeviceSnapshot.activeSceneId`. Поэтому UI не показывает оптимистический успех
+и не рисует фиктивные проценты. Повторное нажатие во время команды блокируется;
+закрытие sheet уничтожает auto-dispose state. Ошибка и retry остаются внутри
+той же material surface без параллельного SnackBar.
+
+Applying, Applied и Error используют одинаковую геометрию, реальный preview и
+имя сцены. Success/error различаются не только цветом, но также формой кольца,
+glyph и текстом. Delete confirmation показывает реальную сцену и сохраняет
+ошибку inline, позволяя повторить удаление.
 
 ## Persistence
 

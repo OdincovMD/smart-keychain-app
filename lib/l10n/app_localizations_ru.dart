@@ -142,6 +142,84 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appearanceSystem => 'Как в системе';
 
   @override
+  String get settingsTitle => 'Настройки';
+
+  @override
+  String get settingsEyebrow => 'CHROME KISS';
+
+  @override
+  String get settingsApplicationSection => 'ПРИЛОЖЕНИЕ';
+
+  @override
+  String get settingsDeviceSection => 'УСТРОЙСТВО';
+
+  @override
+  String get settingsBrightnessTitle => 'Яркость экрана';
+
+  @override
+  String get settingsConnectionTitle => 'Подключение и Bluetooth';
+
+  @override
+  String get settingsDeviceInformation => 'Информация об устройстве';
+
+  @override
+  String get settingsDeviceIdentifier => 'Идентификатор';
+
+  @override
+  String get settingsBattery => 'Заряд';
+
+  @override
+  String get settingsDisplay => 'Экран';
+
+  @override
+  String settingsDisplayProfile(int width, int height) {
+    return 'Круглый экран $width×$height';
+  }
+
+  @override
+  String get settingsBrightnessFailure =>
+      'Яркость не сохранилась. Значение на устройстве не изменилось.';
+
+  @override
+  String get settingsDisconnectQuestion => 'Отключить companion?';
+
+  @override
+  String get settingsDisconnectHint =>
+      'Ты вернёшься к поиску устройства. Образы и настройки останутся на месте.';
+
+  @override
+  String get cancel => 'Отмена';
+
+  @override
+  String get confirmDisconnect => 'Отключить';
+
+  @override
+  String get appearanceMaterialEyebrow => 'PERSONALITY MATERIAL';
+
+  @override
+  String get appearanceScreenHint =>
+      'Выбери настроение приложения. Luna останется собой.';
+
+  @override
+  String get appearanceThemeLabel => 'Theme';
+
+  @override
+  String get appearanceAutoLabel => 'Auto';
+
+  @override
+  String get appearanceInstantNote => 'Материалы и контраст переключатся сразу';
+
+  @override
+  String get appearanceSaving => 'Сохраняем оформление…';
+
+  @override
+  String get appearanceSaveFailure =>
+      'Оформление не сохранилось. Выбран прежний вариант.';
+
+  @override
+  String get done => 'Готово';
+
+  @override
   String get latency => 'Задержка';
 
   @override
@@ -576,9 +654,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reset => 'Сбросить';
-
-  @override
-  String get cancel => 'Отмена';
 
   @override
   String get save => 'Сохранить';

@@ -202,6 +202,13 @@ Developer screen не является пользовательской част
 
 Он предназначен для разработки.
 
+В текущем приложении controls открываются только через отдельный debug-only
+entry на Companion Home. Production Settings использует настоящий
+`DeviceSnapshot` и `DeviceController`, не импортирует simulator presentation и
+не показывает latency, fake battery, forced states или diagnostics. Эти два
+интерфейса нельзя объединять даже при использовании
+`VirtualDeviceRepository` как runtime backend.
+
 ---
 
 ## Error Simulation

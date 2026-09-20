@@ -26,7 +26,9 @@ final class _BrightnessControlState extends State<BrightnessControl> {
   @override
   void didUpdateWidget(BrightnessControl oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_dragging && oldWidget.value != widget.value) {
+    if (!_dragging &&
+        (oldWidget.value != widget.value ||
+            oldWidget.enabled != widget.enabled && widget.enabled)) {
       _draftValue = widget.value;
     }
   }

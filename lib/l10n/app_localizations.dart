@@ -346,6 +346,150 @@ abstract class AppLocalizations {
   /// **'Как в системе'**
   String get appearanceSystem;
 
+  /// No description provided for @settingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CHROME KISS'**
+  String get settingsEyebrow;
+
+  /// No description provided for @settingsApplicationSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'ПРИЛОЖЕНИЕ'**
+  String get settingsApplicationSection;
+
+  /// No description provided for @settingsDeviceSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'УСТРОЙСТВО'**
+  String get settingsDeviceSection;
+
+  /// No description provided for @settingsBrightnessTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Яркость экрана'**
+  String get settingsBrightnessTitle;
+
+  /// No description provided for @settingsConnectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключение и Bluetooth'**
+  String get settingsConnectionTitle;
+
+  /// No description provided for @settingsDeviceInformation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Информация об устройстве'**
+  String get settingsDeviceInformation;
+
+  /// No description provided for @settingsDeviceIdentifier.
+  ///
+  /// In ru, this message translates to:
+  /// **'Идентификатор'**
+  String get settingsDeviceIdentifier;
+
+  /// No description provided for @settingsBattery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заряд'**
+  String get settingsBattery;
+
+  /// No description provided for @settingsDisplay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Экран'**
+  String get settingsDisplay;
+
+  /// No description provided for @settingsDisplayProfile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Круглый экран {width}×{height}'**
+  String settingsDisplayProfile(int width, int height);
+
+  /// No description provided for @settingsBrightnessFailure.
+  ///
+  /// In ru, this message translates to:
+  /// **'Яркость не сохранилась. Значение на устройстве не изменилось.'**
+  String get settingsBrightnessFailure;
+
+  /// No description provided for @settingsDisconnectQuestion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отключить companion?'**
+  String get settingsDisconnectQuestion;
+
+  /// No description provided for @settingsDisconnectHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ты вернёшься к поиску устройства. Образы и настройки останутся на месте.'**
+  String get settingsDisconnectHint;
+
+  /// No description provided for @cancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get cancel;
+
+  /// No description provided for @confirmDisconnect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отключить'**
+  String get confirmDisconnect;
+
+  /// No description provided for @appearanceMaterialEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'PERSONALITY MATERIAL'**
+  String get appearanceMaterialEyebrow;
+
+  /// No description provided for @appearanceScreenHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбери настроение приложения. Luna останется собой.'**
+  String get appearanceScreenHint;
+
+  /// No description provided for @appearanceThemeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Theme'**
+  String get appearanceThemeLabel;
+
+  /// No description provided for @appearanceAutoLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Auto'**
+  String get appearanceAutoLabel;
+
+  /// No description provided for @appearanceInstantNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Материалы и контраст переключатся сразу'**
+  String get appearanceInstantNote;
+
+  /// No description provided for @appearanceSaving.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняем оформление…'**
+  String get appearanceSaving;
+
+  /// No description provided for @appearanceSaveFailure.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформление не сохранилось. Выбран прежний вариант.'**
+  String get appearanceSaveFailure;
+
+  /// No description provided for @done.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get done;
+
   /// No description provided for @latency.
   ///
   /// In ru, this message translates to:
@@ -1191,12 +1335,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сбросить'**
   String get reset;
-
-  /// No description provided for @cancel.
-  ///
-  /// In ru, this message translates to:
-  /// **'Отмена'**
-  String get cancel;
 
   /// No description provided for @save.
   ///
