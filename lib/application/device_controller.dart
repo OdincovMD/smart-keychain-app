@@ -9,13 +9,24 @@ final deviceControllerProvider = AsyncNotifierProvider<DeviceController, void>(
 );
 
 final class DeviceController extends AsyncNotifier<void> {
+  Future<void> _activeCommand = Future<void>.value();
+  bool _disconnectQueued = false;
+
   @override
   FutureOr<void> build() {}
 
   void connect(String deviceId) =>
       _run(() => ref.read(deviceRepositoryProvider).connect(deviceId));
 
-  void disconnect() => _run(ref.read(deviceRepositoryProvider).disconnect);
+  void disconnect() {
+    if (state.isLoading) {
+      if (_disconnectQueued) return;
+      _disconnectQueued = true;
+      unawaited(_disconnectAfterActiveCommand());
+      return;
+    }
+    _run(ref.read(deviceRepositoryProvider).disconnect);
+  }
 
   void setScene(String sceneId) => _run(() async {
     await ref.read(deviceRepositoryProvider).setScene(sceneId);
@@ -29,7 +40,15 @@ final class DeviceController extends AsyncNotifier<void> {
 
   void _run(Future<void> Function() command) {
     if (state.isLoading) return;
-    unawaited(_runCommand(command));
+    _activeCommand = _runCommand(command);
+    unawaited(_activeCommand);
+  }
+
+  Future<void> _disconnectAfterActiveCommand() async {
+    await _activeCommand;
+    if (!ref.mounted) return;
+    _disconnectQueued = false;
+    _run(ref.read(deviceRepositoryProvider).disconnect);
   }
 
   Future<void> _runCommand(Future<void> Function() command) async {

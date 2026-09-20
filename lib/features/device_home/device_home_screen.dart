@@ -26,6 +26,8 @@ import '../shared/chrome_kiss_material_sheet.dart';
 import '../shared/image_failure_label.dart';
 import '../settings/chrome_kiss_settings_screen.dart';
 import '../user_content/user_content_screen.dart';
+import 'connection_recovery_controller.dart';
+import 'connection_recovery_view.dart';
 import 'eye_preview_controller.dart';
 import 'widgets/character_study_screen.dart';
 import 'widgets/chrome_kiss_bottom_navigation.dart';
@@ -52,6 +54,10 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final recoveryProvider = connectionRecoveryControllerProvider(
+      widget.deviceId,
+    );
+    final recovery = ref.watch(recoveryProvider);
     final snapshot = ref.watch(deviceSnapshotProvider);
     final command = ref.watch(deviceControllerProvider);
     final scenes = ref.watch(sceneLibraryProvider);
@@ -59,13 +65,18 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
     final imageBusy =
         imageFlow is UserImagePicking || imageFlow is UserImageSaving;
 
-    ref.listen(connectionStateProvider, (previous, next) {
-      if (next.value == DeviceConnectionStatus.disconnected && mounted) {
+    ref.listen(recoveryProvider, (previous, next) {
+      if (next.returnToDiscovery &&
+          previous?.returnToDiscovery != true &&
+          mounted) {
         context.go(DeviceDiscoveryScreen.routePath);
       }
     });
     ref.listen(deviceControllerProvider, (previous, next) {
-      if (next.hasError && mounted) {
+      if (next.hasError &&
+          ref.read(recoveryProvider).status ==
+              ConnectionRecoveryStatus.connected &&
+          mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(l10n.connectionError)));
       }
@@ -111,6 +122,17 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
                   .when(
                     data: (activeScene) => activeScene == null
                         ? _SceneLibraryError(onRetry: _retrySceneLibrary)
+                        : recovery.status != ConnectionRecoveryStatus.connected
+                        ? ConnectionRecoveryView(
+                            status: recovery.status,
+                            snapshot: value,
+                            scene: activeScene,
+                            onRetry: () =>
+                                ref.read(recoveryProvider.notifier).retry(),
+                            onReturnToDiscovery: () => ref
+                                .read(recoveryProvider.notifier)
+                                .returnToDiscovery(),
+                          )
                         : _DeviceHomeContent(
                             snapshot: value,
                             scenes: items,

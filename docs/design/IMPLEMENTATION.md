@@ -137,6 +137,30 @@ Applying, Applied и Error используют одинаковую геоме�
 glyph и текстом. Delete confirmation показывает реальную сцену и сохраняет
 ошибку inline, позволяя повторить удаление.
 
+## Production connection recovery
+
+Companion Home владеет feature-local `ConnectionRecoveryController`,
+параметризованным стабильным `deviceId`. Он различает намеренное отключение и
+неожиданную потерю связи, дедуплицирует повторные `disconnected` events и
+запускает не больше одной автоматической попытки на один эпизод потери.
+
+```text
+connected → disconnected → reconnecting ─┬→ ready → connected
+                                          └→ failed → retry
+```
+
+Завершение `connect` Future не считается успехом: Home возвращается только после
+реального `DeviceConnectionStatus.ready`. Ошибка остаётся inline без SnackBar и
+предлагает Retry или возврат к Discovery. Намеренный disconnect сначала отмечает
+intent, затем выполняет существующую `DeviceController.disconnect` команду и не
+запускает auto-reconnect. Если другая device-команда уже активна, disconnect
+ставится за ней в очередь и не теряется.
+
+Disconnected/Reconnecting используют общий `ChromeKissFidelityFrame`,
+`CompanionStage`, semantic appearance tokens и `JewelButton`. Reconnecting rim
+indeterminate и не показывает фиктивный процент; в reduced-motion он остаётся
+статичным, сохраняя текстовый и формовый state signal.
+
 ## Persistence
 
 `app_settings.appearance` stores the stable enum string. Schema version 3 adds

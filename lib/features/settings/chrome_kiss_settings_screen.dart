@@ -9,6 +9,7 @@ import '../../domain/device/device_snapshot.dart';
 import '../../domain/settings/app_appearance.dart';
 import '../../l10n/app_localizations.dart';
 import '../appearance/appearance_controller.dart';
+import '../device_home/connection_recovery_controller.dart';
 import '../device_home/widgets/brightness_control.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
@@ -93,7 +94,9 @@ final class ChromeKissSettingsScreen extends ConsumerWidget {
       ),
     );
     if (disconnect != true || !context.mounted) return;
-    ref.read(deviceControllerProvider.notifier).disconnect();
+    ref
+        .read(connectionRecoveryControllerProvider(snapshot.deviceId).notifier)
+        .disconnectIntentionally();
     Navigator.of(context).pop();
   }
 }
