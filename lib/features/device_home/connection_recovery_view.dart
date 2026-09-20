@@ -83,6 +83,7 @@ final class _ConnectionRecoveryViewState extends State<ConnectionRecoveryView>
   @override
   Widget build(BuildContext context) {
     final reconnecting = widget.status == ConnectionRecoveryStatus.reconnecting;
+    final l10n = AppLocalizations.of(context);
     return ChromeKissFidelityFrame(
       child: SafeArea(
         child: LayoutBuilder(
@@ -121,7 +122,7 @@ final class _ConnectionRecoveryViewState extends State<ConnectionRecoveryView>
                     else ...[
                       JewelButton(
                         key: const Key('connection_retry_button'),
-                        label: 'Подключить снова',
+                        label: l10n.recoveryRetry,
                         style: JewelButtonStyle.hero,
                         onPressed: widget.onRetry,
                       ),
@@ -135,7 +136,7 @@ final class _ConnectionRecoveryViewState extends State<ConnectionRecoveryView>
                           side: BorderSide(color: context.chromeKiss.divider),
                           shape: const StadiumBorder(),
                         ),
-                        child: const Text('Вернуться к поиску'),
+                        child: Text(l10n.recoveryReturnToDiscovery),
                       ),
                     ],
                     const SizedBox(height: 14),
@@ -181,7 +182,7 @@ final class _RecoveryHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'CHROME KISS · DEVICE',
+                l10n.recoveryHeaderEyebrow,
                 style: context.chromeKissText.status.copyWith(
                   color: colors.textSecondary,
                   fontSize: 10,
@@ -210,7 +211,10 @@ final class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
-    final label = reconnecting ? 'ВОЗВРАЩАЕМСЯ' : 'НЕ В СЕТИ';
+    final l10n = AppLocalizations.of(context);
+    final label = reconnecting
+        ? l10n.recoveryStatusReconnecting
+        : l10n.recoveryStatusOffline;
     return Container(
       key: const Key('connection_recovery_status'),
       constraints: const BoxConstraints(minHeight: 30),
@@ -264,11 +268,12 @@ final class _RecoveryCompanion extends StatelessWidget {
   Widget build(BuildContext context) {
     final reconnecting = status == ConnectionRecoveryStatus.reconnecting;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       liveRegion: true,
       label: reconnecting
-          ? 'Восстанавливаем связь с брелоком'
-          : 'Связь с брелоком потеряна',
+          ? l10n.recoveryReconnectingSemantics
+          : l10n.recoveryDisconnectedSemantics,
       child: ExcludeSemantics(
         child: Center(
           child: SizedBox(
@@ -333,20 +338,22 @@ final class _RecoveryCopy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
-    final name = AppLocalizations.of(context).companionName;
+    final l10n = AppLocalizations.of(context);
+    final name = l10n.companionName;
     return Column(
       children: [
         Text(
-          reconnecting ? 'Возвращаем $name' : '$name потерялась',
+          reconnecting
+              ? l10n.recoveryReconnectingTitle(name)
+              : l10n.recoveryDisconnectedTitle(name),
           textAlign: TextAlign.center,
           style: context.chromeKissText.display.copyWith(fontSize: 36),
         ),
         const SizedBox(height: 8),
         Text(
           reconnecting
-              ? 'Ищем знакомый блеск рядом. Обычно это занимает несколько секунд.'
-              : 'Проверь, что брелок включён и находится рядом. '
-                    'Мы сохранили её настроение и образ.',
+              ? l10n.recoveryReconnectingBody
+              : l10n.recoveryDisconnectedBody,
           textAlign: TextAlign.center,
           style: context.chromeKissText.body.copyWith(
             color: colors.textSecondary,
@@ -365,8 +372,9 @@ final class _ReconnectingHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
+    final l10n = AppLocalizations.of(context);
     return Semantics(
-      label: 'Не закрывай приложение. Восстановление связи продолжается.',
+      label: l10n.recoveryHintSemantics,
       child: Container(
         key: const Key('connection_reconnecting_hint'),
         constraints: const BoxConstraints(minHeight: 58),
@@ -387,7 +395,7 @@ final class _ReconnectingHint extends StatelessWidget {
             const SizedBox(width: 9),
             Flexible(
               child: Text(
-                'Не закрывай приложение',
+                l10n.recoveryHint,
                 textAlign: TextAlign.center,
                 style: context.chromeKissText.label.copyWith(fontSize: 13),
               ),

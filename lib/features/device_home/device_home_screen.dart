@@ -29,6 +29,7 @@ import '../user_content/user_content_screen.dart';
 import 'connection_recovery_controller.dart';
 import 'connection_recovery_view.dart';
 import 'eye_preview_controller.dart';
+import 'home_async_state_view.dart';
 import 'widgets/character_study_screen.dart';
 import 'widgets/chrome_kiss_bottom_navigation.dart';
 import 'widgets/companion_home_hero.dart';
@@ -61,6 +62,11 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
     final snapshot = ref.watch(deviceSnapshotProvider);
     final command = ref.watch(deviceControllerProvider);
     final scenes = ref.watch(sceneLibraryProvider);
+    final snapshotValue = snapshot.value;
+    final activeSceneState = snapshotValue == null
+        ? null
+        : ref.watch(sceneByIdProvider(snapshotValue.activeSceneId));
+    final activeScene = activeSceneState?.value;
     final imageFlow = ref.watch(userImageControllerProvider);
     final imageBusy =
         imageFlow is UserImagePicking || imageFlow is UserImageSaving;
@@ -111,68 +117,81 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
       }
     });
 
+    final Widget presentation;
+    if (snapshotValue == null) {
+      presentation = snapshot.isLoading
+          ? const HomeAsyncStateView(kind: HomeAsyncStateKind.initialLoading)
+          : HomeAsyncStateView(
+              kind: HomeAsyncStateKind.snapshotUnavailable,
+              retryBusy: snapshot.isLoading,
+              onRetry: _retrySnapshot,
+              onReturnToDiscovery: () =>
+                  context.go(DeviceDiscoveryScreen.routePath),
+            );
+    } else if (recovery.status != ConnectionRecoveryStatus.connected &&
+        activeScene != null) {
+      presentation = ConnectionRecoveryView(
+        status: recovery.status,
+        snapshot: snapshotValue,
+        scene: activeScene,
+        onRetry: () => ref.read(recoveryProvider.notifier).retry(),
+        onReturnToDiscovery: () =>
+            ref.read(recoveryProvider.notifier).returnToDiscovery(),
+      );
+    } else if (scenes.hasValue && activeScene != null) {
+      final contentRefreshing =
+          scenes.isLoading || activeSceneState?.isLoading == true;
+      presentation = Stack(
+        children: [
+          _DeviceHomeContent(
+            snapshot: snapshotValue,
+            scenes: scenes.value!,
+            activeScene: activeScene,
+            selectedSceneId: _selectedSceneId ?? snapshotValue.activeSceneId,
+            isBusy: command.isLoading || imageBusy,
+            isAddingImage: imageBusy,
+            onSceneSelected: (sceneId) {
+              setState(() => _selectedSceneId = sceneId);
+            },
+            onInstallScene: () => ref
+                .read(deviceControllerProvider.notifier)
+                .setScene(_selectedSceneId ?? snapshotValue.activeSceneId),
+            onAddImage: () => unawaited(_openCreateLook()),
+            onOpenMyContent: () => unawaited(_openMyContent()),
+            onOpenSettings: () => unawaited(_openSettings()),
+            onOpenSimulatorSettings: () => _showSimulatorSettings(context),
+          ),
+          if (contentRefreshing)
+            const PositionedDirectional(
+              top: 112,
+              end: 20,
+              child: IgnorePointer(child: HomeContentLoadingIndicator()),
+            ),
+        ],
+      );
+    } else if (scenes.hasError) {
+      presentation = HomeAsyncStateView(
+        kind: HomeAsyncStateKind.sceneLibraryFailure,
+        retryBusy: scenes.isLoading,
+        onRetry: _retrySceneLibrary,
+      );
+    } else if (activeSceneState?.hasError == true ||
+        (activeSceneState?.hasValue == true && activeScene == null)) {
+      presentation = HomeAsyncStateView(
+        kind: HomeAsyncStateKind.activeSceneFailure,
+        retryBusy: activeSceneState?.isLoading == true,
+        onRetry: _retryActiveScene,
+      );
+    } else {
+      presentation = const HomeAsyncStateView(
+        kind: HomeAsyncStateKind.contentLoading,
+      );
+    }
+
     return Scaffold(
       body: ColoredBox(
         color: context.chromeKiss.canvas,
-        child: SafeArea(
-          child: snapshot.when(
-            data: (value) => scenes.when(
-              data: (items) => ref
-                  .watch(sceneByIdProvider(value.activeSceneId))
-                  .when(
-                    data: (activeScene) => activeScene == null
-                        ? _SceneLibraryError(onRetry: _retrySceneLibrary)
-                        : recovery.status != ConnectionRecoveryStatus.connected
-                        ? ConnectionRecoveryView(
-                            status: recovery.status,
-                            snapshot: value,
-                            scene: activeScene,
-                            onRetry: () =>
-                                ref.read(recoveryProvider.notifier).retry(),
-                            onReturnToDiscovery: () => ref
-                                .read(recoveryProvider.notifier)
-                                .returnToDiscovery(),
-                          )
-                        : _DeviceHomeContent(
-                            snapshot: value,
-                            scenes: items,
-                            activeScene: activeScene,
-                            selectedSceneId:
-                                _selectedSceneId ?? value.activeSceneId,
-                            isBusy: command.isLoading || imageBusy,
-                            isAddingImage: imageBusy,
-                            onSceneSelected: (sceneId) {
-                              setState(() => _selectedSceneId = sceneId);
-                            },
-                            onInstallScene: () => ref
-                                .read(deviceControllerProvider.notifier)
-                                .setScene(
-                                  _selectedSceneId ?? value.activeSceneId,
-                                ),
-                            onAddImage: () => unawaited(_openCreateLook()),
-                            onOpenMyContent: () => unawaited(_openMyContent()),
-                            onOpenSettings: () => unawaited(_openSettings()),
-                            onOpenSimulatorSettings: () =>
-                                _showSimulatorSettings(context),
-                          ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (error, stackTrace) =>
-                        _SceneLibraryError(onRetry: _retrySceneLibrary),
-                  ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) =>
-                  _SceneLibraryError(onRetry: _retrySceneLibrary),
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) => Center(
-              child: FilledButton(
-                onPressed: () => context.go(DeviceDiscoveryScreen.routePath),
-                child: Text(l10n.retry),
-              ),
-            ),
-          ),
-        ),
+        child: SafeArea(child: presentation),
       ),
     );
   }
@@ -245,8 +264,21 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   }
 
   void _retrySceneLibrary() {
+    if (ref.read(sceneLibraryProvider).isLoading) return;
     ref.invalidate(sceneLibraryProvider);
-    ref.invalidate(sceneByIdProvider);
+  }
+
+  void _retryActiveScene() {
+    final sceneId = ref.read(deviceSnapshotProvider).value?.activeSceneId;
+    if (sceneId == null) return;
+    final provider = sceneByIdProvider(sceneId);
+    if (ref.read(provider).isLoading) return;
+    ref.invalidate(provider);
+  }
+
+  void _retrySnapshot() {
+    if (ref.read(deviceSnapshotProvider).isLoading) return;
+    ref.invalidate(deviceSnapshotProvider);
   }
 
   Future<void> _openSettings() async {
@@ -451,22 +483,6 @@ final class _DeviceHomeContent extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-final class _SceneLibraryError extends StatelessWidget {
-  const _SceneLibraryError({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: FilledButton(
-        onPressed: onRetry,
-        child: Text(AppLocalizations.of(context).retry),
-      ),
     );
   }
 }

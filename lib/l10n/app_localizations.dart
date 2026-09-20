@@ -556,6 +556,210 @@ abstract class AppLocalizations {
   /// **'Попробовать снова'**
   String get retry;
 
+  /// No description provided for @recoveryHeaderEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CHROME KISS · DEVICE'**
+  String get recoveryHeaderEyebrow;
+
+  /// No description provided for @recoveryRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключить снова'**
+  String get recoveryRetry;
+
+  /// No description provided for @recoveryReturnToDiscovery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуться к поиску'**
+  String get recoveryReturnToDiscovery;
+
+  /// No description provided for @recoveryStatusReconnecting.
+  ///
+  /// In ru, this message translates to:
+  /// **'ВОЗВРАЩАЕМСЯ'**
+  String get recoveryStatusReconnecting;
+
+  /// No description provided for @recoveryStatusOffline.
+  ///
+  /// In ru, this message translates to:
+  /// **'НЕ В СЕТИ'**
+  String get recoveryStatusOffline;
+
+  /// No description provided for @recoveryReconnectingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возвращаем {name}'**
+  String recoveryReconnectingTitle(String name);
+
+  /// No description provided for @recoveryDisconnectedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} потерялась'**
+  String recoveryDisconnectedTitle(String name);
+
+  /// No description provided for @recoveryReconnectingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ищем знакомый блеск рядом. Обычно это занимает несколько секунд.'**
+  String get recoveryReconnectingBody;
+
+  /// No description provided for @recoveryDisconnectedBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверь, что брелок включён и находится рядом. Мы сохранили её настроение и образ.'**
+  String get recoveryDisconnectedBody;
+
+  /// No description provided for @recoveryReconnectingSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстанавливаем связь с брелоком'**
+  String get recoveryReconnectingSemantics;
+
+  /// No description provided for @recoveryDisconnectedSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Связь с брелоком потеряна'**
+  String get recoveryDisconnectedSemantics;
+
+  /// No description provided for @recoveryHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не закрывай приложение'**
+  String get recoveryHint;
+
+  /// No description provided for @recoveryHintSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не закрывай приложение. Восстановление связи продолжается.'**
+  String get recoveryHintSemantics;
+
+  /// No description provided for @homeInitialLoadingStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'ПРОСЫПАЕМСЯ'**
+  String get homeInitialLoadingStatus;
+
+  /// No description provided for @homeInitialLoadingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} просыпается'**
+  String homeInitialLoadingTitle(String name);
+
+  /// No description provided for @homeInitialLoadingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готовим линзу и возвращаем твой последний образ.'**
+  String get homeInitialLoadingBody;
+
+  /// No description provided for @homeInitialLoadingSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главный экран загружается'**
+  String get homeInitialLoadingSemantics;
+
+  /// No description provided for @homeContentLoadingStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'ГОТОВИМ ОБРАЗ'**
+  String get homeContentLoadingStatus;
+
+  /// No description provided for @homeContentLoadingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Собираем знакомый блеск'**
+  String get homeContentLoadingTitle;
+
+  /// No description provided for @homeContentLoadingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образ и гардероб появятся через мгновение.'**
+  String get homeContentLoadingBody;
+
+  /// No description provided for @homeContentLoadingSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образы загружаются'**
+  String get homeContentLoadingSemantics;
+
+  /// No description provided for @homeLoadingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё одно мгновение'**
+  String get homeLoadingHint;
+
+  /// No description provided for @homeContentRefreshing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновляем образы'**
+  String get homeContentRefreshing;
+
+  /// No description provided for @homeSceneLibraryErrorStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'ГАРДЕРОБ ЖДЁТ'**
+  String get homeSceneLibraryErrorStatus;
+
+  /// No description provided for @homeSceneLibraryErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гардероб не открылся'**
+  String get homeSceneLibraryErrorTitle;
+
+  /// No description provided for @homeSceneLibraryErrorBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробуй ещё раз — сохранённые образы останутся на месте.'**
+  String get homeSceneLibraryErrorBody;
+
+  /// No description provided for @homeActiveSceneErrorStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'ОБРАЗ ЖДЁТ'**
+  String get homeActiveSceneErrorStatus;
+
+  /// No description provided for @homeActiveSceneErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Образ не открылся'**
+  String get homeActiveSceneErrorTitle;
+
+  /// No description provided for @homeActiveSceneErrorBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторим загрузку только этого образа.'**
+  String get homeActiveSceneErrorBody;
+
+  /// No description provided for @homeSnapshotErrorStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'БРЕЛОК НЕ ОТВЕЧАЕТ'**
+  String get homeSnapshotErrorStatus;
+
+  /// No description provided for @homeSnapshotErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не видим состояние брелока'**
+  String get homeSnapshotErrorTitle;
+
+  /// No description provided for @homeSnapshotErrorBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробуй получить данные ещё раз или вернись к поиску устройства.'**
+  String get homeSnapshotErrorBody;
+
+  /// No description provided for @homeSnapshotErrorSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Состояние брелока недоступно'**
+  String get homeSnapshotErrorSemantics;
+
+  /// No description provided for @returnToDeviceSearch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуться к поиску устройства'**
+  String get returnToDeviceSearch;
+
   /// No description provided for @pairingTitle.
   ///
   /// In ru, this message translates to:

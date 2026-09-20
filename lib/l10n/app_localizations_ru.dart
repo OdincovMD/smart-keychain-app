@@ -257,6 +257,123 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retry => 'Попробовать снова';
 
   @override
+  String get recoveryHeaderEyebrow => 'CHROME KISS · DEVICE';
+
+  @override
+  String get recoveryRetry => 'Подключить снова';
+
+  @override
+  String get recoveryReturnToDiscovery => 'Вернуться к поиску';
+
+  @override
+  String get recoveryStatusReconnecting => 'ВОЗВРАЩАЕМСЯ';
+
+  @override
+  String get recoveryStatusOffline => 'НЕ В СЕТИ';
+
+  @override
+  String recoveryReconnectingTitle(String name) {
+    return 'Возвращаем $name';
+  }
+
+  @override
+  String recoveryDisconnectedTitle(String name) {
+    return '$name потерялась';
+  }
+
+  @override
+  String get recoveryReconnectingBody =>
+      'Ищем знакомый блеск рядом. Обычно это занимает несколько секунд.';
+
+  @override
+  String get recoveryDisconnectedBody =>
+      'Проверь, что брелок включён и находится рядом. Мы сохранили её настроение и образ.';
+
+  @override
+  String get recoveryReconnectingSemantics =>
+      'Восстанавливаем связь с брелоком';
+
+  @override
+  String get recoveryDisconnectedSemantics => 'Связь с брелоком потеряна';
+
+  @override
+  String get recoveryHint => 'Не закрывай приложение';
+
+  @override
+  String get recoveryHintSemantics =>
+      'Не закрывай приложение. Восстановление связи продолжается.';
+
+  @override
+  String get homeInitialLoadingStatus => 'ПРОСЫПАЕМСЯ';
+
+  @override
+  String homeInitialLoadingTitle(String name) {
+    return '$name просыпается';
+  }
+
+  @override
+  String get homeInitialLoadingBody =>
+      'Готовим линзу и возвращаем твой последний образ.';
+
+  @override
+  String get homeInitialLoadingSemantics => 'Главный экран загружается';
+
+  @override
+  String get homeContentLoadingStatus => 'ГОТОВИМ ОБРАЗ';
+
+  @override
+  String get homeContentLoadingTitle => 'Собираем знакомый блеск';
+
+  @override
+  String get homeContentLoadingBody =>
+      'Образ и гардероб появятся через мгновение.';
+
+  @override
+  String get homeContentLoadingSemantics => 'Образы загружаются';
+
+  @override
+  String get homeLoadingHint => 'Ещё одно мгновение';
+
+  @override
+  String get homeContentRefreshing => 'Обновляем образы';
+
+  @override
+  String get homeSceneLibraryErrorStatus => 'ГАРДЕРОБ ЖДЁТ';
+
+  @override
+  String get homeSceneLibraryErrorTitle => 'Гардероб не открылся';
+
+  @override
+  String get homeSceneLibraryErrorBody =>
+      'Попробуй ещё раз — сохранённые образы останутся на месте.';
+
+  @override
+  String get homeActiveSceneErrorStatus => 'ОБРАЗ ЖДЁТ';
+
+  @override
+  String get homeActiveSceneErrorTitle => 'Образ не открылся';
+
+  @override
+  String get homeActiveSceneErrorBody =>
+      'Повторим загрузку только этого образа.';
+
+  @override
+  String get homeSnapshotErrorStatus => 'БРЕЛОК НЕ ОТВЕЧАЕТ';
+
+  @override
+  String get homeSnapshotErrorTitle => 'Не видим состояние брелока';
+
+  @override
+  String get homeSnapshotErrorBody =>
+      'Попробуй получить данные ещё раз или вернись к поиску устройства.';
+
+  @override
+  String get homeSnapshotErrorSemantics => 'Состояние брелока недоступно';
+
+  @override
+  String get returnToDeviceSearch => 'Вернуться к поиску устройства';
+
+  @override
   String get pairingTitle => 'Найди свой брелок';
 
   @override

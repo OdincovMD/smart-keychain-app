@@ -161,6 +161,39 @@ Disconnected/Reconnecting используют общий `ChromeKissFidelityFra
 indeterminate и не показывает фиктивный процент; в reduced-motion он остаётся
 статичным, сохраняя текстовый и формовый state signal.
 
+## Production Home async states
+
+Home выводит presentation state из существующих Riverpod `AsyncValue` и не
+создаёт вторую domain- или connection-state machine. Приоритет фиксирован:
+
+```text
+intentional disconnect navigation
+  ↓
+connection recovery (когда доступны last-known snapshot + active scene)
+  ↓
+valid Home
+  ↓
+scene library / active scene loading or failure
+  ↓
+initial snapshot loading or unavailable
+```
+
+Initial snapshot и content loading используют общий Chrome Kiss loading stage:
+приглушённую lens, спокойные Kiss Cut eyes и optical rim без фиктивного
+прогресса. При reduced motion rim остаётся статичным. Ошибки сохраняют ту же
+композицию, различаются glyph, заголовком и действием, а не только цветом.
+
+После появления пригодных данных refresh сохраняет last-known-good Home и
+добавляет компактный optical status без изменения основной геометрии. Retry
+инвалидирует только конкретный упавший provider: snapshot, scene library или
+active scene. Повторный Retry во время refresh блокируется. Snapshot failure не
+считается потерей connection и не вызывает `ConnectionRecoveryController`;
+возврат к Discovery остаётся отдельным явным действием пользователя.
+
+Весь пользовательский и accessibility copy Home async и Connection Recovery
+принадлежит Flutter localization catalog. Production widgets не содержат
+захардкоженных русских строк для этих состояний.
+
 ## Persistence
 
 `app_settings.appearance` stores the stable enum string. Schema version 3 adds
