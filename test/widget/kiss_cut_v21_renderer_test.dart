@@ -1,16 +1,21 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_keychain_app/core/result.dart';
 import 'package:smart_keychain_app/domain/device/display_profile.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_library.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_player.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
+
+import '../../tool/src/avatar_lab_motion_adapter.dart';
 
 void main() {
   test('V2.1 moods retain safe silhouettes and optical cores', () {
@@ -107,6 +112,50 @@ void main() {
       }
     }
   });
+
+  test(
+    'converted Avatar Lab frames remain inside renderer geometry bounds',
+    () {
+      final converted = convertAvatarLabMotion(
+        File('tool/fixtures/avatar_lab_real_export_v1.avatar.json')
+            .readAsStringSync(),
+      );
+      expect(converted, isA<Ok<EyeMotionDefinition, AvatarLabMotionFailure>>());
+      final definition =
+          (converted as Ok<EyeMotionDefinition, AvatarLabMotionFailure>).value;
+      final base = EyeRuntimeState.resting(EyeEmotion.neutral);
+
+      for (final clip in definition.clips.values) {
+        for (
+          var elapsed = Duration.zero;
+          elapsed <= clip.duration;
+          elapsed += const Duration(milliseconds: 16)
+        ) {
+          final state = EyeMotionClipSampler.sample(
+            definition: definition,
+            clip: clip,
+            elapsed: elapsed,
+            base: base,
+            initial: base,
+          ).state;
+          final geometry = KissCutGeometrySnapshot.fromState(
+            state,
+            style: KissCutRendererStyle.v21OpticalGlint,
+          );
+
+          expect(geometry.left.pupilInsideEye, isTrue);
+          expect(geometry.right.pupilInsideEye, isTrue);
+          expect(state.leftEyelidOpen, inInclusiveRange(0, 1));
+          expect(state.rightEyelidOpen, inInclusiveRange(0, 1));
+          expect(
+            geometry.contentRadiusFraction,
+            lessThanOrEqualTo(0.41),
+            reason: '${clip.name} at $elapsed',
+          );
+        }
+      }
+    },
+  );
 
   test('pure and optical-glint studies are distinct immutable scenes', () {
     final state = KissCutStudyPose.forMood(

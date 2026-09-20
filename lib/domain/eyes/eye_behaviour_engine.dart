@@ -106,6 +106,7 @@ final class BlinkEyeAction extends EyeBehaviourAction {
     this.variant = EyeBlinkVariant.normal,
     this.asymmetryDelay = const Duration(milliseconds: 12),
     this.leftLeads = true,
+    this.authoredDuration,
   });
 
   static const closeDuration = Duration(milliseconds: 86);
@@ -116,25 +117,36 @@ final class BlinkEyeAction extends EyeBehaviourAction {
   final EyeBlinkVariant variant;
   final Duration asymmetryDelay;
   final bool leftLeads;
+  final Duration? authoredDuration;
 
   bool get isDouble => variant == EyeBlinkVariant.doubleBlink;
 
   int get count => isDouble ? 2 : 1;
 
-  Duration get effectiveCloseDuration => switch (variant) {
-    EyeBlinkVariant.normal || EyeBlinkVariant.doubleBlink => closeDuration,
-    EyeBlinkVariant.slow => const Duration(milliseconds: 230),
-  };
+  Duration get effectiveCloseDuration => authoredDuration == null
+      ? switch (variant) {
+          EyeBlinkVariant.normal ||
+          EyeBlinkVariant.doubleBlink => closeDuration,
+          EyeBlinkVariant.slow => const Duration(milliseconds: 230),
+        }
+      : _authoredBlinkPart(authoredDuration!, 86);
 
-  Duration get effectiveClosedDuration => switch (variant) {
-    EyeBlinkVariant.normal || EyeBlinkVariant.doubleBlink => closedDuration,
-    EyeBlinkVariant.slow => const Duration(milliseconds: 90),
-  };
+  Duration get effectiveClosedDuration => authoredDuration == null
+      ? switch (variant) {
+          EyeBlinkVariant.normal ||
+          EyeBlinkVariant.doubleBlink => closedDuration,
+          EyeBlinkVariant.slow => const Duration(milliseconds: 90),
+        }
+      : _authoredBlinkPart(authoredDuration!, 42);
 
-  Duration get effectiveOpenDuration => switch (variant) {
-    EyeBlinkVariant.normal || EyeBlinkVariant.doubleBlink => openDuration,
-    EyeBlinkVariant.slow => const Duration(milliseconds: 285),
-  };
+  Duration get effectiveOpenDuration => authoredDuration == null
+      ? switch (variant) {
+          EyeBlinkVariant.normal || EyeBlinkVariant.doubleBlink => openDuration,
+          EyeBlinkVariant.slow => const Duration(milliseconds: 285),
+        }
+      : authoredDuration! -
+            _authoredBlinkPart(authoredDuration!, 86) -
+            _authoredBlinkPart(authoredDuration!, 42);
 
   @override
   bool operator ==(Object other) =>
@@ -143,11 +155,16 @@ final class BlinkEyeAction extends EyeBehaviourAction {
           delay == other.delay &&
           variant == other.variant &&
           asymmetryDelay == other.asymmetryDelay &&
-          leftLeads == other.leftLeads;
+          leftLeads == other.leftLeads &&
+          authoredDuration == other.authoredDuration;
 
   @override
-  int get hashCode => Object.hash(delay, variant, asymmetryDelay, leftLeads);
+  int get hashCode =>
+      Object.hash(delay, variant, asymmetryDelay, leftLeads, authoredDuration);
 }
+
+Duration _authoredBlinkPart(Duration duration, int share) =>
+    Duration(microseconds: (duration.inMicroseconds * share / 244).round());
 
 /// One-shot original character beat: the eyes follow an imagined firefly.
 final class SpecialEyeAction extends EyeBehaviourAction {
@@ -223,6 +240,7 @@ final class EyeBehaviourEngine {
   BlinkEyeAction forceBlink({
     EyeBlinkVariant variant = EyeBlinkVariant.normal,
     Duration delay = Duration.zero,
+    Duration? duration,
   }) {
     _timeSinceBlink = Duration.zero;
     return BlinkEyeAction(
@@ -230,8 +248,18 @@ final class EyeBehaviourEngine {
       variant: variant,
       asymmetryDelay: Duration(milliseconds: 8 + _random.nextInt(11)),
       leftLeads: _random.nextBool(),
+      authoredDuration: duration,
     );
   }
+
+  BlinkEyeAction scheduledBlink({
+    required Duration minimumDelay,
+    required Duration maximumDelay,
+    required Duration duration,
+  }) => forceBlink(
+    delay: _durationBetween(minimumDelay, maximumDelay),
+    duration: duration,
+  );
 
   GazeEyeAction look(EyeLookDirection direction) {
     if (direction == EyeLookDirection.center) {

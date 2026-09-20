@@ -1,0 +1,90 @@
+{
+  "schema": "bible-strong/avatar-definition",
+  "schemaVersion": 1,
+  "name": "Chrome Kiss Compatibility Fixture",
+  "body": {
+    "primary": {
+      "type": "sphere",
+      "width": 240,
+      "height": 240,
+      "depth": 240,
+      "roundness": 1
+    },
+    "nodes": []
+  },
+  "colors": {
+    "body": "#5b7fe5",
+    "eyes": "#111316"
+  },
+  "expressions": {
+    "neutral": {
+      "head": {"x": 0, "y": 0, "z": 0},
+      "eyes": {
+        "left": {"width": 20, "height": 50, "x": -10, "y": -5, "angle": 0},
+        "right": {"width": 20, "height": 50, "x": 10, "y": -5, "angle": 0},
+        "spacing": 35
+      },
+      "perspective": 1,
+      "motion": {"eyes": "none", "body": "none"}
+    },
+    "curious": {
+      "head": {"x": 4, "y": -2, "z": 0},
+      "eyes": {
+        "left": {"width": 22, "height": 45, "x": -3, "y": -15, "angle": 16},
+        "right": {"width": 22, "height": 40, "x": 17, "y": -15, "angle": -12},
+        "spacing": 42
+      },
+      "perspective": 1,
+      "motion": {"eyes": "microSaccades", "body": "none"}
+    },
+    "flirty": {
+      "head": {"x": -3, "y": 1, "z": 0},
+      "eyes": {
+        "left": {"width": 24, "height": 25, "x": -18, "y": -8, "angle": 24},
+        "right": {"width": 20, "height": 46, "x": 2, "y": -8, "angle": -18},
+        "spacing": 40
+      },
+      "perspective": 1,
+      "motion": {"eyes": "none", "body": "slowDrift"},
+      "colors": {"eyes": "#151118"}
+    }
+  },
+  "expressionOrder": ["flirty", "neutral", "curious"],
+  "animations": {
+    "curious-once": {
+      "playbackMode": "once",
+      "steps": [
+        {"expression": "curious", "holdMs": 640, "transitionMs": 220, "transition": "spring"},
+        {"expression": "neutral", "holdMs": 320, "transitionMs": 360, "transition": "smooth"}
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 900,
+        "minIntervalMs": 2400,
+        "maxIntervalMs": 4600,
+        "durationMs": 220
+      },
+      "metadata": {
+        "label": "Curious once",
+        "description": "Project-authored compatibility motion.",
+        "group": "Chrome Kiss"
+      }
+    },
+    "flirty-loop": {
+      "playbackMode": "loop",
+      "steps": [
+        {"expression": "flirty", "holdMs": 820, "transitionMs": 180, "transition": "snappy"},
+        {"expression": "neutral", "holdMs": 1100, "transitionMs": 420, "transition": "smooth"}
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 1200,
+        "minIntervalMs": 3000,
+        "maxIntervalMs": 5200,
+        "durationMs": 240
+      }
+    }
+  },
+  "animationOrder": ["flirty-loop", "curious-once"],
+  "standardAnimationSet": 1
+}

@@ -176,6 +176,9 @@ final class EyeMotionDefinition {
       (name, clip) => MapEntry(name, {
         'mode': clip.playbackMode.name,
         'blink': clip.blinkPolicy.name,
+        if (clip.blinkConfiguration case final configuration?)
+          'blinkConfiguration': configuration.toJson(),
+        if (clip.metadata case final metadata?) 'metadata': metadata.toJson(),
         'steps': [
           for (final step in clip.steps)
             {
@@ -358,7 +361,13 @@ Result<EyeMotionClip, EyeMotionFailure> _parseClip(
 ) {
   if (!_validName(name) ||
       value is! Map<String, Object?> ||
-      !_onlyKeys(value, const {'mode', 'blink', 'steps'})) {
+      !_onlyKeys(value, const {
+        'mode',
+        'blink',
+        'blinkConfiguration',
+        'metadata',
+        'steps',
+      })) {
     return Err(EyeMotionInvalidField(r'$.clips.' + name));
   }
   final playback = _enumByName(EyeMotionPlaybackMode.values, value['mode']);
@@ -369,6 +378,28 @@ Result<EyeMotionClip, EyeMotionFailure> _parseClip(
   final stepsJson = value['steps'];
   if (playback == null || blink == null || stepsJson is! List<Object?>) {
     return Err(EyeMotionInvalidField(r'$.clips.' + name));
+  }
+  final blinkConfigurationResult = _parseBlinkConfiguration(
+    value['blinkConfiguration'],
+    '\$.clips.$name.blinkConfiguration',
+  );
+  final EyeMotionBlinkConfiguration? blinkConfiguration;
+  switch (blinkConfigurationResult) {
+    case Ok(:final value):
+      blinkConfiguration = value;
+    case Err(:final failure):
+      return Err(failure);
+  }
+  final metadataResult = _parseClipMetadata(
+    value['metadata'],
+    '\$.clips.$name.metadata',
+  );
+  final EyeMotionClipMetadata? metadata;
+  switch (metadataResult) {
+    case Ok(:final value):
+      metadata = value;
+    case Err(:final failure):
+      return Err(failure);
   }
   if (stepsJson.isEmpty ||
       stepsJson.length > EyeMotionLimits.maximumStepsPerClip) {
@@ -433,6 +464,76 @@ Result<EyeMotionClip, EyeMotionFailure> _parseClip(
       playbackMode: playback,
       steps: List.unmodifiable(steps),
       blinkPolicy: blink,
+      blinkConfiguration: blinkConfiguration,
+      metadata: metadata,
+    ),
+  );
+}
+
+Result<EyeMotionBlinkConfiguration?, EyeMotionFailure> _parseBlinkConfiguration(
+  Object? value,
+  String path,
+) {
+  if (value == null) return const Ok(null);
+  if (value is! Map<String, Object?> ||
+      !_onlyKeys(value, const {
+        'initialDelayMs',
+        'minIntervalMs',
+        'maxIntervalMs',
+        'durationMs',
+      }) ||
+      value.length != 4) {
+    return Err(EyeMotionInvalidField(path));
+  }
+  final initialDelay = _duration(value['initialDelayMs']);
+  final minimumInterval = _duration(value['minIntervalMs']);
+  final maximumInterval = _duration(value['maxIntervalMs']);
+  final duration = _duration(value['durationMs']);
+  if (initialDelay == null ||
+      minimumInterval == null ||
+      maximumInterval == null ||
+      duration == null ||
+      initialDelay > const Duration(minutes: 1) ||
+      minimumInterval < const Duration(milliseconds: 250) ||
+      maximumInterval > const Duration(minutes: 2) ||
+      minimumInterval > maximumInterval ||
+      duration < const Duration(milliseconds: 50) ||
+      duration > const Duration(seconds: 2)) {
+    return Err(EyeMotionInvalidField(path));
+  }
+  return Ok(
+    EyeMotionBlinkConfiguration(
+      initialDelay: initialDelay,
+      minimumInterval: minimumInterval,
+      maximumInterval: maximumInterval,
+      duration: duration,
+    ),
+  );
+}
+
+Result<EyeMotionClipMetadata?, EyeMotionFailure> _parseClipMetadata(
+  Object? value,
+  String path,
+) {
+  if (value == null) return const Ok(null);
+  if (value is! Map<String, Object?> ||
+      value.isEmpty ||
+      !_onlyKeys(value, const {'label', 'description', 'group'})) {
+    return Err(EyeMotionInvalidField(path));
+  }
+  final label = value['label'];
+  final description = value['description'];
+  final group = value['group'];
+  if (!_optionalBoundedString(label, 120) ||
+      !_optionalBoundedString(description, 512) ||
+      !_optionalBoundedString(group, 64)) {
+    return Err(EyeMotionInvalidField(path));
+  }
+  return Ok(
+    EyeMotionClipMetadata(
+      label: label as String?,
+      description: description as String?,
+      group: group as String?,
     ),
   );
 }
@@ -470,4 +571,8 @@ bool _onlyKeys(Map<String, Object?> object, Set<String> allowed) =>
     object.keys.every(allowed.contains);
 
 bool _validName(String value) =>
-    RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(value);
+    RegExp(r'^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$').hasMatch(value) &&
+    value.length <= 64;
+
+bool _optionalBoundedString(Object? value, int maximumLength) =>
+    value == null || value is String && value.length <= maximumLength;

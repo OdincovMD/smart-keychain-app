@@ -132,6 +132,7 @@ final class EyeMotionPlayer {
   Duration _behaviourDelay = Duration.zero;
   EyeBehaviourAction? _activeAction;
   Duration _actionElapsed = Duration.zero;
+  bool _initialBlinkPending = true;
 
   EyeRuntimeState? _moodTransitionFrom;
   EyeRuntimeState? _moodTransitionTo;
@@ -189,6 +190,7 @@ final class EyeMotionPlayer {
     _clipElapsed = Duration.zero;
     _status = EyeMotionPlaybackStatus.playing;
     _clearAction();
+    _initialBlinkPending = true;
     _scheduleNextBehaviour();
   }
 
@@ -345,7 +347,26 @@ final class EyeMotionPlayer {
   }
 
   void _scheduleNextBehaviour() {
-    final action = _engine.nextAction();
+    final clip = definition.clips[_clipName];
+    final configuration = clip?.blinkConfiguration;
+    final action =
+        configuration != null &&
+            clip!.blinkPolicy == EyeMotionBlinkPolicy.natural
+        ? _initialBlinkPending
+              ? _engine.forceBlink(
+                  delay: configuration.initialDelay,
+                  duration: configuration.duration,
+                )
+              : _engine.scheduledBlink(
+                  minimumDelay: configuration.minimumInterval,
+                  maximumDelay: configuration.maximumInterval,
+                  duration: configuration.duration,
+                )
+        : _engine.nextAction();
+    if (configuration != null &&
+        clip!.blinkPolicy == EyeMotionBlinkPolicy.natural) {
+      _initialBlinkPending = false;
+    }
     _scheduledAction = action;
     _behaviourDelay = action.delay;
   }

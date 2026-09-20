@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/core/result.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_clip.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_library.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_transition.dart';
 
 void main() {
   group('EyeMotionDefinition', () {
@@ -17,6 +19,42 @@ void main() {
           (decoded as Ok<EyeMotionDefinition, EyeMotionFailure>).value;
       expect(value.poses, chromeKissEyeMotionDefinition.poses);
       expect(value.clips, chromeKissEyeMotionDefinition.clips);
+    });
+
+    test('round trips optional blink configuration and clip metadata', () {
+      const clip = EyeMotionClip(
+        name: 'avatar-loop',
+        playbackMode: EyeMotionPlaybackMode.loop,
+        steps: [
+          EyeMotionStep(
+            pose: 'neutral',
+            hold: Duration(milliseconds: 500),
+            transition: Duration(milliseconds: 200),
+            transitionStyle: EyeMotionTransitionStyle.easeInOut,
+          ),
+        ],
+        blinkConfiguration: EyeMotionBlinkConfiguration(
+          initialDelay: Duration(milliseconds: 900),
+          minimumInterval: Duration(milliseconds: 2400),
+          maximumInterval: Duration(milliseconds: 4600),
+          duration: Duration(milliseconds: 220),
+        ),
+        metadata: EyeMotionClipMetadata(label: 'Avatar loop'),
+      );
+      const definition = EyeMotionDefinition(
+        poses: {'neutral': EyeMotionPose(gazeX: 0)},
+        clips: {'avatar-loop': clip},
+      );
+
+      final decoded = decodeEyeMotionDefinition(definition.encode());
+
+      expect(decoded, isA<Ok<EyeMotionDefinition, EyeMotionFailure>>());
+      expect(
+        (decoded as Ok<EyeMotionDefinition, EyeMotionFailure>)
+            .value
+            .clips['avatar-loop'],
+        clip,
+      );
     });
 
     test('rejects unknown fields and non-finite numbers', () {

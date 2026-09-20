@@ -51,6 +51,12 @@ The root object rejects unknown fields and uses:
     "neutral_idle": {
       "mode": "loop",
       "blink": "natural",
+      "blinkConfiguration": {
+        "initialDelayMs": 900,
+        "minIntervalMs": 2400,
+        "maxIntervalMs": 4600,
+        "durationMs": 220
+      },
       "steps": [
         {
           "pose": "rest",
@@ -75,6 +81,11 @@ Playback modes are `once`, `loop`, and `pingPong`. Blink policies are
 `natural`, `suppress`, and `authored`. Transition styles are `linear`,
 `easeIn`, `easeOut`, `easeInOut`, and `emphasized`.
 
+`blinkConfiguration` is optional and typed. When present on a `natural` clip,
+the player uses its initial delay, seeded min/max interval, and authored blink
+duration. A `suppress` clip retains the configuration for lossless authoring
+round-trips but schedules no blink from it.
+
 ## Original clips
 
 - `neutral_idle`: the production loop, with soft breathing and sparse notice.
@@ -87,22 +98,56 @@ pupil response are procedural overlays.
 
 ## Avatar Definition v1 clean-room adapter
 
-`tool/avatar_lab_motion_converter.dart` is a development-only adapter. It was
-implemented from public format documentation and the project-owned minimal
-fixture, without copying Avatar Lab source, runtime, or presets. It reads only
-left/right eye `width`, `height`, `x`, `y`, `angle`, expression `spacing`,
-animation steps, playback mode, transition, and blink intent. `body` and
-`colors` are accepted but ignored.
+`tool/avatar_lab_motion_converter.dart` is a development-only adapter. The
+authoring path is deliberately one-way:
+
+```text
+Avatar Lab .avatar.json export
+  → clean-room Dart converter
+  → chrome-kiss/eye-motion JSON
+  → EyeMotionPlayer
+```
+
+The converter accepts the public `bible-strong/avatar-definition` schema at
+`schemaVersion: 1`: root body/colours, nested `expressions.neutral`, expression
+and animation order arrays, real animations, object-form blink settings, and
+optional names/metadata. It reads only left/right eye `width`, `height`, `x`,
+`y`, `angle`, and expression `spacing` into Chrome Kiss. Body geometry,
+colours, head, perspective, and source motion hints are validated but not
+transferred.
 
 Expressions are normalised relative to the neutral expression, then clamped to
 Chrome Kiss runtime values. The converter emits only
 `chrome-kiss/eye-motion` version 1.
 
+- average left/right X delta divided by neutral spacing → `gazeX`;
+- average Y delta divided by neutral eye height → `gazeY`;
+- left/right height ratio → independent eyelid openness;
+- average width ratio → `eyeScaleX`;
+- differential left/right angle delta → `expressionTilt`;
+- spacing is validated but intentionally not transferred.
+
+Avatar transitions map as `smooth → easeInOut`, `snappy → easeOut`, and
+`spring → emphasized`. Playback names map directly. The complete blink object
+is retained as the owned optional configuration; `enabled: false` additionally
+maps to the `suppress` policy.
+
 ```sh
-dart run tool/avatar_lab_motion_converter.dart INPUT.json OUTPUT.json
+dart run tool/avatar_lab_motion_converter.dart \
+  path/to/export.avatar.json \
+  assets/chrome_kiss/motion/custom.eye-motion.json
 ```
 
 Exit codes are 64 for usage, 65 for invalid input, and 74 for I/O failure.
+
+The former `avatar_definition_v1_minimal.json` fixture was an internal
+compatibility draft and did not match a real Avatar Lab export. The replacement
+`avatar_lab_real_export_v1.avatar.json` follows the public schema and contains
+only project-authored neutral, curious, flirty, once, and loop data.
+
+No Avatar Lab source code, packages, renderer, runtime, or bundled presets are
+copied or linked. Only project-authored animation data exported through the
+public JSON contract may enter this workflow.
 
 ## Rendering and performance gates
 

@@ -112,6 +112,32 @@ void main() {
       expect(player.state.gazeX, inInclusiveRange(-1, 1));
       expect(player.state.gazeY, inInclusiveRange(-1, 1));
     });
+
+    test(
+      'authored blink configuration controls initial timing and duration',
+      () {
+        final player = EyeMotionPlayer(
+          behaviourEngine: EyeBehaviourEngine(Random(31)),
+          definition: _configuredBlinkDefinition,
+          initialClip: 'configured-loop',
+        );
+
+        player.advance(const Duration(milliseconds: 899));
+        expect(player.state.leftEyelidOpen, 1);
+
+        player.advance(const Duration(milliseconds: 101));
+        expect(player.state.leftEyelidOpen, lessThan(0.9));
+
+        player.advance(const Duration(milliseconds: 300));
+        expect(player.state.leftEyelidOpen, closeTo(1, 0.001));
+        expect(player.state.rightEyelidOpen, closeTo(1, 0.001));
+
+        player.advance(const Duration(milliseconds: 499));
+        expect(player.phase, isNot(EyeMotionPlayerPhase.behaviour));
+        player.advance(const Duration(milliseconds: 1));
+        expect(player.phase, EyeMotionPlayerPhase.behaviour);
+      },
+    );
   });
 
   group('EyeMotionClipSampler', () {
@@ -154,6 +180,37 @@ void main() {
     });
   });
 }
+
+const _configuredBlinkDefinition = EyeMotionDefinition(
+  poses: {
+    'neutral': EyeMotionPose(
+      gazeX: 0,
+      gazeY: 0,
+      leftEyelidOpen: 1,
+      rightEyelidOpen: 1,
+    ),
+  },
+  clips: {
+    'configured-loop': EyeMotionClip(
+      name: 'configured-loop',
+      playbackMode: EyeMotionPlaybackMode.loop,
+      steps: [
+        EyeMotionStep(
+          pose: 'neutral',
+          hold: Duration(seconds: 2),
+          transition: Duration.zero,
+          transitionStyle: EyeMotionTransitionStyle.linear,
+        ),
+      ],
+      blinkConfiguration: EyeMotionBlinkConfiguration(
+        initialDelay: Duration(milliseconds: 900),
+        minimumInterval: Duration(milliseconds: 500),
+        maximumInterval: Duration(milliseconds: 500),
+        duration: Duration(milliseconds: 220),
+      ),
+    ),
+  },
+);
 
 EyeMotionPlayer _player(int seed) =>
     EyeMotionPlayer(behaviourEngine: EyeBehaviourEngine(Random(seed)));
