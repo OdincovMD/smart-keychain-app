@@ -1,12 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
+import 'package:smart_keychain_app/core/result.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/keychain_preview.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_repository.dart';
+import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_definition_loader.dart';
 
 import '../support/fake_app_settings_repository.dart';
 import '../support/load_app_fonts.dart';
@@ -98,6 +105,33 @@ void main() {
       greaterThanOrEqualTo(48),
     );
     expect(find.byType(KeychainPreview), findsNothing);
+  });
+
+  testWidgets('production Home opts into the bundled kiss-idle motion', (
+    tester,
+  ) async {
+    final definition = _productionDefinition();
+    await _pumpConnectedHome(
+      tester,
+      disableAnimations: false,
+      productionDefinition: definition,
+    );
+
+    final stage = find.byKey(const Key('companion_stage'));
+    final eyes = find.descendant(
+      of: stage,
+      matching: find.byType(ProceduralEyesView),
+    );
+
+    expect(eyes, findsOneWidget);
+    expect(
+      tester.widget<ProceduralEyesView>(eyes).useProductionMotionDefinition,
+      isTrue,
+    );
+    expect(
+      resolveInitialEyeMotionClip(definition),
+      ChromeKissProductionEyeClips.kissIdle,
+    );
   });
 
   testWidgets('wardrobe presents four aligned looks at reference width', (
@@ -251,6 +285,8 @@ Future<void> _pumpConnectedHome(
   Size size = const Size(390, 844),
   double textScale = 1,
   EdgeInsets viewPadding = EdgeInsets.zero,
+  bool disableAnimations = true,
+  EyeMotionDefinition? productionDefinition,
 }) async {
   tester.view
     ..physicalSize = size
@@ -282,12 +318,16 @@ Future<void> _pumpConnectedHome(
         appSettingsRepositoryProvider.overrideWithValue(
           FakeAppSettingsRepository(),
         ),
+        if (productionDefinition != null)
+          productionEyeMotionDefinitionProvider.overrideWithValue(
+            productionDefinition,
+          ),
       ],
       child: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.linear(textScale),
-            disableAnimations: true,
+            disableAnimations: disableAnimations,
           ),
           child: const SmartKeychainApp(),
         ),
@@ -302,7 +342,20 @@ Future<void> _pumpConnectedHome(
   for (var frame = 0; frame < 6; frame++) {
     await tester.pump(const Duration(milliseconds: 1));
   }
-  await tester.pump(const Duration(milliseconds: 181));
+  await tester.pump(
+    disableAnimations
+        ? const Duration(milliseconds: 181)
+        : const Duration(milliseconds: 601),
+  );
   await tester.pump();
   await tester.pump();
+}
+
+EyeMotionDefinition _productionDefinition() {
+  final decoded = decodeEyeMotionDefinition(
+    File(BundledEyeMotionDefinitionLoader.productionAssetPath)
+        .readAsStringSync(),
+  );
+  expect(decoded, isA<Ok<EyeMotionDefinition, EyeMotionFailure>>());
+  return (decoded as Ok<EyeMotionDefinition, EyeMotionFailure>).value;
 }

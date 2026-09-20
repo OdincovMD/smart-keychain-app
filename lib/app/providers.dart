@@ -13,6 +13,8 @@ import '../domain/device/device_connection_status.dart';
 import '../domain/device/device_info.dart';
 import '../domain/device/device_repository.dart';
 import '../domain/device/device_snapshot.dart';
+import '../domain/eyes/eye_motion_definition.dart';
+import '../domain/eyes/eye_motion_library.dart';
 import '../domain/image/image_picker_gateway.dart';
 import '../domain/image/image_processor.dart';
 import '../domain/image/user_image_asset_repository.dart';
@@ -28,6 +30,10 @@ final failureLoggerProvider = Provider<FailureLogger>(
   (ref) => throw UnimplementedError(
     'Override failureLoggerProvider in the composition root.',
   ),
+);
+
+final productionEyeMotionDefinitionProvider = Provider<EyeMotionDefinition>(
+  (ref) => chromeKissEyeMotionDefinition,
 );
 
 final sceneRepositoryProvider = Provider<SceneRepository>(

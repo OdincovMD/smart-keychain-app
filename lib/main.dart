@@ -42,6 +42,9 @@ Future<void> main() async {
           dependencies.userImageIdGenerator,
         ),
         failureLoggerProvider.overrideWithValue(failureLogger),
+        productionEyeMotionDefinitionProvider.overrideWithValue(
+          dependencies.productionEyeMotionDefinition,
+        ),
         initialAppAppearanceProvider.overrideWithValue(
           dependencies.initialAppearance,
         ),

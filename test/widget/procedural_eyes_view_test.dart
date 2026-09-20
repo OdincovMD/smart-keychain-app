@@ -1,12 +1,17 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_keychain_app/app/providers.dart';
+import 'package:smart_keychain_app/core/result.dart';
 import 'package:smart_keychain_app/app/app_theme.dart';
 import 'package:smart_keychain_app/domain/device/device_connection_status.dart';
 import 'package:smart_keychain_app/domain/device/device_snapshot.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
@@ -16,6 +21,7 @@ import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.d
 import 'package:smart_keychain_app/features/device_home/widgets/virtual_screen.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
+import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_definition_loader.dart';
 
 void main() {
   testWidgets('procedural and static scenes use their matching renderers', (
@@ -119,7 +125,7 @@ void main() {
       painter.currentState.motionPhase,
       anyOf(EyeMotionPhase.closing, EyeMotionPhase.closed),
     );
-    expect(painter.currentState.leftEyelidOpen, isNot(equals(0.04)));
+    expect(painter.currentState.leftEyelidOpen, isNot(closeTo(0.04, 1e-9)));
 
     await tester.pump(const Duration(milliseconds: 90));
     await tester.pump(const Duration(milliseconds: 45));
@@ -207,15 +213,22 @@ void main() {
   testWidgets('lifecycle pause resumes without catching up elapsed time', (
     tester,
   ) async {
+    final productionDefinition = _productionDefinition();
     late EyeMotionTicker runtime;
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [eyeRandomProvider.overrideWithValue(Random(51))],
+        overrides: [
+          eyeRandomProvider.overrideWithValue(Random(51)),
+          productionEyeMotionDefinitionProvider.overrideWithValue(
+            productionDefinition,
+          ),
+        ],
         child: MaterialApp(
           home: SizedBox.square(
             dimension: 240,
             child: ProceduralEyesView(
               initialEmotion: EyeEmotion.neutral,
+              useProductionMotionDefinition: true,
               onRuntimeReady: (value) => runtime = value,
             ),
           ),
@@ -237,6 +250,116 @@ void main() {
       runtime.player.elapsed - beforePause,
       lessThan(const Duration(milliseconds: 150)),
     );
+  });
+
+  testWidgets(
+    'production timeline survives parent rebuild and appearance change',
+    (tester) async {
+      final definition = _productionDefinition();
+      late EyeMotionTicker runtime;
+
+      await tester.pumpWidget(
+        _productionEyesHarness(
+          definition: definition,
+          themeMode: ThemeMode.light,
+          onRuntimeReady: (value) => runtime = value,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+      final originalRuntime = runtime;
+      final beforeRebuild = runtime.player.elapsed;
+
+      expect(runtime.player.definition, same(definition));
+      expect(runtime.player.clipName, ChromeKissProductionEyeClips.kissIdle);
+
+      await tester.pumpWidget(
+        _productionEyesHarness(
+          definition: definition,
+          themeMode: ThemeMode.light,
+          onRuntimeReady: (value) => runtime = value,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(runtime, same(originalRuntime));
+      final beforeAppearanceChange = runtime.player.elapsed;
+
+      await tester.pumpWidget(
+        _productionEyesHarness(
+          definition: definition,
+          themeMode: ThemeMode.dark,
+          onRuntimeReady: (value) => runtime = value,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(runtime, same(originalRuntime));
+      expect(beforeAppearanceChange, greaterThan(beforeRebuild));
+      expect(runtime.player.elapsed, greaterThan(beforeAppearanceChange));
+    },
+  );
+
+  testWidgets('opening and closing a sheet does not restart production eyes', (
+    tester,
+  ) async {
+    final definition = _productionDefinition();
+    late EyeMotionTicker runtime;
+
+    await tester.pumpWidget(
+      _productionSheetHarness(
+        definition: definition,
+        onRuntimeReady: (value) => runtime = value,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    final originalRuntime = runtime;
+    final beforeSheet = runtime.player.elapsed;
+
+    await tester.tap(find.byKey(const Key('open_test_sheet')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('test_sheet')), findsOneWidget);
+    Navigator.of(tester.element(find.byKey(const Key('test_sheet')))).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(runtime, same(originalRuntime));
+    expect(runtime.player.elapsed, greaterThan(beforeSheet));
+  });
+
+  testWidgets('reduced motion keeps production eyes static', (tester) async {
+    final definition = _productionDefinition();
+    late EyeMotionTicker runtime;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          productionEyeMotionDefinitionProvider.overrideWithValue(definition),
+        ],
+        child: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: MaterialApp(
+              home: SizedBox.square(
+                dimension: 240,
+                child: ProceduralEyesView(
+                  initialEmotion: EyeEmotion.neutral,
+                  useProductionMotionDefinition: true,
+                  onRuntimeReady: (value) => runtime = value,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final initial = runtime.state;
+    await tester.pump(const Duration(seconds: 8));
+
+    expect(runtime.player.clipName, ChromeKissProductionEyeClips.kissIdle);
+    expect(runtime.isTicking, isFalse);
+    expect(runtime.state, initial);
   });
 
   testWidgets('eye frames repaint without rebuilding the parent', (
@@ -298,6 +421,80 @@ ProceduralEyePainter _eyePainter(WidgetTester tester) {
     find.byKey(const Key('procedural_eyes_painter')),
   );
   return paint.painter! as ProceduralEyePainter;
+}
+
+EyeMotionDefinition _productionDefinition() {
+  final decoded = decodeEyeMotionDefinition(
+    File(BundledEyeMotionDefinitionLoader.productionAssetPath)
+        .readAsStringSync(),
+  );
+  expect(decoded, isA<Ok<EyeMotionDefinition, EyeMotionFailure>>());
+  return (decoded as Ok<EyeMotionDefinition, EyeMotionFailure>).value;
+}
+
+Widget _productionEyesHarness({
+  required EyeMotionDefinition definition,
+  required ThemeMode themeMode,
+  required ValueChanged<EyeMotionTicker> onRuntimeReady,
+}) {
+  return ProviderScope(
+    overrides: [
+      eyeRandomProvider.overrideWithValue(Random(101)),
+      productionEyeMotionDefinitionProvider.overrideWithValue(definition),
+    ],
+    child: MaterialApp(
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: themeMode,
+      home: SizedBox.square(
+        dimension: 240,
+        child: ProceduralEyesView(
+          initialEmotion: EyeEmotion.neutral,
+          useProductionMotionDefinition: true,
+          onRuntimeReady: onRuntimeReady,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _productionSheetHarness({
+  required EyeMotionDefinition definition,
+  required ValueChanged<EyeMotionTicker> onRuntimeReady,
+}) {
+  return ProviderScope(
+    overrides: [
+      eyeRandomProvider.overrideWithValue(Random(103)),
+      productionEyeMotionDefinitionProvider.overrideWithValue(definition),
+    ],
+    child: MaterialApp(
+      home: Scaffold(
+        body: Column(
+          children: [
+            SizedBox.square(
+              dimension: 240,
+              child: ProceduralEyesView(
+                initialEmotion: EyeEmotion.neutral,
+                useProductionMotionDefinition: true,
+                onRuntimeReady: onRuntimeReady,
+              ),
+            ),
+            Builder(
+              builder: (context) => TextButton(
+                key: const Key('open_test_sheet'),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  builder: (context) =>
+                      const SizedBox(key: Key('test_sheet'), height: 120),
+                ),
+                child: const Text('Open'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _pumpScreen(

@@ -1,0 +1,150 @@
+{
+  "schema": "chrome-kiss/eye-motion",
+  "schemaVersion": 1,
+  "poses": {
+    "ck_rest": {
+      "gazeX": 0.0,
+      "gazeY": 0.0,
+      "leftEyelidOpen": 0.92,
+      "rightEyelidOpen": 0.92,
+      "pupilScale": 1.0,
+      "eyeScaleX": 1.0,
+      "eyeScaleY": 1.0,
+      "expressionTilt": 0.0,
+      "verticalOffset": 0.0
+    },
+    "ck_idle_notice": {
+      "gazeX": -0.12,
+      "gazeY": -0.035,
+      "leftEyelidOpen": 0.95,
+      "rightEyelidOpen": 0.92,
+      "pupilScale": 1.015,
+      "eyeScaleX": 1.0,
+      "eyeScaleY": 1.01,
+      "expressionTilt": 0.018,
+      "verticalOffset": -0.006
+    },
+    "ck_flirty_open": {
+      "gazeX": -0.18,
+      "gazeY": -0.055,
+      "leftEyelidOpen": 0.9,
+      "rightEyelidOpen": 0.97,
+      "pupilScale": 0.98,
+      "eyeScaleX": 1.01,
+      "eyeScaleY": 1.0,
+      "expressionTilt": 0.052,
+      "verticalOffset": -0.004
+    },
+    "ck_flirty_wide": {
+      "gazeX": -0.46,
+      "gazeY": -0.09,
+      "leftEyelidOpen": 1.0,
+      "rightEyelidOpen": 0.94,
+      "pupilScale": 0.88,
+      "eyeScaleX": 1.045,
+      "eyeScaleY": 1.025,
+      "expressionTilt": 0.064,
+      "verticalOffset": -0.012
+    },
+    "ck_flirty_up": {
+      "gazeX": 0.2,
+      "gazeY": -0.34,
+      "leftEyelidOpen": 0.96,
+      "rightEyelidOpen": 0.89,
+      "pupilScale": 0.94,
+      "eyeScaleX": 1.02,
+      "eyeScaleY": 1.03,
+      "expressionTilt": 0.04,
+      "verticalOffset": -0.014
+    },
+    "ck_flirty_return": {
+      "gazeX": 0.0,
+      "gazeY": 0.0,
+      "leftEyelidOpen": 0.92,
+      "rightEyelidOpen": 0.92,
+      "pupilScale": 1.0,
+      "eyeScaleX": 1.0,
+      "eyeScaleY": 1.0,
+      "expressionTilt": 0.0,
+      "verticalOffset": 0.0
+    }
+  },
+  "clips": {
+    "kiss-idle": {
+      "mode": "loop",
+      "blink": "natural",
+      "blinkConfiguration": {
+        "initialDelayMs": 1800,
+        "minIntervalMs": 3200,
+        "maxIntervalMs": 5800,
+        "durationMs": 240
+      },
+      "metadata": {
+        "label": "Kiss Idle",
+        "description": "Slow living-eye drift with relaxed randomized blinking.",
+        "group": "Cycle de vie"
+      },
+      "steps": [
+        {
+          "pose": "ck_idle_notice",
+          "hold": 2600,
+          "transition": 750,
+          "style": "easeInOut"
+        },
+        {
+          "pose": "ck_rest",
+          "hold": 3400,
+          "transition": 900,
+          "style": "easeInOut"
+        }
+      ]
+    },
+    "kiss-flirty-scan": {
+      "mode": "loop",
+      "blink": "natural",
+      "blinkConfiguration": {
+        "initialDelayMs": 900,
+        "minIntervalMs": 2400,
+        "maxIntervalMs": 4600,
+        "durationMs": 220
+      },
+      "metadata": {
+        "label": "Kiss Flirty Scan",
+        "description": "Asymmetric curious scan with a playful return to center.",
+        "group": "Réactions"
+      },
+      "steps": [
+        {
+          "pose": "ck_flirty_open",
+          "hold": 1200,
+          "transition": 320,
+          "style": "easeInOut"
+        },
+        {
+          "pose": "ck_flirty_wide",
+          "hold": 850,
+          "transition": 260,
+          "style": "easeInOut"
+        },
+        {
+          "pose": "ck_flirty_up",
+          "hold": 650,
+          "transition": 220,
+          "style": "easeInOut"
+        },
+        {
+          "pose": "ck_flirty_return",
+          "hold": 1350,
+          "transition": 360,
+          "style": "easeInOut"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "title": "Chrome Kiss Production Motion v1",
+    "authoring": "project-owned-clean-room",
+    "poseOrigin": "chrome-kiss-original",
+    "timelineOrigin": "user-authored"
+  }
+}

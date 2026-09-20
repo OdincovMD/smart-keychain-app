@@ -1,6 +1,9 @@
 # Code intelligence
 .gitnexus/
 
+# Developer-only Avatar Lab exports (never bundled or committed)
+tool/local_inputs/
+
 # Locally installed agent skill packages; skills-lock.json is committed.
 .agents/
 

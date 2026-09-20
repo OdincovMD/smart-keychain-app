@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../app/providers.dart';
 import '../../../domain/device/display_profile.dart';
 import '../../../domain/eyes/eye_behaviour_engine.dart';
 import '../../../domain/eyes/eye_emotion.dart';
-import '../../../domain/eyes/eye_motion_library.dart';
 import '../../../domain/eyes/eye_motion_definition.dart';
+import '../../../domain/eyes/eye_motion_library.dart';
 import '../../../domain/eyes/eye_motion_player.dart';
+import '../../../domain/eyes/eye_motion_production.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
 import '../eye_preview_controller.dart';
 import 'eye_motion_ticker.dart';
@@ -25,6 +27,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
     this.kissCutVisualMoodOverride,
     this.kissCutColourway = KissCutColourway.orchidLilac,
     this.motionDefinition,
+    this.useProductionMotionDefinition = false,
     this.onRuntimeReady,
     super.key,
   });
@@ -36,6 +39,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
   final KissCutVisualMood? kissCutVisualMoodOverride;
   final KissCutColourway kissCutColourway;
   final EyeMotionDefinition? motionDefinition;
+  final bool useProductionMotionDefinition;
   final ValueChanged<EyeMotionTicker>? onRuntimeReady;
 
   @override
@@ -67,12 +71,20 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     final preview = widget.animate
         ? ref.read(eyePreviewControllerProvider)
         : null;
+    final EyeMotionDefinition definition =
+        widget.motionDefinition ??
+        (widget.useProductionMotionDefinition
+            ? ref.read(productionEyeMotionDefinitionProvider)
+            : chromeKissEyeMotionDefinition);
     _engine = EyeBehaviourEngine(random, initialMood: mood);
     final player = EyeMotionPlayer(
       behaviourEngine: _engine,
-      definition: widget.motionDefinition,
+      definition: definition,
       initialMood: mood,
-      initialClip: preview?.clipName ?? ChromeKissEyeClips.neutralIdle,
+      initialClip: resolveInitialEyeMotionClip(
+        definition,
+        requestedClip: preview?.clipName,
+      ),
     )..setSpeed(preview?.playbackSpeed ?? 1);
     if (!widget.animate) player.stop(snapToMood: true);
     _runtime = EyeMotionTicker(vsync: this, player: player);
@@ -98,7 +110,9 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   @override
   void didUpdateWidget(ProceduralEyesView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.motionDefinition != widget.motionDefinition) {
+    if (oldWidget.motionDefinition != widget.motionDefinition ||
+        oldWidget.useProductionMotionDefinition !=
+            widget.useProductionMotionDefinition) {
       final shouldRun = _motionEnabled && _lifecycleActive && !_manuallyPaused;
       final mood = _runtime.player.mood;
       _runtime.dispose();

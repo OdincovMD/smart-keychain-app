@@ -88,25 +88,37 @@ round-trips but schedules no blink from it.
 
 ## Original clips
 
-- `neutral_idle`: the production loop, with soft breathing and sparse notice.
+- `neutral_idle`: the original built-in loop, with soft breathing and sparse
+  notice.
 - `curious_follow`: anticipation, overshoot, settle, and return.
 - `flirty_glance`: asymmetric contact, side glance, and soft return.
 
-The latter two are Character Study/debug material. Seeded natural, slow, and
-double blinks, asymmetric leading lids, gaze overshoot, rare asymmetry, and
-pupil response are procedural overlays.
+These three clips remain built-in Character Study/debug material. The bundled
+production asset contains `kiss-idle` and `kiss-flirty-scan`. Home starts
+`kiss-idle`; `kiss-flirty-scan` is available only from Character Study for now.
+Seeded natural, slow, and double blinks, asymmetric leading lids, gaze
+overshoot, rare asymmetry, and pupil response are procedural overlays.
 
 ## Avatar Definition v1 clean-room adapter
 
 `tool/avatar_lab_motion_converter.dart` is a development-only adapter. The
-authoring path is deliberately one-way:
+authoring and curation path is deliberately one-way:
 
 ```text
 Avatar Lab .avatar.json export
-  → clean-room Dart converter
-  → chrome-kiss/eye-motion JSON
+  → local untracked tool/local_inputs export
+  → clean-room conversion and provenance review
+  → original Chrome Kiss ck_* poses
+  → bundled chrome-kiss/eye-motion production asset
+  → cached startup loader
   → EyeMotionPlayer
+  → Kiss Cut V2.1 renderer
 ```
+
+Raw exports belong under `tool/local_inputs/`. That directory is ignored by
+Git, is not included in the Flutter asset bundle, and must never be committed.
+The checked-in schema fixture under `tool/fixtures/` remains available for
+converter compatibility tests.
 
 The converter accepts the public `bible-strong/avatar-definition` schema at
 `schemaVersion: 1`: root body/colours, nested `expressions.neutral`, expression
@@ -146,8 +158,25 @@ compatibility draft and did not match a real Avatar Lab export. The replacement
 only project-authored neutral, curious, flirty, once, and loop data.
 
 No Avatar Lab source code, packages, renderer, runtime, or bundled presets are
-copied or linked. Only project-authored animation data exported through the
-public JSON contract may enter this workflow.
+copied or linked. Schema compatibility does not grant permission to copy
+presets. Timeline authorship and pose authorship are reviewed independently:
+animation names, step order, timings, transition styles, blink configuration,
+and animation metadata may be curated from a user-authored export, while every
+production pose must be project-owned `ck_*` data derived from the Chrome Kiss
+runtime and character studies.
+
+The production pack is
+`assets/chrome_kiss/motion/chrome_kiss_production_v1.eye-motion.json`. It
+contains no Avatar Lab body, colours, unused expressions, or preset pose
+values. A policy test rejects known Strobi pose names and Avatar Definition
+provenance metadata in production assets.
+
+The bundled JSON is decoded once during bootstrap by the cached loader, before
+`runApp`. The resulting immutable definition is shared through Riverpod as an
+app-scope value. Asset I/O and decoding never run in `build` or `paint`. A typed
+load/decode failure is logged through the existing failure logger and resolves
+to `chromeKissEyeMotionDefinition`, so Home always retains a visible eye
+fallback.
 
 ## Rendering and performance gates
 

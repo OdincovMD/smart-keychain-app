@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/providers.dart';
 import '../../../app/chrome_kiss_theme.dart';
 import '../../../core/result.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_motion_definition.dart';
 import '../../../domain/eyes/eye_motion_library.dart';
+import '../../../domain/eyes/eye_motion_production.dart';
 import '../eye_preview_controller.dart';
 import 'eye_motion_ticker.dart';
 import 'kiss_cut_eye_renderer.dart';
 import 'procedural_eyes_view.dart';
 
 enum CharacterStudySize { full, thumbnail }
+
+enum CharacterStudyMotionSource { builtIn, productionAsset }
 
 final class CharacterStudyScreen extends ConsumerStatefulWidget {
   const CharacterStudyScreen({super.key});
@@ -27,6 +31,7 @@ final class _CharacterStudyScreenState
   KissCutVisualMood _mood = KissCutVisualMood.neutral;
   KissCutColourway _colourway = KissCutColourway.orchidLilac;
   CharacterStudySize _size = CharacterStudySize.full;
+  CharacterStudyMotionSource _motionSource = CharacterStudyMotionSource.builtIn;
   EyeMotionDefinition _definition = chromeKissEyeMotionDefinition;
   EyeMotionTicker? _runtime;
 
@@ -84,6 +89,24 @@ final class _CharacterStudyScreenState
                     _MotionReadout(runtime: _runtime),
                     const SizedBox(height: 24),
                     _StudySection(
+                      label: 'Motion source',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final source
+                              in CharacterStudyMotionSource.values)
+                            ChoiceChip(
+                              key: Key('study_source_${source.name}'),
+                              label: Text(_motionSourceLabel(source)),
+                              selected: _motionSource == source,
+                              onSelected: (_) => _selectMotionSource(source),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
                       label: 'Renderer',
                       child: Wrap(
                         spacing: 8,
@@ -108,7 +131,7 @@ final class _CharacterStudyScreenState
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          for (final clip in ChromeKissEyeClips.values)
+                          for (final clip in _definition.clips.keys)
                             ChoiceChip(
                               key: Key('study_clip_$clip'),
                               label: Text(clip),
@@ -318,21 +341,46 @@ final class _CharacterStudyScreenState
     setState(() => _runtime = runtime);
   }
 
+  void _selectMotionSource(CharacterStudyMotionSource source) {
+    if (_motionSource == source) return;
+    final definition = switch (source) {
+      CharacterStudyMotionSource.builtIn => chromeKissEyeMotionDefinition,
+      CharacterStudyMotionSource.productionAsset => ref.read(
+        productionEyeMotionDefinitionProvider,
+      ),
+    };
+    final clip = resolveInitialEyeMotionClip(definition);
+    ref.read(eyePreviewControllerProvider.notifier).setClip(clip);
+    setState(() {
+      _motionSource = source;
+      _definition = definition;
+      _runtime = null;
+    });
+  }
+
   void _importOwnedFixture() {
     final decoded = decodeEyeMotionDefinition(
       chromeKissEyeMotionDefinition.encode(),
     );
     if (decoded case Ok(:final value)) {
+      ref
+          .read(eyePreviewControllerProvider.notifier)
+          .setClip(resolveInitialEyeMotionClip(value));
       setState(() {
         _runtime = null;
+        _motionSource = CharacterStudyMotionSource.builtIn;
         _definition = value;
       });
     }
   }
 
   void _importConvertedFixture() {
+    ref
+        .read(eyePreviewControllerProvider.notifier)
+        .setClip(ChromeKissEyeClips.neutralIdle);
     setState(() {
       _runtime = null;
+      _motionSource = CharacterStudyMotionSource.builtIn;
       _definition = EyeMotionDefinition(
         poses: chromeKissEyeMotionDefinition.poses,
         clips: chromeKissEyeMotionDefinition.clips,
@@ -479,5 +527,12 @@ String _rendererLabel(EyeRendererVariant renderer) {
     EyeRendererVariant.kissCutV2 => 'Kiss Cut V2',
     EyeRendererVariant.kissCutV21 => 'Kiss Cut V2.1',
     EyeRendererVariant.figmaJewelry => 'Figma Jewelry',
+  };
+}
+
+String _motionSourceLabel(CharacterStudyMotionSource source) {
+  return switch (source) {
+    CharacterStudyMotionSource.builtIn => 'Built-in',
+    CharacterStudyMotionSource.productionAsset => 'Production asset',
   };
 }

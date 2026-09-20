@@ -9,11 +9,13 @@ import 'package:smart_keychain_app/domain/device/display_profile.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_library.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_player.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
+import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_definition_loader.dart';
 
 import '../../tool/src/avatar_lab_motion_adapter.dart';
 
@@ -109,6 +111,62 @@ void main() {
           lessThanOrEqualTo(0.41),
           reason: '${clip.name} at $elapsed',
         );
+      }
+    }
+  });
+
+  test('production clips remain finite and contained at 16–33 ms samples', () {
+    final decoded = decodeEyeMotionDefinition(
+      File(BundledEyeMotionDefinitionLoader.productionAssetPath)
+          .readAsStringSync(),
+    );
+    expect(decoded, isA<Ok<EyeMotionDefinition, EyeMotionFailure>>());
+    final definition =
+        (decoded as Ok<EyeMotionDefinition, EyeMotionFailure>).value;
+    final base = EyeRuntimeState.resting(EyeEmotion.neutral);
+
+    for (final clipName in ChromeKissProductionEyeClips.values) {
+      final clip = definition.clips[clipName]!;
+      for (final interval in const [16, 33]) {
+        for (
+          var elapsed = Duration.zero;
+          elapsed <= clip.duration;
+          elapsed += Duration(milliseconds: interval)
+        ) {
+          final state = EyeMotionClipSampler.sample(
+            definition: definition,
+            clip: clip,
+            elapsed: elapsed,
+            base: base,
+            initial: base,
+          ).state;
+          final geometry = KissCutGeometrySnapshot.fromState(
+            state,
+            style: KissCutRendererStyle.v21OpticalGlint,
+          );
+          final values = [
+            state.gazeX,
+            state.gazeY,
+            state.leftEyelidOpen,
+            state.rightEyelidOpen,
+            state.pupilScale,
+            state.eyeScaleX,
+            state.eyeScaleY,
+            state.expressionTilt,
+            state.verticalOffset,
+          ];
+
+          expect(values.every((value) => value.isFinite), isTrue);
+          expect(state.leftEyelidOpen, inInclusiveRange(0, 1));
+          expect(state.rightEyelidOpen, inInclusiveRange(0, 1));
+          expect(geometry.left.pupilInsideEye, isTrue);
+          expect(geometry.right.pupilInsideEye, isTrue);
+          expect(
+            geometry.contentRadiusFraction,
+            lessThanOrEqualTo(0.41),
+            reason: '$clipName @ ${elapsed.inMilliseconds} ms / $interval ms',
+          );
+        }
       }
     }
   });

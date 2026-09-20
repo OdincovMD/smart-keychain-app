@@ -1,16 +1,23 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app_theme.dart';
+import 'package:smart_keychain_app/app/providers.dart';
+import 'package:smart_keychain_app/core/result.dart';
 import 'package:smart_keychain_app/domain/device/display_profile.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_library.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/character_study_screen.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
+import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_definition_loader.dart';
 
 void main() {
   test('all visual moods keep pupils and silhouettes in the safe region', () {
@@ -228,6 +235,49 @@ void main() {
     expect(tester.getRect(finalControl).bottom, lessThanOrEqualTo(616));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Character Study launches both production asset clips', (
+    tester,
+  ) async {
+    final definition = _productionDefinition();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          productionEyeMotionDefinitionProvider.overrideWithValue(definition),
+        ],
+        child: MaterialApp(
+          theme: buildAppTheme(),
+          home: const CharacterStudyScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Built-in'), findsOneWidget);
+    for (final clip in ChromeKissEyeClips.values) {
+      expect(find.byKey(Key('study_clip_$clip')), findsOneWidget);
+    }
+
+    final productionSource = find.byKey(
+      const Key('study_source_productionAsset'),
+    );
+    await tester.ensureVisible(productionSource);
+    await tester.tap(productionSource);
+    await tester.pump();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(CharacterStudyScreen)),
+    );
+    for (final clip in ChromeKissProductionEyeClips.values) {
+      final control = find.byKey(Key('study_clip_$clip'));
+      await tester.ensureVisible(control);
+      await tester.tap(control);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(container.read(eyePreviewControllerProvider).clipName, clip);
+    }
+
+    expect(find.text('Production asset'), findsOneWidget);
+  });
 }
 
 Future<ProviderContainer> _pumpAnimatedKissCut(WidgetTester tester) async {
@@ -256,4 +306,13 @@ KissCutEyePainter _kissCutPainter(WidgetTester tester) {
     find.byKey(const Key('kiss_cut_eye_painter')),
   );
   return paint.painter! as KissCutEyePainter;
+}
+
+EyeMotionDefinition _productionDefinition() {
+  final decoded = decodeEyeMotionDefinition(
+    File(BundledEyeMotionDefinitionLoader.productionAssetPath)
+        .readAsStringSync(),
+  );
+  expect(decoded, isA<Ok<EyeMotionDefinition, EyeMotionFailure>>());
+  return (decoded as Ok<EyeMotionDefinition, EyeMotionFailure>).value;
 }

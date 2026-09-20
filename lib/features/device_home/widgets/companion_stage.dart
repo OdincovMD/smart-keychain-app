@@ -325,6 +325,7 @@ final class _JewelryCompanionStage extends StatelessWidget {
               initialEmotion: content.defaultEmotion,
               displayProfile: displayProfile,
               rendererVariant: EyeRendererVariant.kissCutV21,
+              useProductionMotionDefinition: true,
             ),
           ),
           IgnorePointer(

@@ -131,6 +131,7 @@ final class ProceduralEyesSceneRenderer extends StatelessWidget {
       animate: animate,
       displayProfile: displayProfile,
       rendererVariant: EyeRendererVariant.kissCutV21,
+      useProductionMotionDefinition: animate,
     );
   }
 }

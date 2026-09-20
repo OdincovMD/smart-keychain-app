@@ -35,6 +35,7 @@ flutter:
   generate: true
   assets:
     - assets/chrome_kiss/
+    - assets/chrome_kiss/motion/
     - assets/scenes/
   fonts:
     - family: Unbounded
