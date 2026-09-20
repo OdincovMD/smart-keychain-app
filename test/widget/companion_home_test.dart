@@ -145,18 +145,20 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('brightness is a compact utility sheet and stays functional', (
-    tester,
-  ) async {
+  testWidgets('settings opens production brightness flow', (tester) async {
     await _pumpConnectedHome(tester);
 
     expect(find.byKey(const Key('brightness_slider')), findsNothing);
-    final button = find.byKey(const Key('brightness_settings_button'));
+    final button = find.byKey(const Key('production_settings_button'));
     await tester.ensureVisible(button);
     await tester.pump();
     await tester.tap(button);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('production_settings_screen')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('settings_brightness_row')));
+    await tester.pump();
 
     expect(find.byKey(const Key('brightness_slider')), findsOneWidget);
   });
@@ -171,18 +173,29 @@ void main() {
       viewPadding: const EdgeInsets.only(top: 24, bottom: 24),
     );
 
-    final brightnessButton = find.byKey(
-      const Key('brightness_settings_button'),
-    );
-    await tester.ensureVisible(brightnessButton);
+    final settingsButton = find.byKey(const Key('production_settings_button'));
+    await tester.ensureVisible(settingsButton);
     await tester.pump();
-    await tester.tap(brightnessButton);
+    await tester.tap(settingsButton);
     await tester.pump();
-    expect(find.byKey(const Key('brightness_sheet')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('production_settings_screen')), findsOneWidget);
+    final appearanceRow = find.byKey(const Key('settings_appearance_row'));
+    await tester.ensureVisible(appearanceRow);
+    await tester.pump();
+    await tester.tap(appearanceRow);
+    await tester.pump();
+    expect(find.byKey(const Key('appearance_screen')), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    Navigator.of(tester.element(find.byKey(const Key('brightness_sheet'))))
+    Navigator.of(tester.element(find.byKey(const Key('appearance_screen'))))
         .pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    Navigator.of(
+      tester.element(find.byKey(const Key('production_settings_screen'))),
+    ).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 

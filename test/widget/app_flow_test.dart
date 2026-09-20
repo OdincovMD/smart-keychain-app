@@ -110,19 +110,32 @@ void main() {
     addTearDown(repository.dispose);
     await _pumpConnectedApp(tester, repository);
 
-    final brightnessButton = find.byKey(
-      const Key('brightness_settings_button'),
-    );
-    await tester.ensureVisible(brightnessButton);
+    final settingsButton = find.byKey(const Key('production_settings_button'));
+    await tester.ensureVisible(settingsButton);
     await tester.pump();
-    await tester.tap(brightnessButton);
+    await tester.tap(settingsButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const Key('settings_brightness_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.ensureVisible(find.byKey(const Key('brightness_slider')));
+    await tester.pump();
     await tester.drag(
       find.byKey(const Key('brightness_slider')),
       const Offset(-180, 0),
     );
     await tester.pump(const Duration(milliseconds: 250));
+
+    Navigator.of(tester.element(find.byKey(const Key('brightness_slider'))))
+        .pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    Navigator.of(
+      tester.element(find.byKey(const Key('production_settings_screen'))),
+    ).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     final overlay = tester.widget<AnimatedContainer>(
       find.byKey(const Key('figma_jewelry_brightness_overlay')),
@@ -192,15 +205,26 @@ void main() {
     addTearDown(repository.dispose);
     await _pumpConnectedApp(tester, repository);
 
-    final settingsButton = find.byKey(const Key('brightness_settings_button'));
+    final settingsButton = find.byKey(const Key('production_settings_button'));
     await tester.ensureVisible(settingsButton);
     await tester.pump();
     await tester.tap(settingsButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
+    await tester.tap(find.byKey(const Key('settings_device_information_row')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
     final disconnectButton = find.byKey(const Key('disconnect_button'));
+    await tester.ensureVisible(disconnectButton);
+    await tester.pump();
     await tester.tap(disconnectButton);
+    await tester.pump();
+    final confirmButton = find.byKey(const Key('disconnect_confirm_button'));
+    await tester.ensureVisible(confirmButton);
+    await tester.pump();
+    await tester.tap(confirmButton);
     for (var frame = 0; frame < 6; frame++) {
       await tester.pump(const Duration(milliseconds: 1));
     }
