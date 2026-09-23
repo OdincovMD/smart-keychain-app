@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../domain/content/scene.dart';
+import 'chrome_kiss_production_eyes.dart';
 import '../../../domain/device/display_profile.dart';
 import 'kiss_cut_eye_renderer.dart';
-import 'procedural_eyes_view.dart';
 
 final class SceneRenderer extends ConsumerWidget {
   const SceneRenderer({
@@ -126,12 +126,15 @@ final class ProceduralEyesSceneRenderer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ProceduralEyesView(
-      initialEmotion: content.defaultEmotion,
-      animate: animate,
-      displayProfile: displayProfile,
-      rendererVariant: EyeRendererVariant.kissCutV21,
-      useProductionMotionDefinition: animate,
+    return Center(
+      child: ChromeKissProductionEyes(
+        scale: animate ? ChromeKissEyeScale.hero : ChromeKissEyeScale.tiny,
+        mood: animate
+            ? KissCutVisualMood.fromEmotion(content.defaultEmotion)
+            : KissCutVisualMood.neutral,
+        animate: animate,
+        useProductionMotion: animate,
+      ),
     );
   }
 }

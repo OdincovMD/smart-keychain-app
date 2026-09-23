@@ -16,6 +16,8 @@ import 'package:smart_keychain_app/domain/device/display_profile.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/features/user_content/look_details_sheet.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
 import '../support/fake_app_settings_repository.dart';
@@ -31,6 +33,12 @@ void main() {
     final device = _ScriptedDeviceRepository();
     await _pumpDetails(tester, device: device);
 
+    var eyes = tester.widget<ChromeKissProductionEyes>(
+      find.byType(ChromeKissProductionEyes),
+    );
+    expect(eyes.scale, ChromeKissEyeScale.tiny);
+    expect(eyes.mood, KissCutVisualMood.neutral);
+
     final apply = find.byKey(const Key('set_current_builtin-eyes-mint'));
     await tester.tap(apply);
     await tester.tap(apply);
@@ -38,6 +46,11 @@ void main() {
 
     expect(device.setSceneCalls, 1);
     expect(find.byKey(const Key('look_applying_state')), findsOneWidget);
+    eyes = tester.widget<ChromeKissProductionEyes>(
+      find.byType(ChromeKissProductionEyes),
+    );
+    expect(eyes.scale, ChromeKissEyeScale.medium);
+    expect(eyes.mood, KissCutVisualMood.curious);
     expect(find.byType(SnackBar), findsNothing);
 
     device.completeCommand();
@@ -52,6 +65,11 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('look_applied_state')), findsOneWidget);
+    eyes = tester.widget<ChromeKissProductionEyes>(
+      find.byType(ChromeKissProductionEyes),
+    );
+    expect(eyes.scale, ChromeKissEyeScale.medium);
+    expect(eyes.mood, KissCutVisualMood.happy);
     expect(find.text(_targetScene.name), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
     expect(tester.takeException(), isNull);
@@ -68,6 +86,11 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('look_failed_state')), findsOneWidget);
+    final eyes = tester.widget<ChromeKissProductionEyes>(
+      find.byType(ChromeKissProductionEyes),
+    );
+    expect(eyes.scale, ChromeKissEyeScale.medium);
+    expect(eyes.mood, KissCutVisualMood.sleepy);
     expect(find.text('Образ не изменён'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('retry_apply_look')));

@@ -13,6 +13,8 @@ import 'package:smart_keychain_app/domain/device/device_snapshot.dart';
 import 'package:smart_keychain_app/domain/settings/app_appearance.dart';
 import 'package:smart_keychain_app/features/appearance/appearance_controller.dart';
 import 'package:smart_keychain_app/features/device_home/device_home_screen.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_engine.dart';
 import 'package:smart_keychain_app/infrastructure/device/virtual_device_repository.dart';
@@ -59,11 +61,29 @@ void main() {
     expect(find.text(VirtualDeviceEngine.deviceId), findsOneWidget);
     expect(find.text('На связи · 78%'), findsOneWidget);
     expect(find.text('80%'), findsOneWidget);
+    final summaryEyes = tester.widget<ChromeKissProductionEyes>(
+      find.descendant(
+        of: find.byKey(const Key('settings_identity_card')),
+        matching: find.byType(ChromeKissProductionEyes),
+      ),
+    );
+    expect(summaryEyes.scale, ChromeKissEyeScale.tiny);
+    expect(summaryEyes.mood, KissCutVisualMood.neutral);
+    expect(summaryEyes.animate, isFalse);
 
     await tester.tap(find.byKey(const Key('settings_device_information_row')));
     await tester.pump();
     expect(find.byKey(const Key('device_information_sheet')), findsOneWidget);
     expect(find.text('Круглый экран 240×240'), findsOneWidget);
+    final statusEyes = tester.widget<ChromeKissProductionEyes>(
+      find.descendant(
+        of: find.byKey(const Key('device_information_sheet')),
+        matching: find.byType(ChromeKissProductionEyes),
+      ),
+    );
+    expect(statusEyes.scale, ChromeKissEyeScale.tiny);
+    expect(statusEyes.mood, KissCutVisualMood.neutral);
+    expect(statusEyes.animate, isFalse);
   });
 
   testWidgets('brightness uses DeviceController and settings persistence', (
@@ -73,6 +93,16 @@ void main() {
     await _openSettings(tester);
     await tester.tap(find.byKey(const Key('settings_brightness_row')));
     await tester.pump();
+
+    final brightnessEyes = tester.widget<ChromeKissProductionEyes>(
+      find.descendant(
+        of: find.byKey(const Key('settings_brightness_sheet')),
+        matching: find.byType(ChromeKissProductionEyes),
+      ),
+    );
+    expect(brightnessEyes.scale, ChromeKissEyeScale.tiny);
+    expect(brightnessEyes.mood, KissCutVisualMood.neutral);
+    expect(brightnessEyes.animate, isFalse);
 
     await tester.drag(
       find.byKey(const Key('brightness_slider')),
@@ -261,6 +291,51 @@ void main() {
         find.byKey(const Key('appearance_done_button')),
       );
       await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final testCase in <({String name, Size size, double scale})>[
+    (name: '360x800', size: const Size(360, 800), scale: 1),
+    (name: '390x844', size: const Size(390, 844), scale: 1),
+    (name: '412x915', size: const Size(412, 915), scale: 1),
+    (name: '360x800 text 1.8', size: const Size(360, 800), scale: 1.8),
+  ]) {
+    testWidgets('System sheets fit ${testCase.name} with reduced motion', (
+      tester,
+    ) async {
+      await _pumpConnectedApp(
+        tester,
+        size: testCase.size,
+        textScale: testCase.scale,
+        disableAnimations: true,
+      );
+      await _openSettings(tester);
+
+      await tester.tap(
+        find.byKey(const Key('settings_device_information_row')),
+      );
+      await tester.pump();
+      final statusSheet = find.byKey(const Key('device_information_sheet'));
+      expect(statusSheet, findsOneWidget);
+      expect(
+        tester.getRect(statusSheet).bottom,
+        lessThanOrEqualTo(testCase.size.height),
+      );
+      expect(tester.takeException(), isNull);
+
+      Navigator.of(tester.element(statusSheet)).pop();
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('settings_brightness_row')));
+      await tester.pump();
+      final brightnessSheet = find.byKey(
+        const Key('settings_brightness_sheet'),
+      );
+      expect(brightnessSheet, findsOneWidget);
+      expect(
+        tester.getRect(brightnessSheet).bottom,
+        lessThanOrEqualTo(testCase.size.height),
+      );
       expect(tester.takeException(), isNull);
     });
   }

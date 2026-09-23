@@ -3,9 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../app/chrome_kiss_theme.dart';
+import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../../domain/content/scene.dart';
 import '../device_home/widgets/jewel_button.dart';
-import '../device_home/widgets/wardrobe_rail.dart';
 import 'look_application_controller.dart';
 
 final class LookApplicationView extends StatefulWidget {
@@ -236,6 +237,12 @@ final class _ApplicationPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final diameter = math.min(MediaQuery.sizeOf(context).width - 122, 214.0);
     final colors = context.chromeKiss;
+    final mood = switch (status) {
+      LookApplicationStatus.applying => KissCutVisualMood.curious,
+      LookApplicationStatus.applied => KissCutVisualMood.happy,
+      LookApplicationStatus.failed => KissCutVisualMood.sleepy,
+      LookApplicationStatus.ready => KissCutVisualMood.neutral,
+    };
     final semanticLabel = switch (status) {
       LookApplicationStatus.applying => 'Образ передаётся на брелок',
       LookApplicationStatus.applied => 'Брелок подтвердил новый образ',
@@ -265,12 +272,26 @@ final class _ApplicationPreview extends StatelessWidget {
                   ),
                 ),
               ),
-              LookPreview(
+              Container(
                 key: const Key('look_details_preview'),
-                scene: scene,
-                diameter: diameter,
-                isSelected: status == LookApplicationStatus.applied,
-                isActive: status == LookApplicationStatus.applied,
+                width: diameter,
+                height: diameter,
+                decoration: BoxDecoration(
+                  color: colors.lens,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colors.accentPrimary,
+                    width: status == LookApplicationStatus.applied ? 3 : 2,
+                  ),
+                ),
+                child: Center(
+                  child: ChromeKissProductionEyes(
+                    scale: ChromeKissEyeScale.medium,
+                    mood: mood,
+                    animate: false,
+                    useProductionMotion: false,
+                  ),
+                ),
               ),
               if (status
                   case LookApplicationStatus.applied ||

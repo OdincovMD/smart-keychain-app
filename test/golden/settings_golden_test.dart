@@ -34,6 +34,32 @@ void main() {
       );
     });
 
+    testWidgets('Device status sheet $name 390x844', (tester) async {
+      await _pumpSettings(tester, appearance: appearance);
+      await tester.tap(
+        find.byKey(const Key('settings_device_information_row')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('baselines/system_device_status_${name}_390x844.png'),
+      );
+    });
+
+    testWidgets('Brightness sheet $name 390x844', (tester) async {
+      await _pumpSettings(tester, appearance: appearance);
+      await tester.tap(find.byKey(const Key('settings_brightness_row')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('baselines/system_brightness_${name}_390x844.png'),
+      );
+    });
+
     testWidgets('Appearance $name 390x844', (tester) async {
       await _pumpSettings(tester, appearance: appearance);
       await tester.tap(find.byKey(const Key('settings_appearance_row')));

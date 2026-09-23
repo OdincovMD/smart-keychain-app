@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
 import '../device_home/widgets/jewel_button.dart';
-import '../device_home/widgets/wardrobe_rail.dart';
+import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 
 final class LookDetailsReady extends StatelessWidget {
   const LookDetailsReady({
@@ -110,12 +111,26 @@ final class LookDetailsReady extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    LookPreview(
+                    Container(
                       key: const Key('look_details_preview'),
-                      scene: scene,
-                      diameter: 82,
-                      isSelected: true,
-                      isActive: isActive,
+                      width: 82,
+                      height: 82,
+                      decoration: BoxDecoration(
+                        color: fidelity.lens,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colors.accentPrimary,
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: ChromeKissProductionEyes(
+                          scale: ChromeKissEyeScale.tiny,
+                          mood: KissCutVisualMood.neutral,
+                          animate: false,
+                          useProductionMotion: false,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(

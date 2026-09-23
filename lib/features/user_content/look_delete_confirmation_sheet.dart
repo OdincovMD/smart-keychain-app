@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
 import '../device_home/widgets/jewel_button.dart';
-import '../device_home/widgets/wardrobe_rail.dart';
+import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
 import 'user_content_controller.dart';
 
@@ -115,12 +116,23 @@ final class _DeleteContent extends StatelessWidget {
             ),
             child: Row(
               children: [
-                LookPreview(
+                Container(
                   key: const Key('delete_look_preview'),
-                  scene: scene,
-                  diameter: 72,
-                  isSelected: false,
-                  isActive: false,
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: fidelity.lens,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.accentPrimary, width: 2),
+                  ),
+                  child: const Center(
+                    child: ChromeKissProductionEyes(
+                      scale: ChromeKissEyeScale.tiny,
+                      mood: KissCutVisualMood.annoyed,
+                      animate: false,
+                      useProductionMotion: false,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(

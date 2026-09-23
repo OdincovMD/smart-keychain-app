@@ -13,6 +13,7 @@ import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_definition_loader.dart';
@@ -41,6 +42,54 @@ void main() {
       );
     }
   });
+
+  test(
+    'production scales stay finite, circular-safe, and readable at 64 px',
+    () {
+      for (final scale in ChromeKissEyeScale.values) {
+        expect(scale.size.width.isFinite, isTrue);
+        expect(scale.size.height.isFinite, isTrue);
+        expect(scale.size.aspectRatio, closeTo(216 / 112, 0.001));
+
+        for (final mood in KissCutVisualMood.values) {
+          final state = KissCutStudyPose.forMood(
+            mood,
+            style: KissCutRendererStyle.v21OpticalGlint,
+          );
+          final geometry = KissCutGeometrySnapshot.fromState(
+            state,
+            visualMoodOverride: mood,
+            style: KissCutRendererStyle.v21OpticalGlint,
+          );
+          final coordinates = [
+            geometry.left.silhouetteBounds.left,
+            geometry.left.silhouetteBounds.top,
+            geometry.left.silhouetteBounds.right,
+            geometry.left.silhouetteBounds.bottom,
+            geometry.right.silhouetteBounds.left,
+            geometry.right.silhouetteBounds.top,
+            geometry.right.silhouetteBounds.right,
+            geometry.right.silhouetteBounds.bottom,
+          ];
+
+          expect(coordinates.every((value) => value.isFinite), isTrue);
+          expect(geometry.left.pupilInsideEye, isTrue);
+          expect(geometry.right.pupilInsideEye, isTrue);
+          expect(geometry.contentRadiusFraction, lessThanOrEqualTo(0.41));
+          expect(
+            geometry.left.silhouetteBounds.width * 64,
+            greaterThanOrEqualTo(16),
+            reason: '${scale.name}/${mood.name} left eye readability',
+          );
+          expect(
+            geometry.right.silhouetteBounds.width * 64,
+            greaterThanOrEqualTo(16),
+            reason: '${scale.name}/${mood.name} right eye readability',
+          );
+        }
+      }
+    },
+  );
 
   test('seeded V2.1 geometry remains bounded for extreme runtime inputs', () {
     final random = Random(210021);

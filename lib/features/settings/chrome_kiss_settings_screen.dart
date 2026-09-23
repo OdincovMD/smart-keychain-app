@@ -11,6 +11,8 @@ import '../../l10n/app_localizations.dart';
 import '../appearance/appearance_controller.dart';
 import '../device_home/connection_recovery_controller.dart';
 import '../device_home/widgets/brightness_control.dart';
+import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
 import 'appearance_screen.dart';
@@ -336,9 +338,35 @@ final class _DeviceInformationSheetState extends State<DeviceInformationSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.settingsDeviceInformation,
-          style: context.chromeKissText.title,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.settingsDeviceInformation,
+                style: context.chromeKissText.title,
+              ),
+            ),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: context.chromeKiss.lens,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: context.chromeKiss.accentPrimary,
+                  width: 1.5,
+                ),
+              ),
+              child: const Center(
+                child: ChromeKissProductionEyes(
+                  scale: ChromeKissEyeScale.tiny,
+                  mood: KissCutVisualMood.neutral,
+                  animate: false,
+                  useProductionMotion: false,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         _InformationValue(

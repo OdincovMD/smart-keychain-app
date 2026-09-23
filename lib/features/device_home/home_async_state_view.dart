@@ -3,12 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../app/chrome_kiss_theme.dart';
-import '../../domain/eyes/eye_emotion.dart';
 import '../../l10n/app_localizations.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
 import 'widgets/jewel_button.dart';
+import 'widgets/chrome_kiss_production_eyes.dart';
 import 'widgets/kiss_cut_eye_renderer.dart';
-import 'widgets/procedural_eyes_view.dart';
 
 enum HomeAsyncStateKind {
   initialLoading,
@@ -463,12 +462,15 @@ final class _HomeLoadingStage extends StatelessWidget {
                   child: ClipOval(
                     child: Opacity(
                       opacity: loading ? 0.72 : 0.58,
-                      child: ProceduralEyesView(
-                        initialEmotion: loading
-                            ? EyeEmotion.sleepy
-                            : EyeEmotion.neutral,
-                        animate: false,
-                        rendererVariant: EyeRendererVariant.figmaJewelry,
+                      child: Center(
+                        child: ChromeKissProductionEyes(
+                          scale: ChromeKissEyeScale.hero,
+                          mood: loading
+                              ? KissCutVisualMood.sleepy
+                              : KissCutVisualMood.neutral,
+                          animate: false,
+                          useProductionMotion: false,
+                        ),
                       ),
                     ),
                   ),

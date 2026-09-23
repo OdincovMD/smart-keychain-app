@@ -5,14 +5,13 @@ import 'package:flutter/material.dart';
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
 import '../../domain/device/device_snapshot.dart';
-import '../../domain/eyes/eye_emotion.dart';
 import '../../l10n/app_localizations.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
 import 'connection_recovery_controller.dart';
+import 'widgets/chrome_kiss_production_eyes.dart';
 import 'widgets/companion_stage.dart';
 import 'widgets/jewel_button.dart';
 import 'widgets/kiss_cut_eye_renderer.dart';
-import 'widgets/procedural_eyes_view.dart';
 
 final class ConnectionRecoveryView extends StatefulWidget {
   const ConnectionRecoveryView({
@@ -293,13 +292,15 @@ final class _RecoveryCompanion extends StatelessWidget {
                     snapshot: snapshot,
                     diameter: 250,
                     jewelryMode: true,
-                    visualStudyOverride: ProceduralEyesView(
-                      initialEmotion: reconnecting
-                          ? EyeEmotion.neutral
-                          : EyeEmotion.sleepy,
-                      animate: reconnecting,
-                      displayProfile: snapshot.displayProfile,
-                      rendererVariant: EyeRendererVariant.figmaJewelry,
+                    visualStudyOverride: Center(
+                      child: ChromeKissProductionEyes(
+                        scale: ChromeKissEyeScale.hero,
+                        mood: reconnecting
+                            ? KissCutVisualMood.neutral
+                            : KissCutVisualMood.sleepy,
+                        animate: reconnecting,
+                        useProductionMotion: reconnecting,
+                      ),
                     ),
                   ),
                 ),

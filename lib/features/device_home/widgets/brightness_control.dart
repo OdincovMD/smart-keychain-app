@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/chrome_kiss_theme.dart';
 import '../../../l10n/app_localizations.dart';
+import 'chrome_kiss_production_eyes.dart';
+import 'kiss_cut_eye_renderer.dart';
 
 final class BrightnessControl extends StatefulWidget {
   const BrightnessControl({
@@ -44,8 +46,24 @@ final class _BrightnessControlState extends State<BrightnessControl> {
       children: [
         Row(
           children: [
-            Icon(Icons.light_mode_rounded, color: colors.materialChampagne),
-            const SizedBox(width: 10),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: colors.lens,
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.accentPrimary, width: 1.5),
+              ),
+              child: const Center(
+                child: ChromeKissProductionEyes(
+                  scale: ChromeKissEyeScale.tiny,
+                  mood: KissCutVisualMood.neutral,
+                  animate: false,
+                  useProductionMotion: false,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 l10n.brightness,

@@ -6,9 +6,9 @@ import '../../../app/chrome_kiss_theme.dart';
 import '../../../domain/content/scene.dart';
 import '../../../domain/device/device_snapshot.dart';
 import '../../../domain/device/display_profile.dart';
+import 'chrome_kiss_production_eyes.dart';
 import '../../../l10n/app_localizations.dart';
 import 'kiss_cut_eye_renderer.dart';
-import 'procedural_eyes_view.dart';
 import 'virtual_screen.dart';
 
 final class CompanionStage extends StatelessWidget {
@@ -316,16 +316,18 @@ final class _JewelryCompanionStage extends StatelessWidget {
 
   Widget _jewelryScreen(BuildContext context) {
     return switch (scene.content) {
-      final ProceduralEyesContent content => Stack(
+      ProceduralEyesContent() => Stack(
         fit: StackFit.expand,
         children: [
           KeyedSubtree(
             key: ValueKey(scene.id),
-            child: ProceduralEyesView(
-              initialEmotion: content.defaultEmotion,
-              displayProfile: displayProfile,
-              rendererVariant: EyeRendererVariant.kissCutV21,
-              useProductionMotionDefinition: true,
+            child: Center(
+              child: ChromeKissProductionEyes(
+                scale: ChromeKissEyeScale.hero,
+                mood: KissCutVisualMood.neutral,
+                animate: true,
+                useProductionMotion: true,
+              ),
             ),
           ),
           IgnorePointer(

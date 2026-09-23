@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_snapshot.dart';
+import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../../l10n/app_localizations.dart';
 
 final class SettingsHeader extends StatelessWidget {
@@ -99,10 +101,13 @@ final class SettingsIdentityCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: fidelity.lacquer, width: 2),
                 ),
-                child: Image.asset(
-                  'assets/chrome_kiss/home_look_original.png',
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
+                child: const Center(
+                  child: ChromeKissProductionEyes(
+                    scale: ChromeKissEyeScale.tiny,
+                    mood: KissCutVisualMood.neutral,
+                    animate: false,
+                    useProductionMotion: false,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),

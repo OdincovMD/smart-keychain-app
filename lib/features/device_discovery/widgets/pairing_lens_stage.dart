@@ -3,11 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../app/chrome_kiss_theme.dart';
-import '../../../domain/device/display_profile.dart';
-import '../../../domain/eyes/eye_emotion.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../device_home/widgets/chrome_kiss_production_eyes.dart';
 import '../../device_home/widgets/kiss_cut_eye_renderer.dart';
-import '../../device_home/widgets/procedural_eyes_view.dart';
 import '../pairing_presentation_state.dart';
 
 final class PairingLensStage extends StatefulWidget {
@@ -115,15 +113,12 @@ final class _PairingLensStageState extends State<PairingLensStage>
                           opacity: pose.eyeOpacity,
                           duration: duration,
                           curve: motion.interaction.curve,
-                          child: ProceduralEyesView(
-                            animate: false,
-                            initialEmotion: pose.emotion,
-                            rendererVariant: EyeRendererVariant.kissCutV21,
-                            displayProfile: const DisplayProfile(
-                              width: 240,
-                              height: 240,
-                              shape: DisplayShape.circle,
-                              aspectRatio: 1,
+                          child: Center(
+                            child: ChromeKissProductionEyes(
+                              scale: ChromeKissEyeScale.medium,
+                              mood: pose.mood,
+                              animate: false,
+                              useProductionMotion: false,
                             ),
                           ),
                         ),
@@ -152,7 +147,7 @@ final class _PairingLensStageState extends State<PairingLensStage>
 @immutable
 final class _PairingPose {
   const _PairingPose({
-    required this.emotion,
+    required this.mood,
     required this.eyeOpacity,
     required this.stageScale,
   });
@@ -160,39 +155,39 @@ final class _PairingPose {
   factory _PairingPose.forState(PairingPresentationState state) {
     return switch (state) {
       PairingPresentationState.idle => const _PairingPose(
-        emotion: EyeEmotion.sleepy,
+        mood: KissCutVisualMood.sleepy,
         eyeOpacity: 0.2,
         stageScale: 0.975,
       ),
       PairingPresentationState.searching => const _PairingPose(
-        emotion: EyeEmotion.sleepy,
+        mood: KissCutVisualMood.sleepy,
         eyeOpacity: 0.3,
         stageScale: 0.985,
       ),
       PairingPresentationState.found => const _PairingPose(
-        emotion: EyeEmotion.curious,
+        mood: KissCutVisualMood.curious,
         eyeOpacity: 0.68,
         stageScale: 1,
       ),
       PairingPresentationState.connecting => const _PairingPose(
-        emotion: EyeEmotion.curious,
+        mood: KissCutVisualMood.neutral,
         eyeOpacity: 0.54,
         stageScale: 0.986,
       ),
       PairingPresentationState.connected => const _PairingPose(
-        emotion: EyeEmotion.neutral,
+        mood: KissCutVisualMood.happy,
         eyeOpacity: 1,
         stageScale: 1,
       ),
       PairingPresentationState.error => const _PairingPose(
-        emotion: EyeEmotion.sleepy,
+        mood: KissCutVisualMood.sleepy,
         eyeOpacity: 0.35,
         stageScale: 0.98,
       ),
     };
   }
 
-  final EyeEmotion emotion;
+  final KissCutVisualMood mood;
   final double eyeOpacity;
   final double stageScale;
 }

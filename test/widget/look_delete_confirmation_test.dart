@@ -19,6 +19,8 @@ import 'package:smart_keychain_app/domain/image/user_image_asset.dart';
 import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/domain/storage/local_file_storage.dart';
 import 'package:smart_keychain_app/domain/storage/storage_failure.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/user_content/look_delete_confirmation_sheet.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
@@ -99,6 +101,13 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+
+    final eyes = tester.widget<ChromeKissProductionEyes>(
+      find.byType(ChromeKissProductionEyes),
+    );
+    expect(eyes.scale, ChromeKissEyeScale.tiny);
+    expect(eyes.mood, KissCutVisualMood.annoyed);
+    expect(eyes.animate, isFalse);
 
     await tester.tap(find.byKey(const Key('confirm_delete_image')));
     await tester.pump();

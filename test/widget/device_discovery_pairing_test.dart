@@ -5,6 +5,8 @@ import 'package:smart_keychain_app/app/app_theme.dart';
 import 'package:smart_keychain_app/app/chrome_kiss_theme.dart';
 import 'package:smart_keychain_app/features/device_discovery/device_discovery_screen.dart';
 import 'package:smart_keychain_app/features/device_discovery/pairing_presentation_state.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/jewel_button.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
@@ -84,6 +86,31 @@ void main() {
       expect(tester.binding.hasScheduledFrame, isFalse);
     },
   );
+
+  testWidgets('pairing states use the production Medium mood mapping', (
+    tester,
+  ) async {
+    const cases = {
+      PairingPresentationState.idle: KissCutVisualMood.sleepy,
+      PairingPresentationState.searching: KissCutVisualMood.sleepy,
+      PairingPresentationState.found: KissCutVisualMood.curious,
+      PairingPresentationState.connecting: KissCutVisualMood.neutral,
+      PairingPresentationState.connected: KissCutVisualMood.happy,
+      PairingPresentationState.error: KissCutVisualMood.sleepy,
+    };
+
+    for (final entry in cases.entries) {
+      await _pumpPairing(tester, state: entry.key);
+      final eyes = tester.widget<ChromeKissProductionEyes>(
+        find.byType(ChromeKissProductionEyes),
+      );
+
+      expect(eyes.scale, ChromeKissEyeScale.medium, reason: entry.key.name);
+      expect(eyes.mood, entry.value, reason: entry.key.name);
+      expect(eyes.animate, isFalse, reason: entry.key.name);
+      expect(eyes.useProductionMotion, isFalse, reason: entry.key.name);
+    }
+  });
 
   testWidgets('Obsidian and Pearl share the black companion lens', (
     tester,
