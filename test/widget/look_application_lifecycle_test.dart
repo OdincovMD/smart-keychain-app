@@ -18,6 +18,7 @@ import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/features/user_content/look_details_sheet.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
 import '../support/fake_app_settings_repository.dart';
@@ -34,7 +35,7 @@ void main() {
     await _pumpDetails(tester, device: device);
 
     var eyes = tester.widget<ChromeKissProductionEyes>(
-      find.byType(ChromeKissProductionEyes),
+      find.byKey(const Key('look_details_character_reaction')),
     );
     expect(eyes.scale, ChromeKissEyeScale.tiny);
     expect(eyes.mood, KissCutVisualMood.neutral);
@@ -47,7 +48,7 @@ void main() {
     expect(device.setSceneCalls, 1);
     expect(find.byKey(const Key('look_applying_state')), findsOneWidget);
     eyes = tester.widget<ChromeKissProductionEyes>(
-      find.byType(ChromeKissProductionEyes),
+      find.byKey(const Key('look_application_character_reaction')),
     );
     expect(eyes.scale, ChromeKissEyeScale.medium);
     expect(eyes.mood, KissCutVisualMood.curious);
@@ -66,7 +67,7 @@ void main() {
 
     expect(find.byKey(const Key('look_applied_state')), findsOneWidget);
     eyes = tester.widget<ChromeKissProductionEyes>(
-      find.byType(ChromeKissProductionEyes),
+      find.byKey(const Key('look_application_character_reaction')),
     );
     expect(eyes.scale, ChromeKissEyeScale.medium);
     expect(eyes.mood, KissCutVisualMood.happy);
@@ -87,7 +88,7 @@ void main() {
 
     expect(find.byKey(const Key('look_failed_state')), findsOneWidget);
     final eyes = tester.widget<ChromeKissProductionEyes>(
-      find.byType(ChromeKissProductionEyes),
+      find.byKey(const Key('look_application_character_reaction')),
     );
     expect(eyes.scale, ChromeKissEyeScale.medium);
     expect(eyes.mood, KissCutVisualMood.sleepy);
@@ -113,6 +114,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'static content preview stays visible beside the character reaction',
+    (tester) async {
+      final device = _ScriptedDeviceRepository();
+      await _pumpDetails(tester, device: device, scene: _staticScene);
+
+      var contentPreview = find.byKey(const Key('look_details_preview'));
+      expect(
+        find.descendant(
+          of: contentPreview,
+          matching: find.byType(StaticImageSceneRenderer),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('look_details_character_reaction')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('set_current_static-look')));
+      await tester.pump();
+
+      expect(find.byKey(const Key('look_applying_state')), findsOneWidget);
+      contentPreview = find.byKey(const Key('look_details_preview'));
+      expect(
+        find.descendant(
+          of: contentPreview,
+          matching: find.byType(StaticImageSceneRenderer),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: contentPreview,
+          matching: find.byType(ChromeKissProductionEyes),
+        ),
+        findsNothing,
+      );
+      final reaction = tester.widget<ChromeKissProductionEyes>(
+        find.byKey(const Key('look_application_character_reaction')),
+      );
+      expect(reaction.scale, ChromeKissEyeScale.medium);
+      expect(reaction.mood, KissCutVisualMood.curious);
+    },
+  );
   testWidgets('already active look cannot issue another command', (
     tester,
   ) async {
@@ -181,9 +227,19 @@ const _targetScene = Scene(
   content: ProceduralEyesContent(defaultEmotion: EyeEmotion.neutral),
 );
 
+const _staticScene = Scene(
+  id: 'static-look',
+  name: 'Статичный образ',
+  source: SceneSource.builtIn,
+  content: StaticImageContent(
+    previewAssetPath: 'assets/scenes/eyes_mint_static_v1.png',
+  ),
+);
+
 Future<void> _pumpDetails(
   WidgetTester tester, {
   required _ScriptedDeviceRepository device,
+  Scene scene = _targetScene,
   Size size = const Size(390, 844),
   TextScaler textScaler = TextScaler.noScaling,
   bool disableAnimations = false,
@@ -227,10 +283,10 @@ Future<void> _pumpDetails(
           ),
           child: child!,
         ),
-        home: const Scaffold(
+        home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
-            child: LookDetailsSheet(scene: _targetScene),
+            child: LookDetailsSheet(scene: scene),
           ),
         ),
       ),

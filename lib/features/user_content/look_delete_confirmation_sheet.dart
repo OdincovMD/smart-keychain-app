@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
-import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/kiss_cut_eye_renderer.dart';
+import '../device_home/widgets/wardrobe_rail.dart';
 import '../shared/chrome_kiss_material_sheet.dart';
 import 'user_content_controller.dart';
 
@@ -116,23 +117,12 @@ final class _DeleteContent extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
+                LookPreview(
                   key: const Key('delete_look_preview'),
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: fidelity.lens,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colors.accentPrimary, width: 2),
-                  ),
-                  child: const Center(
-                    child: ChromeKissProductionEyes(
-                      scale: ChromeKissEyeScale.tiny,
-                      mood: KissCutVisualMood.annoyed,
-                      animate: false,
-                      useProductionMotion: false,
-                    ),
-                  ),
+                  scene: scene,
+                  diameter: 72,
+                  isSelected: false,
+                  isActive: false,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -151,6 +141,17 @@ final class _DeleteContent extends StatelessWidget {
                         style: context.chromeKissText.body.copyWith(
                           color: fidelity.mutedInk,
                           fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: ChromeKissProductionEyes(
+                          key: Key('delete_character_reaction'),
+                          scale: ChromeKissEyeScale.tiny,
+                          mood: KissCutVisualMood.annoyed,
+                          animate: false,
+                          useProductionMotion: false,
                         ),
                       ),
                     ],

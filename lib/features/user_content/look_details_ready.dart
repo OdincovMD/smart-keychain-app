@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
-import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/kiss_cut_eye_renderer.dart';
+import '../device_home/widgets/wardrobe_rail.dart';
 
 final class LookDetailsReady extends StatelessWidget {
   const LookDetailsReady({
@@ -111,26 +112,12 @@ final class LookDetailsReady extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Container(
+                    LookPreview(
                       key: const Key('look_details_preview'),
-                      width: 82,
-                      height: 82,
-                      decoration: BoxDecoration(
-                        color: fidelity.lens,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colors.accentPrimary,
-                          width: 2,
-                        ),
-                      ),
-                      child: const Center(
-                        child: ChromeKissProductionEyes(
-                          scale: ChromeKissEyeScale.tiny,
-                          mood: KissCutVisualMood.neutral,
-                          animate: false,
-                          useProductionMotion: false,
-                        ),
-                      ),
+                      scene: scene,
+                      diameter: 82,
+                      isSelected: true,
+                      isActive: isActive,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -185,6 +172,17 @@ final class LookDetailsReady extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 4),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: ChromeKissProductionEyes(
+                              key: Key('look_details_character_reaction'),
+                              scale: ChromeKissEyeScale.tiny,
+                              mood: KissCutVisualMood.neutral,
+                              animate: false,
+                              useProductionMotion: false,
+                            ),
                           ),
                         ],
                       ),

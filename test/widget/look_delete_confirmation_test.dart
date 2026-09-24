@@ -20,6 +20,7 @@ import 'package:smart_keychain_app/domain/settings/app_settings.dart';
 import 'package:smart_keychain_app/domain/storage/local_file_storage.dart';
 import 'package:smart_keychain_app/domain/storage/storage_failure.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/user_content/look_delete_confirmation_sheet.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
@@ -102,8 +103,16 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    final contentPreview = find.byKey(const Key('delete_look_preview'));
+    expect(
+      find.descendant(
+        of: contentPreview,
+        matching: find.byType(UserImageSceneRenderer),
+      ),
+      findsOneWidget,
+    );
     final eyes = tester.widget<ChromeKissProductionEyes>(
-      find.byType(ChromeKissProductionEyes),
+      find.byKey(const Key('delete_character_reaction')),
     );
     expect(eyes.scale, ChromeKissEyeScale.tiny);
     expect(eyes.mood, KissCutVisualMood.annoyed);

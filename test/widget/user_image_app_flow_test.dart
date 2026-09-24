@@ -8,6 +8,7 @@ import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/domain/image/image_picker_gateway.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
 import 'package:smart_keychain_app/features/image_editor/image_editor_screen.dart';
 import 'package:smart_keychain_app/features/image_import/create_look_screen.dart';
 import 'package:smart_keychain_app/features/user_content/look_details_sheet.dart';
@@ -163,11 +164,16 @@ void main() {
       (await device.watchDeviceState().first).activeSceneId,
       'user-image:widget-asset',
     );
-    final appliedEyes = tester.widget<ChromeKissProductionEyes>(
+    final contentPreview = find.byKey(const Key('look_details_preview'));
+    expect(
       find.descendant(
-        of: find.byKey(const Key('look_details_preview')),
-        matching: find.byType(ChromeKissProductionEyes),
+        of: contentPreview,
+        matching: find.byType(UserImageSceneRenderer),
       ),
+      findsOneWidget,
+    );
+    final appliedEyes = tester.widget<ChromeKissProductionEyes>(
+      find.byKey(const Key('look_application_character_reaction')),
     );
     expect(appliedEyes.scale, ChromeKissEyeScale.medium);
     expect(appliedEyes.mood, KissCutVisualMood.happy);

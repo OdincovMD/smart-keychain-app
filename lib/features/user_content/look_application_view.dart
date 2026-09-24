@@ -3,10 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../app/chrome_kiss_theme.dart';
-import '../device_home/widgets/chrome_kiss_production_eyes.dart';
-import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../../domain/content/scene.dart';
+import '../device_home/widgets/chrome_kiss_production_eyes.dart';
 import '../device_home/widgets/jewel_button.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
+import '../device_home/widgets/wardrobe_rail.dart';
 import 'look_application_controller.dart';
 
 final class LookApplicationView extends StatefulWidget {
@@ -254,55 +255,54 @@ final class _ApplicationPreview extends StatelessWidget {
       label: semanticLabel,
       liveRegion: true,
       child: ExcludeSemantics(
-        child: SizedBox.square(
-          dimension: diameter + 34,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _ApplicationRingPainter(
-                    progress: progress,
-                    status: status,
-                    accent: colors.accentPrimary,
-                    optical: colors.accentOptical,
-                    success: colors.success,
-                    danger: colors.danger,
-                    track: colors.divider,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox.square(
+              dimension: diameter + 34,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _ApplicationRingPainter(
+                        progress: progress,
+                        status: status,
+                        accent: colors.accentPrimary,
+                        optical: colors.accentOptical,
+                        success: colors.success,
+                        danger: colors.danger,
+                        track: colors.divider,
+                      ),
+                    ),
                   ),
-                ),
+                  LookPreview(
+                    key: const Key('look_details_preview'),
+                    scene: scene,
+                    diameter: diameter,
+                    isSelected: status == LookApplicationStatus.applied,
+                    isActive: status == LookApplicationStatus.applied,
+                  ),
+                  if (status
+                      case LookApplicationStatus.applied ||
+                          LookApplicationStatus.failed)
+                    Positioned(
+                      right: 2,
+                      bottom: 30,
+                      child: _StatusSeal(status: status),
+                    ),
+                ],
               ),
-              Container(
-                key: const Key('look_details_preview'),
-                width: diameter,
-                height: diameter,
-                decoration: BoxDecoration(
-                  color: colors.lens,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colors.accentPrimary,
-                    width: status == LookApplicationStatus.applied ? 3 : 2,
-                  ),
-                ),
-                child: Center(
-                  child: ChromeKissProductionEyes(
-                    scale: ChromeKissEyeScale.medium,
-                    mood: mood,
-                    animate: false,
-                    useProductionMotion: false,
-                  ),
-                ),
-              ),
-              if (status
-                  case LookApplicationStatus.applied ||
-                      LookApplicationStatus.failed)
-                Positioned(
-                  right: 2,
-                  bottom: 30,
-                  child: _StatusSeal(status: status),
-                ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            ChromeKissProductionEyes(
+              key: const Key('look_application_character_reaction'),
+              scale: ChromeKissEyeScale.medium,
+              mood: mood,
+              animate: false,
+              useProductionMotion: false,
+            ),
+          ],
         ),
       ),
     );
