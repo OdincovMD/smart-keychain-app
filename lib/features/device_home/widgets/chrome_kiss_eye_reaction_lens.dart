@@ -121,6 +121,7 @@ final class ChromeKissEyeReactionLens extends StatelessWidget {
                       animate: animate,
                       useProductionMotion: useProductionMotion,
                       colourway: colourway,
+                      background: ChromeKissEyeBackground.transparent,
                     ),
                   ),
                   IgnorePointer(

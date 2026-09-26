@@ -233,10 +233,16 @@ void main() {
   for (final appearance in ResolvedAppAppearance.values) {
     for (final size in responsiveSizes) {
       testWidgets(
-        'Wardrobe ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()}',
+        'Wardrobe ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()} at 180% reduced motion',
         (tester) async {
           final rig = await _WardrobeGoldenRig.create(tester, userLookCount: 1);
-          await _pumpWardrobe(tester, rig, appearance, size: size);
+          await _pumpWardrobe(
+            tester,
+            rig,
+            appearance,
+            size: size,
+            textScaler: const TextScaler.linear(1.8),
+          );
 
           expect(tester.takeException(), isNull);
           expect(find.byKey(const Key('user_content_screen')), findsOneWidget);
@@ -244,9 +250,14 @@ void main() {
       );
 
       testWidgets(
-        'Create Look ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()}',
+        'Create Look ${appearance.name} fits ${size.width.toInt()}x${size.height.toInt()} at 180% reduced motion',
         (tester) async {
-          await _pumpCreateLook(tester, appearance, size: size);
+          await _pumpCreateLook(
+            tester,
+            appearance,
+            size: size,
+            textScaler: const TextScaler.linear(1.8),
+          );
 
           expect(tester.takeException(), isNull);
           expect(find.byType(CreateLookScreen), findsOneWidget);
@@ -260,6 +271,7 @@ Future<void> _pumpCreateLook(
   WidgetTester tester,
   ResolvedAppAppearance appearance, {
   required Size size,
+  TextScaler textScaler = TextScaler.noScaling,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -273,6 +285,11 @@ Future<void> _pumpCreateLook(
       locale: const Locale('ru'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: textScaler, disableAnimations: true),
+        child: child!,
+      ),
       home: const CreateLookScreen(),
     ),
   );
@@ -381,6 +398,7 @@ Future<void> _pumpWardrobe(
   String? highlightedSceneId,
   Size size = const Size(390, 844),
   bool loading = false,
+  TextScaler textScaler = TextScaler.noScaling,
 }) async {
   tester.view
     ..devicePixelRatio = 1
@@ -425,7 +443,8 @@ Future<void> _pumpWardrobe(
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: textScaler, disableAnimations: true),
           child: child!,
         ),
         home: UserContentScreen(highlightedSceneId: highlightedSceneId),

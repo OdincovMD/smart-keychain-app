@@ -280,8 +280,8 @@ final class _ApplicationPreview extends StatelessWidget {
                     key: const Key('look_details_preview'),
                     scene: scene,
                     diameter: diameter,
-                    isSelected: status == LookApplicationStatus.applied,
-                    isActive: status == LookApplicationStatus.applied,
+                    isSelected: false,
+                    isActive: false,
                   ),
                 ],
               ),
@@ -324,6 +324,7 @@ final class _StatusSeal extends StatelessWidget {
     final applied = status == LookApplicationStatus.applied;
     final color = applied ? colors.success : colors.warning;
     return Container(
+      key: const Key('look_application_status_seal'),
       width: 48,
       height: 48,
       decoration: BoxDecoration(

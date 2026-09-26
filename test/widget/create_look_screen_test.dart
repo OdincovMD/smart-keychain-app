@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app_theme.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/image_import/create_look_screen.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
@@ -34,6 +36,24 @@ void main() {
     await tester.pump();
 
     expect(find.text('unchanged'), findsOneWidget);
+  });
+
+  testWidgets('inspiration eyes use glossy, mint, and lilac palettes', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app(const CreateLookScreen()));
+    await tester.pump();
+
+    final eyes = tester
+        .widgetList<ChromeKissProductionEyes>(
+          find.byType(ChromeKissProductionEyes),
+        )
+        .toList(growable: false);
+    expect(eyes.map((eye) => eye.colourway), [
+      KissCutColourway.orchidLilac,
+      KissCutColourway.icyCool,
+      KissCutColourway.lilacDream,
+    ]);
   });
 
   for (final testCase in const [

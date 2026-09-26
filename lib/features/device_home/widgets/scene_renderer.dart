@@ -14,6 +14,7 @@ final class SceneRenderer extends ConsumerWidget {
     this.fit = BoxFit.cover,
     this.filterQuality = FilterQuality.medium,
     this.displayProfile,
+    this.eyeBackground = ChromeKissEyeBackground.lens,
     super.key,
   });
 
@@ -22,6 +23,7 @@ final class SceneRenderer extends ConsumerWidget {
   final BoxFit fit;
   final FilterQuality filterQuality;
   final DisplayProfile? displayProfile;
+  final ChromeKissEyeBackground eyeBackground;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,6 +37,7 @@ final class SceneRenderer extends ConsumerWidget {
         content: content,
         animate: animate,
         displayProfile: displayProfile,
+        eyeBackground: eyeBackground,
       ),
       final UserImageContent content => UserImageSceneRenderer(
         content: content,
@@ -117,12 +120,14 @@ final class ProceduralEyesSceneRenderer extends StatelessWidget {
     required this.content,
     required this.animate,
     this.displayProfile,
+    this.eyeBackground = ChromeKissEyeBackground.lens,
     super.key,
   });
 
   final ProceduralEyesContent content;
   final bool animate;
   final DisplayProfile? displayProfile;
+  final ChromeKissEyeBackground eyeBackground;
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +139,7 @@ final class ProceduralEyesSceneRenderer extends StatelessWidget {
             : KissCutVisualMood.neutral,
         animate: animate,
         useProductionMotion: animate,
+        background: eyeBackground,
       ),
     );
   }

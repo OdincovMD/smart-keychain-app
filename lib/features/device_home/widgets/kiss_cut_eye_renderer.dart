@@ -33,7 +33,7 @@ enum KissCutVisualMood {
   }
 }
 
-enum KissCutColourway { orchidLilac, icyCool, pearlChampagne }
+enum KissCutColourway { orchidLilac, icyCool, lilacDream, pearlChampagne }
 
 @immutable
 final class KissCutPalette {
@@ -55,12 +55,21 @@ final class KissCutPalette {
     highlight: Color(0xFFFFF4FA),
   );
 
-  static const icyCool = KissCutPalette(
-    edge: Color(0xFF444870),
-    fieldTop: Color(0xFFE7E2FF),
-    fieldMiddle: Color(0xFFAAA0F3),
-    fieldBottom: Color(0xFF68BFC1),
-    core: Color(0xFF07090E),
+  static const mintGlow = KissCutPalette(
+    edge: Color(0xFF23594F),
+    fieldTop: Color(0xFFC8FFE8),
+    fieldMiddle: Color(0xFF6FE0BA),
+    fieldBottom: Color(0xFF36A995),
+    core: Color(0xFF04100D),
+    highlight: Color(0xFFF1FFF8),
+  );
+
+  static const lilacDream = KissCutPalette(
+    edge: Color(0xFF4C3F78),
+    fieldTop: Color(0xFFF4EEFF),
+    fieldMiddle: Color(0xFFCAB7FF),
+    fieldBottom: Color(0xFF8D7DE1),
+    core: Color(0xFF090713),
     highlight: Color(0xFFFFFFFF),
   );
 
@@ -76,7 +85,8 @@ final class KissCutPalette {
   static KissCutPalette forColourway(KissCutColourway colourway) {
     return switch (colourway) {
       KissCutColourway.orchidLilac => orchidLilac,
-      KissCutColourway.icyCool => icyCool,
+      KissCutColourway.icyCool => mintGlow,
+      KissCutColourway.lilacDream => lilacDream,
       KissCutColourway.pearlChampagne => pearlChampagne,
     };
   }

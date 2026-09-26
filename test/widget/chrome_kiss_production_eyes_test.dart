@@ -3,14 +3,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_keychain_app/app/app_theme.dart';
+import 'package:smart_keychain_app/app/chrome_kiss_theme.dart';
 import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/core/result.dart';
+import 'package:smart_keychain_app/domain/content/scene.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/eye_motion_ticker.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/wardrobe_rail.dart';
 import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_definition_loader.dart';
 
 void main() {
@@ -38,6 +43,7 @@ void main() {
         find.byType(ProceduralEyesView),
       );
       expect(owner.rendererVariant, EyeRendererVariant.kissCutV21);
+      expect(owner.backgroundColor, KissCutEyePainter.lensColor);
       expect(owner.kissCutColourway, KissCutColourway.orchidLilac);
       expect(owner.kissCutVisualMoodOverride, KissCutVisualMood.neutral);
     }
@@ -62,6 +68,74 @@ void main() {
       expect(painter.scene.visualMoodOverride, mood);
       expect(painter.scene.colourway, KissCutColourway.orchidLilac);
     }
+  });
+
+  testWidgets(
+    'embedded production eyes can omit their rectangular background',
+    (tester) async {
+      await _pumpEyes(
+        tester,
+        const ChromeKissProductionEyes(
+          scale: ChromeKissEyeScale.tiny,
+          mood: KissCutVisualMood.neutral,
+          animate: false,
+          useProductionMotion: false,
+          background: ChromeKissEyeBackground.transparent,
+        ),
+      );
+
+      final owner = tester.widget<ProceduralEyesView>(
+        find.byType(ProceduralEyesView),
+      );
+      expect(owner.backgroundColor, Colors.transparent);
+    },
+  );
+
+  testWidgets('round LookPreview owns the lens behind embedded eyes', (
+    tester,
+  ) async {
+    const previewKey = Key('round_eye_preview');
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildAppTheme(),
+          home: const Center(
+            child: LookPreview(
+              key: previewKey,
+              scene: Scene(
+                id: 'embedded-eyes',
+                name: 'Оригинал',
+                source: SceneSource.builtIn,
+                content: ProceduralEyesContent(
+                  defaultEmotion: EyeEmotion.neutral,
+                ),
+              ),
+              diameter: 75,
+              isSelected: false,
+              isActive: false,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final context = tester.element(find.byKey(previewKey));
+    final container = tester.widget<AnimatedContainer>(
+      find.descendant(
+        of: find.byKey(previewKey),
+        matching: find.byType(AnimatedContainer),
+      ),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    expect(decoration.color, context.chromeKiss.lens);
+    final eyes = tester.widget<ChromeKissProductionEyes>(
+      find.descendant(
+        of: find.byKey(previewKey),
+        matching: find.byType(ChromeKissProductionEyes),
+      ),
+    );
+    expect(eyes.background, ChromeKissEyeBackground.transparent);
   });
 
   testWidgets('Tiny static instances never start their runtime ticker', (

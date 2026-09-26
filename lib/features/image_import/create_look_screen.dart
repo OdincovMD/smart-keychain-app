@@ -615,7 +615,7 @@ final class _InspirationStrip extends StatelessWidget {
     final items = <(KissCutColourway?, String)>[
       (KissCutColourway.orchidLilac, l10n.inspirationOriginal),
       (KissCutColourway.icyCool, l10n.inspirationMint),
-      (KissCutColourway.orchidLilac, l10n.inspirationLilac),
+      (KissCutColourway.lilacDream, l10n.inspirationLilac),
       (null, l10n.inspirationPhoto),
     ];
     final children = [

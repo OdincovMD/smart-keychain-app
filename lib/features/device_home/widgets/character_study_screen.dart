@@ -515,8 +515,9 @@ String _moodLabel(KissCutVisualMood mood) {
 
 String _colourwayLabel(KissCutColourway colourway) {
   return switch (colourway) {
-    KissCutColourway.orchidLilac => 'Orchid / Lilac',
-    KissCutColourway.icyCool => 'Icy / Cool',
+    KissCutColourway.orchidLilac => 'Glossy Orchid',
+    KissCutColourway.icyCool => 'Mint Glow',
+    KissCutColourway.lilacDream => 'Lilac Dream',
     KissCutColourway.pearlChampagne => 'Pearl / Champagne',
   };
 }

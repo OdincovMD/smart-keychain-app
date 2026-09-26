@@ -117,19 +117,23 @@ void main() {
   });
 
   testWidgets('Kiss Cut restrained colour studies', (tester) async {
-    await _setSurface(tester, const Size(840, 330));
+    await _setSurface(tester, const Size(1040, 330));
     await tester.pumpWidget(
       const _GoldenSurface(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _ColourTile(
-              label: 'ORCHID / LILAC',
+              label: 'GLOSSY ORCHID',
               colourway: KissCutColourway.orchidLilac,
             ),
             _ColourTile(
-              label: 'ICY / COOL',
+              label: 'MINT GLOW',
               colourway: KissCutColourway.icyCool,
+            ),
+            _ColourTile(
+              label: 'LILAC DREAM',
+              colourway: KissCutColourway.lilacDream,
             ),
             _ColourTile(
               label: 'PEARL / CHAMPAGNE',

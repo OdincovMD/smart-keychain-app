@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import '../../../app/chrome_kiss_theme.dart';
 import '../../../domain/content/scene.dart';
 import '../../../l10n/app_localizations.dart';
+import 'chrome_kiss_production_eyes.dart';
 import 'companion_home_tokens.dart';
 import 'scene_renderer.dart';
 
@@ -477,7 +478,11 @@ final class LookPreview extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           ClipOval(
-            child: SceneRenderer(scene: scene, animate: animateScene),
+            child: SceneRenderer(
+              scene: scene,
+              animate: animateScene,
+              eyeBackground: ChromeKissEyeBackground.transparent,
+            ),
           ),
           Positioned.fill(
             child: AnimatedOpacity(

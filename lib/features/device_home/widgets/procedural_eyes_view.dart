@@ -26,6 +26,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
     this.rendererVariant = EyeRendererVariant.legacy,
     this.kissCutVisualMoodOverride,
     this.kissCutColourway = KissCutColourway.orchidLilac,
+    this.backgroundColor,
     this.motionDefinition,
     this.useProductionMotionDefinition = false,
     this.onRuntimeReady,
@@ -38,6 +39,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
   final EyeRendererVariant rendererVariant;
   final KissCutVisualMood? kissCutVisualMoodOverride;
   final KissCutColourway kissCutColourway;
+  final Color? backgroundColor;
   final EyeMotionDefinition? motionDefinition;
   final bool useProductionMotionDefinition;
   final ValueChanged<EyeMotionTicker>? onRuntimeReady;
@@ -251,9 +253,11 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     };
 
     return ColoredBox(
-      color: widget.rendererVariant == EyeRendererVariant.legacy
-          ? Colors.black
-          : KissCutEyePainter.lensColor,
+      color:
+          widget.backgroundColor ??
+          (widget.rendererVariant == EyeRendererVariant.legacy
+              ? Colors.black
+              : KissCutEyePainter.lensColor),
       child: ExcludeSemantics(
         child: RepaintBoundary(
           child: CustomPaint(

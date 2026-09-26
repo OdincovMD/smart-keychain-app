@@ -14,6 +14,8 @@ enum ChromeKissEyeScale {
   final Size size;
 }
 
+enum ChromeKissEyeBackground { lens, transparent }
+
 final class ChromeKissProductionEyes extends StatelessWidget {
   const ChromeKissProductionEyes({
     required this.scale,
@@ -21,6 +23,7 @@ final class ChromeKissProductionEyes extends StatelessWidget {
     required this.animate,
     required this.useProductionMotion,
     this.colourway = KissCutColourway.orchidLilac,
+    this.background = ChromeKissEyeBackground.lens,
     super.key,
   });
 
@@ -29,6 +32,7 @@ final class ChromeKissProductionEyes extends StatelessWidget {
   final bool animate;
   final bool useProductionMotion;
   final KissCutColourway colourway;
+  final ChromeKissEyeBackground background;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +52,10 @@ final class ChromeKissProductionEyes extends StatelessWidget {
             rendererVariant: EyeRendererVariant.kissCutV21,
             kissCutVisualMoodOverride: mood,
             kissCutColourway: colourway,
+            backgroundColor: switch (background) {
+              ChromeKissEyeBackground.lens => KissCutEyePainter.lensColor,
+              ChromeKissEyeBackground.transparent => Colors.transparent,
+            },
             useProductionMotionDefinition: useProductionMotion,
           ),
         ),

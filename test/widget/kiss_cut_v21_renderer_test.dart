@@ -21,6 +21,29 @@ import 'package:smart_keychain_app/infrastructure/eyes/bundled_eye_motion_defini
 import '../../tool/src/avatar_lab_motion_adapter.dart';
 
 void main() {
+  test('Create Look colourways resolve to distinct material palettes', () {
+    final glossy = KissCutPalette.forColourway(KissCutColourway.orchidLilac);
+    final mint = KissCutPalette.forColourway(KissCutColourway.icyCool);
+    final lilac = KissCutPalette.forColourway(KissCutColourway.lilacDream);
+
+    Set<Color> signature(KissCutPalette palette) => {
+      palette.edge,
+      palette.fieldTop,
+      palette.fieldMiddle,
+      palette.fieldBottom,
+      palette.core,
+      palette.highlight,
+    };
+
+    expect(signature(glossy), isNot(signature(mint)));
+    expect(signature(glossy), isNot(signature(lilac)));
+    expect(signature(mint), isNot(signature(lilac)));
+    expect(mint.fieldMiddle.g, greaterThan(mint.fieldMiddle.r));
+    expect(mint.fieldMiddle.g, greaterThan(mint.fieldMiddle.b));
+    expect(lilac.fieldMiddle.b, greaterThan(lilac.fieldMiddle.g));
+    expect(glossy.fieldMiddle.r, greaterThan(glossy.fieldMiddle.g));
+  });
+
   test('V2.1 moods retain safe silhouettes and optical cores', () {
     for (final mood in KissCutVisualMood.values) {
       final state = KissCutStudyPose.forMood(

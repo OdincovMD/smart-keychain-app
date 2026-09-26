@@ -19,6 +19,7 @@ import 'package:smart_keychain_app/features/user_content/look_details_sheet.dart
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/scene_renderer.dart';
+import 'package:smart_keychain_app/features/device_home/widgets/wardrobe_rail.dart';
 import 'package:smart_keychain_app/l10n/app_localizations.dart';
 
 import '../support/fake_app_settings_repository.dart';
@@ -71,6 +72,22 @@ void main() {
     );
     expect(eyes.scale, ChromeKissEyeScale.medium);
     expect(eyes.mood, KissCutVisualMood.happy);
+    final appliedPreview = tester.widget<LookPreview>(
+      find.byKey(const Key('look_details_preview')),
+    );
+    expect(appliedPreview.isSelected, isFalse);
+    expect(appliedPreview.isActive, isFalse);
+    expect(
+      find.byKey(const Key('look_application_status_seal')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('look_details_preview')),
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsNothing,
+    );
     expect(find.text(_targetScene.name), findsOneWidget);
     expect(find.byType(SnackBar), findsNothing);
     expect(tester.takeException(), isNull);
@@ -92,6 +109,10 @@ void main() {
     );
     expect(eyes.scale, ChromeKissEyeScale.medium);
     expect(eyes.mood, KissCutVisualMood.sleepy);
+    expect(
+      find.byKey(const Key('look_application_status_seal')),
+      findsOneWidget,
+    );
     expect(find.text('Образ не изменён'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('retry_apply_look')));

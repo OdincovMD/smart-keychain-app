@@ -46,6 +46,7 @@ void main() {
           expect(eyes.scale, lensSize.eyeScale);
           expect(eyes.mood, KissCutVisualMood.neutral);
           expect(eyes.animate, isFalse);
+          expect(eyes.background, ChromeKissEyeBackground.transparent);
           expect(tester.takeException(), isNull);
         },
       );
