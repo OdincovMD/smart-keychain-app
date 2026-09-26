@@ -53,7 +53,13 @@ void main() {
 
     expect(find.text('Мои образы'), findsOneWidget);
     expect(find.byKey(const Key('companion_stage')), findsOneWidget);
-    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('companion_stage')),
+        matching: find.byKey(const Key('kiss_cut_eye_painter')),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey(BuiltInSceneRepository.livingEyesId)),
       findsOneWidget,
@@ -179,7 +185,13 @@ void main() {
       providerContainer.read(eyePreviewControllerProvider).emotion,
       EyeEmotion.happy,
     );
-    expect(find.byKey(const Key('kiss_cut_eye_painter')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('companion_stage')),
+        matching: find.byKey(const Key('kiss_cut_eye_painter')),
+      ),
+      findsOneWidget,
+    );
 
     await tester.pump(const Duration(milliseconds: 180));
     final blinkButton = find.byKey(const Key('eye_blink_button'));

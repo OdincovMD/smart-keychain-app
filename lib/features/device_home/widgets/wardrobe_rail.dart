@@ -163,16 +163,6 @@ final class _CompactWardrobeRail extends StatelessWidget {
     final home = context.companionHome;
     final visibleScenes = scenes.take(3).toList(growable: false);
     final largeText = MediaQuery.textScalerOf(context).scale(12) > 16;
-    final labels = [
-      l10n.homeLookOriginal,
-      l10n.homeLookMint,
-      l10n.homeLookLilac,
-    ];
-    const previewAssets = [
-      'assets/chrome_kiss/home_look_original.png',
-      'assets/chrome_kiss/home_look_mint.png',
-      'assets/chrome_kiss/home_look_lilac.png',
-    ];
 
     return Column(
       key: const Key('wardrobe_rail'),
@@ -262,9 +252,8 @@ final class _CompactWardrobeRail extends StatelessWidget {
                 ? math.max(74.0, scaledLabelSize * 6.8)
                 : math.min(74.0, (constraints.maxWidth - gap * 3) / 4);
             final previewDiameter = math.min(58.0, tileWidth);
-            final labelHeight = scaledLabelSize > 13
-                ? scaledLabelSize * 1.27 * 2
-                : 16.0;
+            final labelHeight =
+                MediaQuery.textScalerOf(context).scale(11) * 1.27 * 2 + 1;
             final previewGap = scaledLabelSize > 13 ? 5.0 : 2.0;
 
             return SizedBox(
@@ -301,8 +290,6 @@ final class _CompactWardrobeRail extends StatelessWidget {
                     enabled: enabled,
                     onSelected: () => onSceneSelected(scene.id),
                     compact: true,
-                    labelOverride: labels[index],
-                    compactPreviewAssetPath: previewAssets[index],
                   );
                 },
               ),

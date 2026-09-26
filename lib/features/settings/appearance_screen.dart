@@ -5,6 +5,8 @@ import '../../app/chrome_kiss_theme.dart';
 import '../../domain/settings/app_appearance.dart';
 import '../../l10n/app_localizations.dart';
 import '../appearance/appearance_controller.dart';
+import '../device_home/widgets/chrome_kiss_eye_reaction_lens.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 
 final class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
@@ -169,11 +171,7 @@ final class AppearanceOption extends StatelessWidget {
                           aspectRatio: 85 / 68,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: Image.asset(
-                              _previewAsset(appearance),
-                              fit: BoxFit.cover,
-                              filterQuality: FilterQuality.high,
-                            ),
+                            child: _AppearancePreview(appearance: appearance),
                           ),
                         ),
                         const SizedBox(height: 7),
@@ -232,6 +230,66 @@ final class AppearanceOption extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+final class _AppearancePreview extends StatelessWidget {
+  const _AppearancePreview({required this.appearance});
+
+  final AppAppearance appearance;
+
+  @override
+  Widget build(BuildContext context) {
+    final previewTheme = switch (appearance) {
+      AppAppearance.obsidian => ChromeKissFidelityTheme.obsidian,
+      AppAppearance.pearl => ChromeKissFidelityTheme.pearl,
+      AppAppearance.system => context.chromeKissFidelity,
+    };
+    final background = switch (appearance) {
+      AppAppearance.obsidian => ChromeKissFidelityTheme.obsidian.satinGradient,
+      AppAppearance.pearl => ChromeKissFidelityTheme.pearl.satinGradient,
+      AppAppearance.system => LinearGradient(
+        colors: [
+          ChromeKissFidelityTheme.obsidian.canvas,
+          ChromeKissFidelityTheme.obsidian.canvas,
+          ChromeKissFidelityTheme.pearl.canvas,
+          ChromeKissFidelityTheme.pearl.canvas,
+        ],
+        stops: [0, 0.49, 0.51, 1],
+      ),
+    };
+
+    return DecoratedBox(
+      key: Key('appearance_preview_${appearance.name}'),
+      decoration: BoxDecoration(
+        gradient: background,
+        border: Border.all(color: previewTheme.chromeLine),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Positioned(
+            top: 7,
+            child: ChromeKissEyeReactionLens(
+              size: ChromeKissEyeReactionLensSize.tiny,
+              mood: KissCutVisualMood.neutral,
+              animate: false,
+              useProductionMotion: false,
+            ),
+          ),
+          Positioned(
+            bottom: 8,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: previewTheme.chromeLine,
+                borderRadius: BorderRadius.circular(2),
+              ),
+              child: const SizedBox(width: 34, height: 3),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -326,14 +384,5 @@ String _appearanceLabel(AppLocalizations l10n, AppAppearance appearance) {
     AppAppearance.obsidian => l10n.appearanceObsidian,
     AppAppearance.pearl => l10n.appearancePearl,
     AppAppearance.system => l10n.appearanceSystem,
-  };
-}
-
-String _previewAsset(AppAppearance appearance) {
-  return switch (appearance) {
-    AppAppearance.obsidian =>
-      'assets/chrome_kiss/appearance_preview_obsidian.png',
-    AppAppearance.pearl => 'assets/chrome_kiss/appearance_preview_pearl.png',
-    AppAppearance.system => 'assets/chrome_kiss/appearance_preview_system.png',
   };
 }

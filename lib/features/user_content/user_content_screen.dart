@@ -1046,14 +1046,6 @@ final class _CurrentLookPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (scene.id == BuiltInSceneRepository.livingEyesId) {
-      return const Image(
-        image: AssetImage('assets/chrome_kiss/wardrobe_current_look.png'),
-        width: 145,
-        height: 147,
-        filterQuality: FilterQuality.high,
-      );
-    }
     return SizedBox(
       width: 145,
       height: 147,
@@ -1234,24 +1226,6 @@ final class _WardrobeTilePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fidelity = context.chromeKissFidelity;
-    final asset = switch (scene.id) {
-      BuiltInSceneRepository.livingEyesId =>
-        'assets/chrome_kiss/home_look_original.png',
-      BuiltInSceneRepository.mintEyesId =>
-        'assets/chrome_kiss/home_look_mint.png',
-      _ => null,
-    };
-    if (asset != null) {
-      return ClipOval(
-        child: Image.asset(
-          asset,
-          width: 75,
-          height: 75,
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.high,
-        ),
-      );
-    }
     return Stack(
       clipBehavior: Clip.none,
       children: [

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
-import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/chrome_kiss_eye_reaction_lens.dart';
 import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../device_home/widgets/wardrobe_rail.dart';
@@ -271,7 +271,7 @@ final class _ApplicationPreview extends StatelessWidget {
                         accent: colors.accentPrimary,
                         optical: colors.accentOptical,
                         success: colors.success,
-                        danger: colors.danger,
+                        failure: colors.warning,
                         track: colors.divider,
                       ),
                     ),
@@ -283,24 +283,28 @@ final class _ApplicationPreview extends StatelessWidget {
                     isSelected: status == LookApplicationStatus.applied,
                     isActive: status == LookApplicationStatus.applied,
                   ),
-                  if (status
-                      case LookApplicationStatus.applied ||
-                          LookApplicationStatus.failed)
-                    Positioned(
-                      right: 2,
-                      bottom: 30,
-                      child: _StatusSeal(status: status),
-                    ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            ChromeKissProductionEyes(
-              key: const Key('look_application_character_reaction'),
-              scale: ChromeKissEyeScale.medium,
-              mood: mood,
-              animate: false,
-              useProductionMotion: false,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ChromeKissEyeReactionLens(
+                  key: const Key('look_application_character_reaction_lens'),
+                  reactionKey: const Key('look_application_character_reaction'),
+                  size: ChromeKissEyeReactionLensSize.medium,
+                  mood: mood,
+                  animate: false,
+                  useProductionMotion: false,
+                ),
+                if (status
+                    case LookApplicationStatus.applied ||
+                        LookApplicationStatus.failed) ...[
+                  const SizedBox(width: 10),
+                  _StatusSeal(status: status),
+                ],
+              ],
             ),
           ],
         ),
@@ -318,7 +322,7 @@ final class _StatusSeal extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.chromeKiss;
     final applied = status == LookApplicationStatus.applied;
-    final color = applied ? colors.success : colors.danger;
+    final color = applied ? colors.success : colors.warning;
     return Container(
       width: 48,
       height: 48,
@@ -351,7 +355,7 @@ final class _LifecycleMessage extends StatelessWidget {
     final fidelity = context.chromeKissFidelity;
     final color = switch (status) {
       LookApplicationStatus.applied => colors.success,
-      LookApplicationStatus.failed => colors.danger,
+      LookApplicationStatus.failed => colors.warning,
       _ => fidelity.accentInk,
     };
     final icon = switch (status) {
@@ -422,7 +426,7 @@ final class _ApplicationRingPainter extends CustomPainter {
     required this.accent,
     required this.optical,
     required this.success,
-    required this.danger,
+    required this.failure,
     required this.track,
   }) : super(repaint: progress);
 
@@ -431,7 +435,7 @@ final class _ApplicationRingPainter extends CustomPainter {
   final Color accent;
   final Color optical;
   final Color success;
-  final Color danger;
+  final Color failure;
   final Color track;
 
   @override
@@ -481,7 +485,7 @@ final class _ApplicationRingPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeWidth = 3
-          ..color = danger;
+          ..color = failure;
         canvas
           ..drawArc(rect, -math.pi * 0.43, math.pi * 0.64, false, paint)
           ..drawArc(rect, math.pi * 0.4, math.pi * 0.76, false, paint);
@@ -496,7 +500,7 @@ final class _ApplicationRingPainter extends CustomPainter {
         oldDelegate.accent != accent ||
         oldDelegate.optical != optical ||
         oldDelegate.success != success ||
-        oldDelegate.danger != danger ||
+        oldDelegate.failure != failure ||
         oldDelegate.track != track ||
         oldDelegate.progress != progress;
   }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/chrome_kiss_theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../device_home/widgets/chrome_kiss_eye_reaction_lens.dart';
+import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../shared/chrome_kiss_fidelity_frame.dart';
 import '../shared/chrome_kiss_fidelity_tokens.dart';
 
@@ -610,17 +612,14 @@ final class _InspirationStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final fidelity = context.chromeKissFidelity;
-    final items = <(String?, String)>[
-      (
-        'assets/chrome_kiss/create_preview_original.png',
-        l10n.inspirationOriginal,
-      ),
-      ('assets/chrome_kiss/create_preview_mint.png', l10n.inspirationMint),
-      ('assets/chrome_kiss/create_preview_lilac.png', l10n.inspirationLilac),
+    final items = <(KissCutColourway?, String)>[
+      (KissCutColourway.orchidLilac, l10n.inspirationOriginal),
+      (KissCutColourway.icyCool, l10n.inspirationMint),
+      (KissCutColourway.orchidLilac, l10n.inspirationLilac),
       (null, l10n.inspirationPhoto),
     ];
     final children = [
-      for (final (asset, label) in items)
+      for (final (colourway, label) in items)
         SizedBox(
           width: 82,
           child: Column(
@@ -628,12 +627,18 @@ final class _InspirationStrip extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  if (asset != null)
-                    Image.asset(
-                      asset,
-                      width: 82,
-                      height: 82,
-                      filterQuality: FilterQuality.high,
+                  if (colourway != null)
+                    SizedBox.square(
+                      dimension: 82,
+                      child: Center(
+                        child: ChromeKissEyeReactionLens(
+                          size: ChromeKissEyeReactionLensSize.tiny,
+                          mood: KissCutVisualMood.neutral,
+                          animate: false,
+                          useProductionMotion: false,
+                          colourway: colourway,
+                        ),
+                      ),
                     )
                   else
                     SizedBox(
@@ -657,7 +662,7 @@ final class _InspirationStrip extends StatelessWidget {
                         ],
                       ),
                     ),
-                  if (asset == null)
+                  if (colourway == null)
                     const Positioned(
                       right: -2,
                       top: 0,

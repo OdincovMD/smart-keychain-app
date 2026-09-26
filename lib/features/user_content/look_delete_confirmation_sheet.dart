@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
-import '../device_home/widgets/chrome_kiss_production_eyes.dart';
+import '../device_home/widgets/chrome_kiss_eye_reaction_lens.dart';
 import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../device_home/widgets/wardrobe_rail.dart';
@@ -146,9 +146,10 @@ final class _DeleteContent extends StatelessWidget {
                       const SizedBox(height: 4),
                       const Align(
                         alignment: Alignment.centerLeft,
-                        child: ChromeKissProductionEyes(
-                          key: Key('delete_character_reaction'),
-                          scale: ChromeKissEyeScale.tiny,
+                        child: ChromeKissEyeReactionLens(
+                          key: Key('delete_character_reaction_lens'),
+                          reactionKey: Key('delete_character_reaction'),
+                          size: ChromeKissEyeReactionLensSize.tiny,
                           mood: KissCutVisualMood.annoyed,
                           animate: false,
                           useProductionMotion: false,
