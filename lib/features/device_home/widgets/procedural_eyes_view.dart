@@ -13,6 +13,7 @@ import '../../../domain/eyes/eye_motion_library.dart';
 import '../../../domain/eyes/eye_motion_player.dart';
 import '../../../domain/eyes/eye_motion_production.dart';
 import '../../../domain/eyes/eye_runtime_state.dart';
+import '../../../domain/eyes/neutral_living_idle.dart';
 import '../eye_preview_controller.dart';
 import 'eye_motion_ticker.dart';
 import 'figma_kiss_cut_eyes_view.dart';
@@ -29,6 +30,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
     this.backgroundColor,
     this.motionDefinition,
     this.useProductionMotionDefinition = false,
+    this.behaviourMode = EyeMotionBehaviourMode.controlled,
     this.onRuntimeReady,
     super.key,
   });
@@ -42,6 +44,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
   final Color? backgroundColor;
   final EyeMotionDefinition? motionDefinition;
   final bool useProductionMotionDefinition;
+  final EyeMotionBehaviourMode behaviourMode;
   final ValueChanged<EyeMotionTicker>? onRuntimeReady;
 
   @override
@@ -54,6 +57,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
 
   late EyeBehaviourEngine _engine;
   late EyeMotionTicker _runtime;
+  final _retiredRuntimes = <EyeMotionTicker>[];
   var _motionEnabled = false;
   var _lifecycleActive = true;
   var _manuallyPaused = false;
@@ -78,7 +82,13 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
         (widget.useProductionMotionDefinition
             ? ref.read(productionEyeMotionDefinitionProvider)
             : chromeKissEyeMotionDefinition);
-    _engine = EyeBehaviourEngine(random, initialMood: mood);
+    _engine = EyeBehaviourEngine(
+      random,
+      initialMood: mood,
+      livingIdleConfiguration:
+          preview?.livingIdleConfiguration ??
+          const EyeLivingIdleConfiguration(),
+    );
     final player = EyeMotionPlayer(
       behaviourEngine: _engine,
       definition: definition,
@@ -87,6 +97,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
         definition,
         requestedClip: preview?.clipName,
       ),
+      behaviourMode: widget.behaviourMode,
     )..setSpeed(preview?.playbackSpeed ?? 1);
     if (!widget.animate) player.stop(snapToMood: true);
     _runtime = EyeMotionTicker(vsync: this, player: player);
@@ -114,7 +125,8 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.motionDefinition != widget.motionDefinition ||
         oldWidget.useProductionMotionDefinition !=
-            widget.useProductionMotionDefinition) {
+            widget.useProductionMotionDefinition ||
+        oldWidget.behaviourMode != widget.behaviourMode) {
       final shouldRun = _motionEnabled && _lifecycleActive && !_manuallyPaused;
       final mood = _runtime.player.mood;
       _runtime.dispose();
@@ -161,8 +173,19 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
           },
         )
         ..listen(
-          eyePreviewControllerProvider.select((state) => state.randomSeed),
-          (previous, next) => _changeRandomSeed(next),
+          eyePreviewControllerProvider.select(
+            (state) => (state.randomSeed, state.seedRevision),
+          ),
+          (previous, next) => _changeRandomSeed(next.$1),
+        )
+        ..listen(
+          eyePreviewControllerProvider.select(
+            (state) => state.livingIdleConfiguration,
+          ),
+          (previous, next) {
+            _runtime.player.configureLivingIdle(next);
+            _runtime.refresh();
+          },
         )
         ..listen(
           eyePreviewControllerProvider.select((state) => state.clipName),
@@ -285,10 +308,16 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     if (!widget.animate) return;
     final wasEnabled = _motionEnabled && _lifecycleActive;
     final mood = _runtime.player.mood;
-    _runtime.dispose();
+    final retired = _runtime..stop();
+    _retiredRuntimes.add(retired);
     _createRuntime(seed: seed, initialMood: mood);
     if (wasEnabled) _runtime.start();
     setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_retiredRuntimes.remove(retired)) retired.dispose();
+      });
+    });
   }
 
   void _requestCommand(EyeDebugCommand command) {
@@ -298,10 +327,23 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
       EyeDebugCommand.doubleBlink => _engine.forceBlink(
         variant: EyeBlinkVariant.doubleBlink,
       ),
+      EyeDebugCommand.slowBlink => _engine.forceBlink(
+        variant: EyeBlinkVariant.slow,
+      ),
+      EyeDebugCommand.wink => _engine.forceBlink(variant: EyeBlinkVariant.wink),
       EyeDebugCommand.lookLeft => _engine.look(EyeLookDirection.left),
       EyeDebugCommand.lookRight => _engine.look(EyeLookDirection.right),
       EyeDebugCommand.specialAction => _engine.playSpecialAction(
         EyeSpecialAction.fireflySearch,
+      ),
+      EyeDebugCommand.signatureCuriousGlance => _engine.playSpecialAction(
+        EyeSpecialAction.neutralCuriousGlance,
+      ),
+      EyeDebugCommand.signatureSoftCenterBlink => _engine.playSpecialAction(
+        EyeSpecialAction.neutralSoftCenterBlink,
+      ),
+      EyeDebugCommand.signatureSideHoldReturn => _engine.playSpecialAction(
+        EyeSpecialAction.neutralSideHoldReturn,
       ),
     };
     _runtime.player.trigger(action);
@@ -330,6 +372,10 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _runtime.dispose();
+    for (final runtime in _retiredRuntimes) {
+      runtime.dispose();
+    }
+    _retiredRuntimes.clear();
     super.dispose();
   }
 }

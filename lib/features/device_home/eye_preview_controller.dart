@@ -3,10 +3,24 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/eyes/eye_emotion.dart';
+import '../../domain/eyes/neutral_living_idle.dart';
 
-enum EyeDebugCommand { blink, doubleBlink, lookLeft, lookRight, specialAction }
+enum EyeDebugCommand {
+  blink,
+  doubleBlink,
+  slowBlink,
+  wink,
+  lookLeft,
+  lookRight,
+  specialAction,
+  signatureCuriousGlance,
+  signatureSoftCenterBlink,
+  signatureSideHoldReturn,
+}
 
 enum EyePlaybackCommand { play, pause, restart }
+
+const _noSeedChange = Object();
 
 final class EyePreviewState {
   const EyePreviewState({
@@ -15,6 +29,8 @@ final class EyePreviewState {
     required this.commandRevision,
     required this.command,
     required this.randomSeed,
+    required this.seedRevision,
+    required this.livingIdleConfiguration,
     required this.clipName,
     required this.playbackRevision,
     required this.playbackCommand,
@@ -26,6 +42,8 @@ final class EyePreviewState {
   final int commandRevision;
   final EyeDebugCommand? command;
   final int? randomSeed;
+  final int seedRevision;
+  final EyeLivingIdleConfiguration livingIdleConfiguration;
   final String clipName;
   final int playbackRevision;
   final EyePlaybackCommand? playbackCommand;
@@ -36,6 +54,9 @@ final class EyePreviewState {
     int? blinkRevision,
     int? commandRevision,
     EyeDebugCommand? command,
+    Object? randomSeed = _noSeedChange,
+    int? seedRevision,
+    EyeLivingIdleConfiguration? livingIdleConfiguration,
     String? clipName,
     int? playbackRevision,
     EyePlaybackCommand? playbackCommand,
@@ -46,7 +67,12 @@ final class EyePreviewState {
       blinkRevision: blinkRevision ?? this.blinkRevision,
       commandRevision: commandRevision ?? this.commandRevision,
       command: command ?? this.command,
-      randomSeed: randomSeed,
+      randomSeed: identical(randomSeed, _noSeedChange)
+          ? this.randomSeed
+          : randomSeed as int?,
+      seedRevision: seedRevision ?? this.seedRevision,
+      livingIdleConfiguration:
+          livingIdleConfiguration ?? this.livingIdleConfiguration,
       clipName: clipName ?? this.clipName,
       playbackRevision: playbackRevision ?? this.playbackRevision,
       playbackCommand: playbackCommand ?? this.playbackCommand,
@@ -63,6 +89,8 @@ final class EyePreviewState {
           commandRevision == other.commandRevision &&
           command == other.command &&
           randomSeed == other.randomSeed &&
+          seedRevision == other.seedRevision &&
+          livingIdleConfiguration == other.livingIdleConfiguration &&
           clipName == other.clipName &&
           playbackRevision == other.playbackRevision &&
           playbackCommand == other.playbackCommand &&
@@ -75,6 +103,8 @@ final class EyePreviewState {
     commandRevision,
     command,
     randomSeed,
+    seedRevision,
+    livingIdleConfiguration,
     clipName,
     playbackRevision,
     playbackCommand,
@@ -91,6 +121,8 @@ final class EyePreviewController extends Notifier<EyePreviewState> {
       commandRevision: 0,
       command: null,
       randomSeed: null,
+      seedRevision: 0,
+      livingIdleConfiguration: EyeLivingIdleConfiguration(),
       clipName: 'neutral_idle',
       playbackRevision: 0,
       playbackCommand: null,
@@ -111,6 +143,14 @@ final class EyePreviewController extends Notifier<EyePreviewState> {
     _request(EyeDebugCommand.doubleBlink);
   }
 
+  void requestSlowBlink() {
+    _request(EyeDebugCommand.slowBlink);
+  }
+
+  void requestWink() {
+    _request(EyeDebugCommand.wink);
+  }
+
   void requestLookLeft() {
     _request(EyeDebugCommand.lookLeft);
   }
@@ -123,6 +163,18 @@ final class EyePreviewController extends Notifier<EyePreviewState> {
     _request(EyeDebugCommand.specialAction);
   }
 
+  void requestSignatureCuriousGlance() {
+    _request(EyeDebugCommand.signatureCuriousGlance);
+  }
+
+  void requestSignatureSoftCenterBlink() {
+    _request(EyeDebugCommand.signatureSoftCenterBlink);
+  }
+
+  void requestSignatureSideHoldReturn() {
+    _request(EyeDebugCommand.signatureSideHoldReturn);
+  }
+
   void setRandomSeed(int? seed) {
     if (state.randomSeed == seed) return;
     state = EyePreviewState(
@@ -131,11 +183,22 @@ final class EyePreviewController extends Notifier<EyePreviewState> {
       commandRevision: state.commandRevision,
       command: state.command,
       randomSeed: seed,
+      seedRevision: state.seedRevision + 1,
+      livingIdleConfiguration: state.livingIdleConfiguration,
       clipName: state.clipName,
       playbackRevision: state.playbackRevision,
       playbackCommand: state.playbackCommand,
       playbackSpeed: state.playbackSpeed,
     );
+  }
+
+  void restartWithSameSeed() {
+    state = state.copyWith(seedRevision: state.seedRevision + 1);
+  }
+
+  void setLivingIdleConfiguration(EyeLivingIdleConfiguration configuration) {
+    if (state.livingIdleConfiguration == configuration) return;
+    state = state.copyWith(livingIdleConfiguration: configuration);
   }
 
   void setClip(String clipName) {

@@ -2,14 +2,20 @@ import 'dart:math';
 
 import 'eye_character.dart';
 import 'eye_emotion.dart';
+import 'neutral_living_idle.dart';
 
-enum EyeBlinkVariant { normal, doubleBlink, slow }
+enum EyeBlinkVariant { natural, doubleBlink, slow, wink }
 
 enum EyeGazeKind { directed, microSaccade, returnToCenter }
 
 enum EyeLookDirection { left, right, slightlyUp, slightlyDown, center }
 
-enum EyeSpecialAction { fireflySearch }
+enum EyeSpecialAction {
+  fireflySearch,
+  neutralCuriousGlance,
+  neutralSoftCenterBlink,
+  neutralSideHoldReturn,
+}
 
 sealed class EyeBehaviourAction {
   const EyeBehaviourAction({required this.delay});
@@ -103,7 +109,7 @@ final class GazeEyeAction extends EyeBehaviourAction {
 final class BlinkEyeAction extends EyeBehaviourAction {
   const BlinkEyeAction({
     required super.delay,
-    this.variant = EyeBlinkVariant.normal,
+    this.variant = EyeBlinkVariant.natural,
     this.asymmetryDelay = const Duration(milliseconds: 12),
     this.leftLeads = true,
     this.authoredDuration,
@@ -121,28 +127,34 @@ final class BlinkEyeAction extends EyeBehaviourAction {
 
   bool get isDouble => variant == EyeBlinkVariant.doubleBlink;
 
+  bool get isWink => variant == EyeBlinkVariant.wink;
+
   int get count => isDouble ? 2 : 1;
 
   Duration get effectiveCloseDuration => authoredDuration == null
       ? switch (variant) {
-          EyeBlinkVariant.normal ||
+          EyeBlinkVariant.natural ||
           EyeBlinkVariant.doubleBlink => closeDuration,
           EyeBlinkVariant.slow => const Duration(milliseconds: 230),
+          EyeBlinkVariant.wink => const Duration(milliseconds: 105),
         }
       : _authoredBlinkPart(authoredDuration!, 86);
 
   Duration get effectiveClosedDuration => authoredDuration == null
       ? switch (variant) {
-          EyeBlinkVariant.normal ||
+          EyeBlinkVariant.natural ||
           EyeBlinkVariant.doubleBlink => closedDuration,
           EyeBlinkVariant.slow => const Duration(milliseconds: 90),
+          EyeBlinkVariant.wink => const Duration(milliseconds: 72),
         }
       : _authoredBlinkPart(authoredDuration!, 42);
 
   Duration get effectiveOpenDuration => authoredDuration == null
       ? switch (variant) {
-          EyeBlinkVariant.normal || EyeBlinkVariant.doubleBlink => openDuration,
+          EyeBlinkVariant.natural ||
+          EyeBlinkVariant.doubleBlink => openDuration,
           EyeBlinkVariant.slow => const Duration(milliseconds: 285),
+          EyeBlinkVariant.wink => const Duration(milliseconds: 165),
         }
       : authoredDuration! -
             _authoredBlinkPart(authoredDuration!, 86) -
@@ -187,7 +199,10 @@ final class EyeBehaviourEngine {
     this._random, {
     this.character = EyeCharacter.standard,
     EyeMood initialMood = EyeEmotion.neutral,
-  }) : _mood = initialMood;
+    EyeLivingIdleConfiguration livingIdleConfiguration =
+        const EyeLivingIdleConfiguration(),
+  }) : _mood = initialMood,
+       _initialLivingIdleConfiguration = livingIdleConfiguration;
 
   static const minimumDelay = Duration(milliseconds: 1050);
   static const maximumDelay = Duration(milliseconds: 4800);
@@ -195,12 +210,38 @@ final class EyeBehaviourEngine {
 
   final Random _random;
   final EyeCharacter character;
+  final EyeLivingIdleConfiguration _initialLivingIdleConfiguration;
+  late final NeutralLivingIdlePlanner _livingIdle = NeutralLivingIdlePlanner(
+    _random,
+    configuration: _initialLivingIdleConfiguration,
+  );
   EyeMood _mood;
   Duration _timeSinceBlink = Duration.zero;
 
   EyeMood get mood => _mood;
 
   EyeMoodProfile get moodProfile => character.profileFor(_mood);
+
+  EyeLivingIdleConfiguration get livingIdleConfiguration =>
+      _livingIdle.configuration;
+
+  EyeLivingIdleStatistics get livingIdleStatistics => _livingIdle.statistics;
+
+  EyeLivingIdleFrame get livingIdleFrame => _livingIdle.currentFrame();
+
+  EyeLivingIdleFrame advanceLivingIdle(Duration delta) =>
+      _livingIdle.advance(delta);
+
+  EyeNeutralSignature? takeScheduledSignature() =>
+      _livingIdle.takeScheduledSignature();
+
+  void configureLivingIdle(EyeLivingIdleConfiguration configuration) {
+    _livingIdle.configure(configuration);
+  }
+
+  void deferLivingIdleBlink() {
+    _livingIdle.deferBlink();
+  }
 
   void setMood(EyeMood mood) {
     _mood = mood;
@@ -215,7 +256,7 @@ final class EyeBehaviourEngine {
       return forceBlink(
         variant: _mood == EyeEmotion.sleepy
             ? EyeBlinkVariant.slow
-            : EyeBlinkVariant.normal,
+            : EyeBlinkVariant.natural,
         delay: delay,
       );
     }
@@ -226,7 +267,7 @@ final class EyeBehaviourEngine {
       return _microSaccade(delay);
     }
     if ((roll -= profile.normalBlinkWeight) < 0) {
-      return forceBlink(variant: EyeBlinkVariant.normal, delay: delay);
+      return forceBlink(variant: EyeBlinkVariant.natural, delay: delay);
     }
     if ((roll -= profile.doubleBlinkWeight) < 0) {
       return forceBlink(variant: EyeBlinkVariant.doubleBlink, delay: delay);
@@ -238,7 +279,7 @@ final class EyeBehaviourEngine {
   }
 
   BlinkEyeAction forceBlink({
-    EyeBlinkVariant variant = EyeBlinkVariant.normal,
+    EyeBlinkVariant variant = EyeBlinkVariant.natural,
     Duration delay = Duration.zero,
     Duration? duration,
   }) {
@@ -287,6 +328,18 @@ final class EyeBehaviourEngine {
 
   SpecialEyeAction playSpecialAction(EyeSpecialAction type) {
     return SpecialEyeAction(delay: Duration.zero, type: type);
+  }
+
+  SpecialEyeAction playNeutralSignature(EyeNeutralSignature signature) {
+    final action = switch (signature) {
+      EyeNeutralSignature.curiousGlance =>
+        EyeSpecialAction.neutralCuriousGlance,
+      EyeNeutralSignature.softCenterBlink =>
+        EyeSpecialAction.neutralSoftCenterBlink,
+      EyeNeutralSignature.sideHoldReturn =>
+        EyeSpecialAction.neutralSideHoldReturn,
+    };
+    return playSpecialAction(action);
   }
 
   GazeEyeAction _gaze(Duration delay) {

@@ -203,6 +203,78 @@ void main() {
     );
   });
 
+  testWidgets('study controls expose seeded living-idle diagnostics', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildAppTheme(),
+          home: const CharacterStudyScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(CharacterStudyScreen)),
+    );
+
+    final speed = find.byKey(const Key('study_speed_4.0x'));
+    await tester.ensureVisible(speed);
+    await tester.tap(speed);
+    await tester.pump();
+    expect(container.read(eyePreviewControllerProvider).playbackSpeed, 4);
+
+    final micro = find.byKey(const Key('study_layer_micro_saccades'));
+    await tester.ensureVisible(micro);
+    await tester.tap(micro);
+    await tester.pump();
+    expect(
+      container
+          .read(eyePreviewControllerProvider)
+          .livingIdleConfiguration
+          .microSaccades,
+      isFalse,
+    );
+
+    final seedField = find.byKey(const Key('study_seed_field'));
+    await tester.ensureVisible(seedField);
+    await tester.enterText(seedField, '8675309');
+    await tester.tap(find.byKey(const Key('study_seed_apply')));
+    await tester.pump();
+    final seeded = container.read(eyePreviewControllerProvider);
+    expect(seeded.randomSeed, 8675309);
+
+    await tester.tap(find.byKey(const Key('study_seed_restart')));
+    await tester.pump();
+    expect(
+      container.read(eyePreviewControllerProvider).seedRevision,
+      seeded.seedRevision + 1,
+    );
+
+    final slowBlink = find.byKey(const Key('study_slow_blink'));
+    await tester.ensureVisible(slowBlink);
+    await tester.tap(slowBlink);
+    await tester.pump(const Duration(milliseconds: 32));
+    expect(
+      container.read(eyePreviewControllerProvider).command,
+      EyeDebugCommand.slowBlink,
+    );
+    expect(find.byKey(const Key('study_wink')), findsOneWidget);
+    expect(find.byKey(const Key('study_signature_curious')), findsOneWidget);
+    expect(find.byKey(const Key('study_signature_soft_blink')), findsOneWidget);
+    expect(
+      find.byKey(const Key('study_signature_side_return')),
+      findsOneWidget,
+    );
+
+    final readout = tester.widget<Text>(
+      find.byKey(const Key('study_motion_readout')),
+    );
+    expect(readout.data, contains('phase'));
+    expect(readout.data, contains('scheduler'));
+  });
+
   testWidgets('study surface remains usable on compact accessibility view', (
     tester,
   ) async {
@@ -229,7 +301,7 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('character_study_preview')), findsOneWidget);
-    final finalControl = find.byKey(const Key('study_seed_42'));
+    final finalControl = find.byKey(const Key('study_seed_restart'));
     await tester.ensureVisible(finalControl);
     await tester.pump();
     expect(tester.getRect(finalControl).bottom, lessThanOrEqualTo(616));

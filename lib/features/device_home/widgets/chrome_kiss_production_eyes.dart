@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/eyes/eye_emotion.dart';
+import '../../../domain/eyes/eye_motion_player.dart';
+import 'eye_motion_ticker.dart';
 import 'kiss_cut_eye_renderer.dart';
 import 'procedural_eyes_view.dart';
 
@@ -24,6 +26,8 @@ final class ChromeKissProductionEyes extends StatelessWidget {
     required this.useProductionMotion,
     this.colourway = KissCutColourway.orchidLilac,
     this.background = ChromeKissEyeBackground.lens,
+    this.behaviourMode = EyeMotionBehaviourMode.controlled,
+    this.onRuntimeReady,
     super.key,
   });
 
@@ -33,6 +37,8 @@ final class ChromeKissProductionEyes extends StatelessWidget {
   final bool useProductionMotion;
   final KissCutColourway colourway;
   final ChromeKissEyeBackground background;
+  final EyeMotionBehaviourMode behaviourMode;
+  final ValueChanged<EyeMotionTicker>? onRuntimeReady;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +63,8 @@ final class ChromeKissProductionEyes extends StatelessWidget {
               ChromeKissEyeBackground.transparent => Colors.transparent,
             },
             useProductionMotionDefinition: useProductionMotion,
+            behaviourMode: behaviourMode,
+            onRuntimeReady: onRuntimeReady,
           ),
         ),
       ),

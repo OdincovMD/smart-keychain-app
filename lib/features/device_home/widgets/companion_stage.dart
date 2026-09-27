@@ -6,6 +6,7 @@ import '../../../app/chrome_kiss_theme.dart';
 import '../../../domain/content/scene.dart';
 import '../../../domain/device/device_snapshot.dart';
 import '../../../domain/device/display_profile.dart';
+import '../../../domain/eyes/eye_motion_player.dart';
 import 'chrome_kiss_production_eyes.dart';
 import '../../../l10n/app_localizations.dart';
 import 'kiss_cut_eye_renderer.dart';
@@ -327,6 +328,7 @@ final class _JewelryCompanionStage extends StatelessWidget {
                 mood: KissCutVisualMood.neutral,
                 animate: true,
                 useProductionMotion: true,
+                behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
               ),
             ),
           ),

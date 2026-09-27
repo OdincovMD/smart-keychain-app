@@ -11,6 +11,7 @@ import 'package:smart_keychain_app/domain/content/scene.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_player.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/eye_motion_ticker.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
@@ -192,12 +193,17 @@ void main() {
         mood: KissCutVisualMood.neutral,
         animate: true,
         useProductionMotion: true,
+        behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
       ),
       definition: definition,
     );
 
     final ticker = _painter(tester).stateSource! as EyeMotionTicker;
     expect(ticker.player.definition, same(definition));
+    expect(
+      ticker.player.behaviourMode,
+      EyeMotionBehaviourMode.neutralLivingIdle,
+    );
     expect(ticker.player.clipName, ChromeKissProductionEyeClips.kissIdle);
     expect(ticker.isTicking, isTrue);
   });

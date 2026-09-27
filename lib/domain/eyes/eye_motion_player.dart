@@ -5,12 +5,55 @@ import 'eye_emotion.dart';
 import 'eye_motion_clip.dart';
 import 'eye_motion_definition.dart';
 import 'eye_motion_library.dart';
+import 'eye_motion_production.dart';
 import 'eye_motion_transition.dart';
 import 'eye_runtime_state.dart';
+import 'neutral_living_idle.dart';
 
 enum EyeMotionPlaybackStatus { playing, paused, stopped }
 
 enum EyeMotionPlayerPhase { idle, transition, hold, behaviour, moodTransition }
+
+enum EyeMotionBehaviourMode { controlled, neutralLivingIdle }
+
+enum EyeMotionActiveGesture {
+  none,
+  ambientGaze,
+  microSaccade,
+  naturalBlink,
+  doubleBlink,
+  slowBlink,
+  wink,
+  forcedGaze,
+  fireflySearch,
+  neutralCuriousGlance,
+  neutralSoftCenterBlink,
+  neutralSideHoldReturn,
+}
+
+final class EyeMotionDiagnostics {
+  const EyeMotionDiagnostics({
+    required this.playerPhase,
+    required this.motionPhase,
+    required this.gazeTargetX,
+    required this.gazeTargetY,
+    required this.activeGesture,
+    required this.blinkType,
+    required this.pupilScale,
+    required this.schedulerState,
+    required this.statistics,
+  });
+
+  final EyeMotionPlayerPhase playerPhase;
+  final EyeMotionPhase motionPhase;
+  final double gazeTargetX;
+  final double gazeTargetY;
+  final EyeMotionActiveGesture activeGesture;
+  final EyeBlinkVariant? blinkType;
+  final double pupilScale;
+  final EyeLivingIdleSchedulerState schedulerState;
+  final EyeLivingIdleStatistics statistics;
+}
 
 final class EyeMotionClipSample {
   const EyeMotionClipSample({
@@ -105,6 +148,7 @@ final class EyeMotionPlayer {
     EyeMotionDefinition? definition,
     EyeMood initialMood = EyeEmotion.neutral,
     String initialClip = ChromeKissEyeClips.neutralIdle,
+    this.behaviourMode = EyeMotionBehaviourMode.controlled,
   }) : _engine = behaviourEngine,
        definition = definition ?? chromeKissEyeMotionDefinition,
        _mood = initialMood,
@@ -113,16 +157,23 @@ final class EyeMotionPlayer {
        _clipName = initialClip {
     _engine.setMood(initialMood);
     _authoredStart = _state;
-    _scheduleNextBehaviour();
+    if (behaviourMode == EyeMotionBehaviourMode.neutralLivingIdle) {
+      _livingFrame = _engine.livingIdleFrame;
+    } else {
+      _scheduleNextBehaviour();
+    }
   }
 
   final EyeBehaviourEngine _engine;
   final EyeMotionDefinition definition;
+  final EyeMotionBehaviourMode behaviourMode;
   EyeMood _mood;
   late EyeRuntimeState _baseState;
   late EyeRuntimeState _state;
   late EyeRuntimeState _authoredStart;
   String _clipName;
+  String? _resumeClipName;
+  var _resumeOnNextAdvance = false;
   Duration _clipElapsed = Duration.zero;
   EyeMotionPlaybackStatus _status = EyeMotionPlaybackStatus.playing;
   EyeMotionPlayerPhase _phase = EyeMotionPlayerPhase.idle;
@@ -133,6 +184,7 @@ final class EyeMotionPlayer {
   EyeBehaviourAction? _activeAction;
   Duration _actionElapsed = Duration.zero;
   bool _initialBlinkPending = true;
+  late EyeLivingIdleFrame _livingFrame;
 
   EyeRuntimeState? _moodTransitionFrom;
   EyeRuntimeState? _moodTransitionTo;
@@ -149,6 +201,37 @@ final class EyeMotionPlayer {
   EyeMotionPlaybackStatus get status => _status;
   EyeMotionPlayerPhase get phase => _phase;
   double get speed => _speed;
+  EyeLivingIdleConfiguration get livingIdleConfiguration =>
+      _engine.livingIdleConfiguration;
+  EyeLivingIdleStatistics get livingIdleStatistics =>
+      _engine.livingIdleStatistics;
+
+  EyeMotionDiagnostics get diagnostics {
+    final living = switch (behaviourMode) {
+      EyeMotionBehaviourMode.neutralLivingIdle => _livingFrame.diagnostics,
+      EyeMotionBehaviourMode.controlled => _engine.livingIdleFrame.diagnostics,
+    };
+    final blinkType = switch (_activeAction) {
+      BlinkEyeAction(:final variant) => variant,
+      _ => _livingBlinkVariant(living.activeBlink),
+    };
+    return EyeMotionDiagnostics(
+      playerPhase: _phase,
+      motionPhase: _state.motionPhase,
+      gazeTargetX: living.gazeTargetX,
+      gazeTargetY: living.gazeTargetY,
+      activeGesture: _activeGesture(living),
+      blinkType: blinkType,
+      pupilScale: _state.pupilScale,
+      schedulerState: living.schedulerState,
+      statistics: living.statistics,
+    );
+  }
+
+  void configureLivingIdle(EyeLivingIdleConfiguration configuration) {
+    _engine.configureLivingIdle(configuration);
+    _livingFrame = _engine.livingIdleFrame;
+  }
 
   void advance(Duration delta) {
     if (_status != EyeMotionPlaybackStatus.playing || delta <= Duration.zero) {
@@ -160,6 +243,15 @@ final class EyeMotionPlayer {
     if (_moodTransitionTo != null) {
       _advanceMoodTransition(scaled);
       return;
+    }
+
+    if (_resumeOnNextAdvance && _resumeClipName != null) {
+      _beginInterruption();
+      _authoredStart = _state;
+      _clipName = _resumeClipName!;
+      _clipElapsed = Duration.zero;
+      _resumeClipName = null;
+      _resumeOnNextAdvance = false;
     }
 
     _clipElapsed += scaled;
@@ -176,14 +268,27 @@ final class EyeMotionPlayer {
       base: _baseState,
       initial: _authoredStart,
     );
+    if (authored.completed && _resumeClipName != null) {
+      _resumeOnNextAdvance = true;
+    }
+    final living = _advanceLivingIdle(scaled, clip);
     final overlay = _advanceBehaviour(scaled, clip.blinkPolicy);
-    final composed = _compose(authored.state, overlay);
+    final composed = _compose(authored.state, living, overlay);
     _state = _applyInterruptionBlend(composed, scaled);
     _phase = overlay == null ? authored.phase : EyeMotionPlayerPhase.behaviour;
   }
 
   void play(String clipName) {
     if (!definition.clips.containsKey(clipName)) return;
+    if (behaviourMode == EyeMotionBehaviourMode.neutralLivingIdle &&
+        !_isNeutralIdleClip(clipName)) {
+      _resumeClipName = _isNeutralIdleClip(_clipName)
+          ? _clipName
+          : resolveInitialEyeMotionClip(definition);
+    } else {
+      _resumeClipName = null;
+    }
+    _resumeOnNextAdvance = false;
     _beginInterruption();
     _authoredStart = _state;
     _clipName = clipName;
@@ -191,7 +296,9 @@ final class EyeMotionPlayer {
     _status = EyeMotionPlaybackStatus.playing;
     _clearAction();
     _initialBlinkPending = true;
-    _scheduleNextBehaviour();
+    if (behaviourMode == EyeMotionBehaviourMode.controlled) {
+      _scheduleNextBehaviour();
+    }
   }
 
   void restart() => play(_clipName);
@@ -255,6 +362,7 @@ final class EyeMotionPlayer {
   }
 
   void trigger(EyeBehaviourAction action) {
+    if (action is BlinkEyeAction) _engine.deferLivingIdleBlink();
     _beginInterruption();
     _activeAction = action;
     _actionElapsed = Duration.zero;
@@ -308,13 +416,40 @@ final class EyeMotionPlayer {
     _clipElapsed = Duration.zero;
     _moodTransitionFrom = null;
     _moodTransitionTo = null;
-    _scheduleNextBehaviour();
+    if (behaviourMode == EyeMotionBehaviourMode.controlled) {
+      _scheduleNextBehaviour();
+    }
+  }
+
+  EyeLivingIdleFrame? _advanceLivingIdle(Duration delta, EyeMotionClip clip) {
+    if (behaviourMode != EyeMotionBehaviourMode.neutralLivingIdle ||
+        !_isNeutralIdleClip(_clipName) ||
+        clip.blinkPolicy != EyeMotionBlinkPolicy.natural) {
+      return null;
+    }
+    final active = _activeAction;
+    if (active != null) {
+      return active is BlinkEyeAction ? _livingFrame : null;
+    }
+    _livingFrame = _engine.advanceLivingIdle(delta);
+    final signature = _engine.takeScheduledSignature();
+    if (signature != null) {
+      _beginInterruption();
+      _activeAction = _engine.playNeutralSignature(signature);
+      _actionElapsed = Duration.zero;
+      return null;
+    }
+    return _livingFrame;
   }
 
   _EyeBehaviourOverlay? _advanceBehaviour(
     Duration delta,
     EyeMotionBlinkPolicy blinkPolicy,
   ) {
+    if (_activeAction == null &&
+        behaviourMode == EyeMotionBehaviourMode.neutralLivingIdle) {
+      return null;
+    }
     if (_activeAction == null) {
       _behaviourDelay -= delta;
       if (_behaviourDelay > Duration.zero) return null;
@@ -341,12 +476,16 @@ final class EyeMotionPlayer {
       _engine.moodProfile.restingGazeY,
     );
     if (!overlay.completed) return overlay;
+    _beginInterruption();
     _clearAction();
-    _scheduleNextBehaviour();
+    if (behaviourMode == EyeMotionBehaviourMode.controlled) {
+      _scheduleNextBehaviour();
+    }
     return null;
   }
 
   void _scheduleNextBehaviour() {
+    if (behaviourMode != EyeMotionBehaviourMode.controlled) return;
     final clip = definition.clips[_clipName];
     final configuration = clip?.blinkConfiguration;
     final action =
@@ -380,28 +519,104 @@ final class EyeMotionPlayer {
 
   EyeRuntimeState _compose(
     EyeRuntimeState authored,
+    EyeLivingIdleFrame? living,
     _EyeBehaviourOverlay? overlay,
   ) {
-    if (overlay == null) return _safe(authored);
+    var gazeX = authored.gazeX;
+    var gazeY = authored.gazeY;
+    var leftOpen = authored.leftEyelidOpen;
+    var rightOpen = authored.rightEyelidOpen;
+    var pupilScale = authored.pupilScale;
+    var expressionTilt = authored.expressionTilt;
+    var velocityX = authored.velocityX;
+    var velocityY = authored.velocityY;
+
+    if (living != null) {
+      gazeX += living.gazeX + living.microSaccadeX;
+      gazeY += living.gazeY + living.microSaccadeY;
+      final verticalCoupling = (-gazeY * 0.045).clamp(-0.025, 0.022);
+      final lateralCoupling = (gazeX * 0.012).clamp(-0.012, 0.012);
+      leftOpen =
+          (leftOpen + verticalCoupling + lateralCoupling) *
+          living.leftEyelidFactor;
+      rightOpen =
+          (rightOpen + verticalCoupling - lateralCoupling) *
+          living.rightEyelidFactor;
+      pupilScale *= living.pupilFactor;
+      leftOpen += living.leftOpennessOffset;
+      rightOpen += living.rightOpennessOffset;
+      expressionTilt += living.expressionTiltOffset;
+      velocityX = living.velocityX;
+      velocityY = living.velocityY;
+    }
+
     final response = switch (_mood) {
       EyeEmotion.curious => 1.045,
       EyeEmotion.surprised => 0.94,
       _ => 1.0,
     };
+    if (overlay != null) {
+      gazeX += overlay.gazeX;
+      gazeY += overlay.gazeY;
+      leftOpen *= overlay.leftEyelidFactor;
+      rightOpen *= overlay.rightEyelidFactor;
+      pupilScale *= overlay.pupilFactor;
+      velocityX = overlay.velocityX;
+      velocityY = overlay.velocityY;
+    }
+
     return _safe(
       authored.copyWith(
-        gazeX: authored.gazeX + overlay.gazeX,
-        gazeY: authored.gazeY + overlay.gazeY,
-        leftEyelidOpen: authored.leftEyelidOpen * overlay.leftEyelidFactor,
-        rightEyelidOpen: authored.rightEyelidOpen * overlay.rightEyelidFactor,
-        pupilScale: authored.pupilScale * overlay.pupilFactor * response,
-        eyeScaleX: authored.eyeScaleX * overlay.eyeScaleXFactor,
-        eyeScaleY: authored.eyeScaleY * overlay.eyeScaleYFactor,
-        velocityX: overlay.velocityX,
-        velocityY: overlay.velocityY,
-        motionPhase: overlay.motionPhase,
+        gazeX: gazeX.clamp(-1.0, 1.0),
+        gazeY: gazeY.clamp(-1.0, 1.0),
+        leftEyelidOpen: leftOpen.clamp(0.0, 1.0),
+        rightEyelidOpen: rightOpen.clamp(0.0, 1.0),
+        pupilScale: (pupilScale * response).clamp(0.55, 1.35),
+        eyeScaleX: authored.eyeScaleX * (overlay?.eyeScaleXFactor ?? 1),
+        eyeScaleY: authored.eyeScaleY * (overlay?.eyeScaleYFactor ?? 1),
+        expressionTilt: expressionTilt.clamp(-0.35, 0.35),
+        velocityX: velocityX.clamp(-2.0, 2.0),
+        velocityY: velocityY.clamp(-2.0, 2.0),
+        motionPhase:
+            overlay?.motionPhase ?? _motionPhaseForLiving(living?.diagnostics),
       ),
     );
+  }
+
+  EyeMotionActiveGesture _activeGesture(EyeLivingIdleDiagnostics living) {
+    final active = _activeAction;
+    if (active case BlinkEyeAction(:final variant)) {
+      return switch (variant) {
+        EyeBlinkVariant.natural => EyeMotionActiveGesture.naturalBlink,
+        EyeBlinkVariant.doubleBlink => EyeMotionActiveGesture.doubleBlink,
+        EyeBlinkVariant.slow => EyeMotionActiveGesture.slowBlink,
+        EyeBlinkVariant.wink => EyeMotionActiveGesture.wink,
+      };
+    }
+    if (active is GazeEyeAction) return EyeMotionActiveGesture.forcedGaze;
+    if (active case SpecialEyeAction(:final type)) {
+      return switch (type) {
+        EyeSpecialAction.fireflySearch => EyeMotionActiveGesture.fireflySearch,
+        EyeSpecialAction.neutralCuriousGlance =>
+          EyeMotionActiveGesture.neutralCuriousGlance,
+        EyeSpecialAction.neutralSoftCenterBlink =>
+          EyeMotionActiveGesture.neutralSoftCenterBlink,
+        EyeSpecialAction.neutralSideHoldReturn =>
+          EyeMotionActiveGesture.neutralSideHoldReturn,
+      };
+    }
+    if (living.activeBlink != null) {
+      return switch (living.activeBlink!) {
+        EyeLivingBlinkType.natural => EyeMotionActiveGesture.naturalBlink,
+        EyeLivingBlinkType.doubleBlink => EyeMotionActiveGesture.doubleBlink,
+        EyeLivingBlinkType.slow => EyeMotionActiveGesture.slowBlink,
+      };
+    }
+    return switch (living.phase) {
+      EyeLivingIdlePhase.gazeTransition => EyeMotionActiveGesture.ambientGaze,
+      EyeLivingIdlePhase.microSaccade => EyeMotionActiveGesture.microSaccade,
+      _ => EyeMotionActiveGesture.none,
+    };
   }
 }
 
@@ -442,7 +657,7 @@ _EyeBehaviourOverlay _sampleAction(
     IdleEyeAction() => const _EyeBehaviourOverlay(completed: true),
     GazeEyeAction() => _sampleGaze(action, elapsed, restingGazeY),
     BlinkEyeAction() => _sampleBlink(action, elapsed),
-    SpecialEyeAction() => _sampleSpecial(elapsed),
+    SpecialEyeAction() => _sampleSpecial(action, elapsed),
   };
 }
 
@@ -528,14 +743,31 @@ _EyeBehaviourOverlay _sampleGaze(
 }
 
 _EyeBehaviourOverlay _sampleBlink(BlinkEyeAction action, Duration elapsed) {
-  const anticipation = Duration(milliseconds: 34);
+  if (action.isWink) return _sampleWink(action, elapsed);
   var cursor = Duration.zero;
   for (var blink = 0; blink < action.count; blink++) {
+    final second = blink > 0;
+    final anticipation = Duration(milliseconds: second ? 18 : 34);
+    final leadDuration = second
+        ? _scaleDuration(action.asymmetryDelay, 0.72)
+        : action.asymmetryDelay;
+    final closeDuration = second
+        ? _scaleDuration(action.effectiveCloseDuration, 0.76)
+        : action.effectiveCloseDuration;
+    final closedDuration = second
+        ? _scaleDuration(action.effectiveClosedDuration, 0.68)
+        : action.effectiveClosedDuration;
+    final openDuration = second
+        ? _scaleDuration(action.effectiveOpenDuration, 0.78)
+        : action.effectiveOpenDuration;
+    final leftLeads = second ? !action.leftLeads : action.leftLeads;
+    final liftedOpen = second ? 1.015 : 1.025;
+
     final anticipationEnd = cursor + anticipation;
     if (elapsed <= anticipationEnd) {
       final lift = _lerp(
         1,
-        1.025,
+        second ? 1.012 : 1.025,
         _durationProgress(elapsed - cursor, anticipation),
       );
       return _EyeBehaviourOverlay(
@@ -545,34 +777,34 @@ _EyeBehaviourOverlay _sampleBlink(BlinkEyeAction action, Duration elapsed) {
       );
     }
     cursor = anticipationEnd;
-    final leadEnd = cursor + action.asymmetryDelay;
+    final leadEnd = cursor + leadDuration;
     if (elapsed <= leadEnd) {
       final lead = _lerp(
-        1.025,
+        second ? 1.012 : 1.025,
         0.72,
-        _durationProgress(elapsed - cursor, action.asymmetryDelay),
+        _durationProgress(elapsed - cursor, leadDuration),
       );
       return _EyeBehaviourOverlay(
-        leftEyelidFactor: action.leftLeads ? lead : 1.025,
-        rightEyelidFactor: action.leftLeads ? 1.025 : lead,
+        leftEyelidFactor: leftLeads ? lead : liftedOpen,
+        rightEyelidFactor: leftLeads ? liftedOpen : lead,
         motionPhase: EyeMotionPhase.closing,
       );
     }
     cursor = leadEnd;
-    final closeEnd = cursor + action.effectiveCloseDuration;
+    final closeEnd = cursor + closeDuration;
     if (elapsed <= closeEnd) {
       final t = transformEyeMotionProgress(
         EyeMotionTransitionStyle.easeIn,
-        _durationProgress(elapsed - cursor, action.effectiveCloseDuration),
+        _durationProgress(elapsed - cursor, closeDuration),
       );
       return _EyeBehaviourOverlay(
-        leftEyelidFactor: _lerp(action.leftLeads ? 0.72 : 1.025, 0.04, t),
-        rightEyelidFactor: _lerp(action.leftLeads ? 1.025 : 0.72, 0.045, t),
+        leftEyelidFactor: _lerp(leftLeads ? 0.72 : liftedOpen, 0.04, t),
+        rightEyelidFactor: _lerp(leftLeads ? liftedOpen : 0.72, 0.045, t),
         motionPhase: EyeMotionPhase.closing,
       );
     }
     cursor = closeEnd;
-    final closedEnd = cursor + action.effectiveClosedDuration;
+    final closedEnd = cursor + closedDuration;
     if (elapsed <= closedEnd) {
       return const _EyeBehaviourOverlay(
         leftEyelidFactor: 0.04,
@@ -581,11 +813,11 @@ _EyeBehaviourOverlay _sampleBlink(BlinkEyeAction action, Duration elapsed) {
       );
     }
     cursor = closedEnd;
-    final openEnd = cursor + action.effectiveOpenDuration;
+    final openEnd = cursor + openDuration;
     if (elapsed <= openEnd) {
       final t = transformEyeMotionProgress(
         EyeMotionTransitionStyle.easeOut,
-        _durationProgress(elapsed - cursor, action.effectiveOpenDuration),
+        _durationProgress(elapsed - cursor, openDuration),
       );
       return _EyeBehaviourOverlay(
         leftEyelidFactor: _lerp(0.04, 1, t),
@@ -595,7 +827,8 @@ _EyeBehaviourOverlay _sampleBlink(BlinkEyeAction action, Duration elapsed) {
     }
     cursor = openEnd;
     if (blink + 1 < action.count) {
-      final gapEnd = cursor + BlinkEyeAction.doubleBlinkGap;
+      const naturalGap = Duration(milliseconds: 108);
+      final gapEnd = cursor + naturalGap;
       if (elapsed <= gapEnd) return const _EyeBehaviourOverlay();
       cursor = gapEnd;
     }
@@ -603,7 +836,69 @@ _EyeBehaviourOverlay _sampleBlink(BlinkEyeAction action, Duration elapsed) {
   return const _EyeBehaviourOverlay(completed: true);
 }
 
-_EyeBehaviourOverlay _sampleSpecial(Duration elapsed) {
+_EyeBehaviourOverlay _sampleWink(BlinkEyeAction action, Duration elapsed) {
+  const anticipation = Duration(milliseconds: 38);
+  final closeEnd = anticipation + action.effectiveCloseDuration;
+  final closedEnd = closeEnd + action.effectiveClosedDuration;
+  final openEnd = closedEnd + action.effectiveOpenDuration;
+  if (elapsed <= anticipation) {
+    final lift = _lerp(1, 1.018, _durationProgress(elapsed, anticipation));
+    return _EyeBehaviourOverlay(
+      leftEyelidFactor: action.leftLeads ? lift : 0.99,
+      rightEyelidFactor: action.leftLeads ? 0.99 : lift,
+      motionPhase: EyeMotionPhase.anticipation,
+    );
+  }
+  if (elapsed <= closeEnd) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeIn,
+      _durationProgress(elapsed - anticipation, action.effectiveCloseDuration),
+    );
+    final closing = _lerp(1.018, 0.035, t);
+    return _EyeBehaviourOverlay(
+      leftEyelidFactor: action.leftLeads ? closing : 0.96,
+      rightEyelidFactor: action.leftLeads ? 0.96 : closing,
+      motionPhase: EyeMotionPhase.closing,
+    );
+  }
+  if (elapsed <= closedEnd) {
+    return _EyeBehaviourOverlay(
+      leftEyelidFactor: action.leftLeads ? 0.035 : 0.96,
+      rightEyelidFactor: action.leftLeads ? 0.96 : 0.035,
+      motionPhase: EyeMotionPhase.closed,
+    );
+  }
+  if (elapsed <= openEnd) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeOut,
+      _durationProgress(elapsed - closedEnd, action.effectiveOpenDuration),
+    );
+    final opening = _lerp(0.035, 1, t);
+    return _EyeBehaviourOverlay(
+      leftEyelidFactor: action.leftLeads ? opening : _lerp(0.96, 1, t),
+      rightEyelidFactor: action.leftLeads ? _lerp(0.96, 1, t) : opening,
+      motionPhase: EyeMotionPhase.opening,
+    );
+  }
+  return const _EyeBehaviourOverlay(completed: true);
+}
+
+_EyeBehaviourOverlay _sampleSpecial(SpecialEyeAction action, Duration elapsed) {
+  return switch (action.type) {
+    EyeSpecialAction.fireflySearch => _sampleFirefly(elapsed),
+    EyeSpecialAction.neutralCuriousGlance => _sampleNeutralCuriousGlance(
+      elapsed,
+    ),
+    EyeSpecialAction.neutralSoftCenterBlink => _sampleNeutralSoftCenterBlink(
+      elapsed,
+    ),
+    EyeSpecialAction.neutralSideHoldReturn => _sampleNeutralSideHoldReturn(
+      elapsed,
+    ),
+  };
+}
+
+_EyeBehaviourOverlay _sampleFirefly(Duration elapsed) {
   const first = Duration(milliseconds: 210);
   const hold = Duration(milliseconds: 130);
   const second = Duration(milliseconds: 270);
@@ -674,6 +969,143 @@ _EyeBehaviourOverlay _sampleSpecial(Duration elapsed) {
     );
   }
   return const _EyeBehaviourOverlay(completed: true);
+}
+
+_EyeBehaviourOverlay _sampleNeutralCuriousGlance(Duration elapsed) {
+  const anticipate = Duration(milliseconds: 75);
+  const move = Duration(milliseconds: 245);
+  const hold = Duration(milliseconds: 620);
+  const returnDuration = Duration(milliseconds: 390);
+  if (elapsed <= anticipate) {
+    final t = _durationProgress(elapsed, anticipate);
+    return _EyeBehaviourOverlay(
+      gazeX: _lerp(0, -0.045, t),
+      gazeY: _lerp(0, 0.02, t),
+      motionPhase: EyeMotionPhase.anticipation,
+    );
+  }
+  if (elapsed <= anticipate + move) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeOut,
+      _durationProgress(elapsed - anticipate, move),
+    );
+    return _EyeBehaviourOverlay(
+      gazeX: _lerp(-0.045, 0.39, t),
+      gazeY: _lerp(0.02, -0.2, t),
+      pupilFactor: _lerp(1, 1.018, t),
+      rightEyelidFactor: _lerp(1, 0.978, t),
+      motionPhase: EyeMotionPhase.special,
+    );
+  }
+  if (elapsed <= anticipate + move + hold) {
+    return const _EyeBehaviourOverlay(
+      gazeX: 0.39,
+      gazeY: -0.2,
+      pupilFactor: 1.018,
+      rightEyelidFactor: 0.978,
+      motionPhase: EyeMotionPhase.special,
+    );
+  }
+  final returnStart = anticipate + move + hold;
+  if (elapsed <= returnStart + returnDuration) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeInOut,
+      _durationProgress(elapsed - returnStart, returnDuration),
+    );
+    return _EyeBehaviourOverlay(
+      gazeX: _lerp(0.39, 0, t),
+      gazeY: _lerp(-0.2, 0, t),
+      pupilFactor: _lerp(1.018, 1, t),
+      rightEyelidFactor: _lerp(0.978, 1, t),
+      motionPhase: EyeMotionPhase.settling,
+    );
+  }
+  return const _EyeBehaviourOverlay(completed: true);
+}
+
+_EyeBehaviourOverlay _sampleNeutralSoftCenterBlink(Duration elapsed) {
+  const settle = Duration(milliseconds: 220);
+  final blink = BlinkEyeAction(
+    delay: Duration.zero,
+    variant: EyeBlinkVariant.slow,
+    asymmetryDelay: Duration(milliseconds: 14),
+  );
+  if (elapsed <= settle) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeInOut,
+      _durationProgress(elapsed, settle),
+    );
+    return _EyeBehaviourOverlay(
+      gazeX: _lerp(0.08, 0, t),
+      gazeY: _lerp(-0.04, 0, t),
+      motionPhase: EyeMotionPhase.settling,
+    );
+  }
+  return _sampleBlink(blink, elapsed - settle);
+}
+
+_EyeBehaviourOverlay _sampleNeutralSideHoldReturn(Duration elapsed) {
+  const move = Duration(milliseconds: 310);
+  const hold = Duration(milliseconds: 780);
+  const returnDuration = Duration(milliseconds: 460);
+  if (elapsed <= move) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeOut,
+      _durationProgress(elapsed, move),
+    );
+    return _EyeBehaviourOverlay(
+      gazeX: _lerp(0, -0.48, t),
+      gazeY: _lerp(0, -0.055, t),
+      motionPhase: EyeMotionPhase.special,
+    );
+  }
+  if (elapsed <= move + hold) {
+    return const _EyeBehaviourOverlay(
+      gazeX: -0.48,
+      gazeY: -0.055,
+      motionPhase: EyeMotionPhase.special,
+    );
+  }
+  final returnStart = move + hold;
+  if (elapsed <= returnStart + returnDuration) {
+    final t = transformEyeMotionProgress(
+      EyeMotionTransitionStyle.easeInOut,
+      _durationProgress(elapsed - returnStart, returnDuration),
+    );
+    return _EyeBehaviourOverlay(
+      gazeX: _lerp(-0.48, 0, t),
+      gazeY: _lerp(-0.055, 0, t),
+      motionPhase: EyeMotionPhase.settling,
+    );
+  }
+  return const _EyeBehaviourOverlay(completed: true);
+}
+
+Duration _scaleDuration(Duration duration, double factor) => Duration(
+  microseconds: math.max(1, (duration.inMicroseconds * factor).round()),
+);
+
+bool _isNeutralIdleClip(String clipName) =>
+    clipName == ChromeKissEyeClips.neutralIdle ||
+    clipName == ChromeKissProductionEyeClips.kissIdle;
+
+EyeBlinkVariant? _livingBlinkVariant(EyeLivingBlinkType? type) {
+  return switch (type) {
+    EyeLivingBlinkType.natural => EyeBlinkVariant.natural,
+    EyeLivingBlinkType.doubleBlink => EyeBlinkVariant.doubleBlink,
+    EyeLivingBlinkType.slow => EyeBlinkVariant.slow,
+    null => null,
+  };
+}
+
+EyeMotionPhase _motionPhaseForLiving(EyeLivingIdleDiagnostics? diagnostics) {
+  return switch (diagnostics?.phase) {
+    EyeLivingIdlePhase.gazeTransition => EyeMotionPhase.moving,
+    EyeLivingIdlePhase.microSaccade => EyeMotionPhase.settling,
+    EyeLivingIdlePhase.blink => EyeMotionPhase.closing,
+    EyeLivingIdlePhase.signature => EyeMotionPhase.special,
+    _ => EyeMotionPhase.idle,
+  };
 }
 
 EyeRuntimeState _safe(EyeRuntimeState state) {

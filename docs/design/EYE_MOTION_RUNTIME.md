@@ -2,39 +2,141 @@
 
 ## Purpose
 
-The eye runtime gives Chrome Kiss one deterministic motion spine. Flutter owns
-one monotonic frame ticker; the domain player owns time, authored clips,
-procedural behaviour, interruption, and safety bounds. No `Timer` participates
-in eye motion and Riverpod is used only for infrequent debug intents.
+Chrome Kiss uses one deterministic motion spine for both authored reactions and
+Neutral Living Idle V2. Flutter owns one monotonic frame ticker;
+`EyeMotionPlayer` owns time, composition, interruption, and the final safety
+boundary. `EyeBehaviourEngine` owns seeded behaviour planning. No `Timer`,
+per-layer ticker, per-frame provider write, or second renderer/runtime is part
+of eye motion.
 
-The visual thesis remains Chrome Kiss: a glossy black lens, orchid/lilac
-material, a recognisable cut-paper eye silhouette, controlled asymmetry, and
-small optical highlights. Motion supports character continuity and delight. It
-must not become generic ambient movement or compete with task UI.
+The visual thesis remains Chrome Kiss: glossy black lens, orchid/lilac material,
+recognisable Kiss Cut silhouettes, controlled asymmetry, and small optical
+highlights. Motion adds quiet attention and character without competing with
+task UI.
 
-## Runtime split
+## Runtime ownership
 
 - `EyeMotionDefinition` validates the owned interchange format.
-- `EyeMotionClipSampler` samples a clip from elapsed time without Flutter.
-- `EyeMotionPlayer` is the deterministic state machine and sole composition
-  authority.
-- `EyeMotionTicker` is a thin Flutter adapter. It forwards monotonic deltas and
-  invalidates only the painter/listeners.
-- `KissCutEyePainter` owns the parametric silhouette, pupils, gaze, and lid
-  occlusion. PNG stretching is not the production motion path.
+- `EyeMotionClipSampler` samples authored clips from elapsed time without
+  Flutter.
+- `NeutralLivingIdlePlanner` is a pure-Dart, delta-driven seeded planner. Its
+  only entropy boundary is an injected `Random` owned by
+  `EyeBehaviourEngine`.
+- `EyeMotionPlayer` is the sole composition and interruption authority.
+- `EyeMotionTicker` is the only frame clock. It forwards monotonic deltas and
+  invalidates painter/listeners only.
+- `KissCutEyePainter` remains the V2.1 renderer owner. Neutral V2 changes state,
+  not anatomy, motion JSON, or paint construction.
+- Riverpod carries infrequent Character Study/debug intents only; it is not a
+  frame transport.
 
-The player composes each frame in this fixed order:
+Home opts into `EyeMotionBehaviourMode.neutralLivingIdle` for its production
+hero. Pairing, loading, recovery, lifecycle-controlled states, static content,
+and embedded previews retain their existing controlled/static contracts.
+Character Study explicitly opts into the same V2 mode.
 
-1. base mood;
-2. authored clip;
-3. gaze and seeded micro-behaviour;
-4. blink;
-5. finite-value and geometry clamps.
+## Fixed frame composition
 
-New commands capture the current interpolated state before retargeting. Mood
-changes do the same. Pause and app lifecycle suspension discard the previous
-ticker timestamp, so resume never catches up background time. Reduced motion
-stops the ticker and displays a stable mood pose.
+Every Neutral V2 frame follows this order:
+
+1. Neutral base mood;
+2. authored clip or foreground reaction;
+3. ambient gaze;
+4. micro-saccades;
+5. eyelid/gaze coupling;
+6. blink;
+7. pupil micro-variation;
+8. controlled asymmetry;
+9. finite-value and geometry safety clamps;
+10. the existing Kiss Cut V2.1 painter.
+
+A foreground authored clip, forced gaze, blink gesture, or signature always has
+priority. While one is active, ambient scheduling is frozen: its dwell, blink,
+and signature clocks do not advance and missed events are not replayed later.
+Completion captures the current interpolated state and blends back to neutral,
+so resume does not snap.
+
+## Neutral Living Idle V2
+
+Ambient gaze uses weighted center, lateral, and gentle vertical interest points.
+Targets have unequal dwell times and avoid immediate repetition. A bounded,
+slightly underdamped spring supplies travel and a small settle overshoot;
+substeps are capped at 16 ms so a long caller delta cannot destabilise it.
+Ambient gaze is bounded to `x ±0.72`, `y ±0.42`.
+
+Micro-saccades occur as short one-to-three event bursts during dwell. They are
+independently bounded to `x ±0.055`, `y ±0.035` and can be disabled without
+changing the main gaze target.
+
+Blink scheduling is irregular and seeded. Ambient scheduling selects only:
+
+- natural blink: fast asymmetric close, short closed phase, softer reopen;
+- double blink: a natural first blink and a shorter opposite-leading second;
+- slow blink: deliberately longer close, hold, and reopen.
+
+Wink is debug-only and is never selected by the ambient scheduler. A forced
+blink defers the next ambient blink to prevent an immediate duplicate.
+
+Pupil micro-variation is smooth seeded value noise, normally within
+`0.985–1.015` before authored/mood response. Eyelid openness and expression tilt
+receive slower, smaller independent asymmetry noise. All composed values are
+clamped at the player boundary before reaching V2.1.
+
+Neutral has three rare authored signatures: curious glance, soft center blink,
+and side-hold-return. The initial seeded request window is 19–43 seconds; later windows are 21–49 seconds. They use the
+existing player action path and interruption rules rather than a parallel
+scheduler or renderer.
+
+## Determinism, lifecycle, and reduced motion
+
+A fixed seed plus the same delta sequence produces the same gaze targets,
+blink choices, signatures, and final states. Natural mode reads the app-owned
+random source. Character Study may supply an arbitrary integer seed and can
+restart that exact seed; replacing it stops the old ticker before the new one
+starts, so only one ticker is active.
+
+Pause, app lifecycle suspension, and navigation discard the previous ticker
+timestamp. Resume receives only the new foreground delta; background time is
+never caught up. Appearance rebuilds and transient sheets preserve runtime
+identity. Leaving the surface disposes the ticker; returning creates one
+replacement.
+
+Reduced motion stops the ticker and holds a stable mood pose. It does not run
+ambient gaze, scheduled blinks, signatures, or hidden catch-up work.
+
+## Character Study workflow
+
+Character Study is the production V2 motion lab. It exposes:
+
+- built-in and bundled production definitions;
+- playback at `0.5×`, `1×`, `2×`, and `4×`, play/pause, and clip restart;
+- independent ambient gaze, micro-saccade, blink, pupil, and asymmetry toggles;
+- forced natural/double/slow blinks and debug-only wink;
+- forced left/right gaze and all three neutral signatures;
+- arbitrary integer seed, natural entropy, and restart-same-seed;
+- live phase, target/current gaze, active gesture, blink type, pupil, and
+  scheduler diagnostics.
+
+The controls change the existing engine/player only. They do not create a
+second runtime and are not persisted as product settings.
+
+## Verification contract
+
+Domain coverage includes same-seed/delta determinism, different-seed
+divergence, non-repeating target selection, per-layer bounds and switches,
+blink profile separation, foreground interruption/resume, a fixed 60-second
+trace summary, and a ten-simulated-minute finite/bounds run.
+
+The reference seed `4` at 16 ms steps for 60 seconds currently produces 14 gaze
+transitions, 10 micro-saccade bursts, 8 natural blinks, 1 double blink, 1 slow
+blink, and 2 signature moments. These counts are a regression fixture, not a
+product-frequency promise.
+
+Golden review uses 16 sequential frames from that seed at both 240 px and the
+64 px device-like scale, plus one natural/double/slow/wink gesture sheet. Widget
+coverage verifies Home opt-in, reduced motion, lifecycle pause/resume without
+catch-up, runtime identity across rebuild/sheet changes, seed replacement,
+ticker disposal, and one replacement ticker after return.
 
 ## Owned format
 
@@ -81,23 +183,23 @@ Playback modes are `once`, `loop`, and `pingPong`. Blink policies are
 `natural`, `suppress`, and `authored`. Transition styles are `linear`,
 `easeIn`, `easeOut`, `easeInOut`, and `emphasized`.
 
-`blinkConfiguration` is optional and typed. When present on a `natural` clip,
-the player uses its initial delay, seeded min/max interval, and authored blink
-duration. A `suppress` clip retains the configuration for lossless authoring
-round-trips but schedules no blink from it.
+`blinkConfiguration` is optional and typed. When present on a controlled
+`natural` clip, the player uses its initial delay, seeded min/max interval, and
+authored blink duration. A `suppress` clip retains the configuration for
+lossless authoring round-trips but schedules no blink from it. Neutral Living
+Idle V2 keeps the JSON unchanged and composes its own seeded blink layer only
+when that mode is explicitly active.
 
 ## Original clips
 
-- `neutral_idle`: the original built-in loop, with soft breathing and sparse
-  notice.
-- `curious_follow`: anticipation, overshoot, settle, and return.
+- `neutral_idle`: original built-in loop and Character Study material;
+- `curious_follow`: anticipation, overshoot, settle, and return;
 - `flirty_glance`: asymmetric contact, side glance, and soft return.
 
-These three clips remain built-in Character Study/debug material. The bundled
-production asset contains `kiss-idle` and `kiss-flirty-scan`. Home starts
-`kiss-idle`; `kiss-flirty-scan` is available only from Character Study for now.
-Seeded natural, slow, and double blinks, asymmetric leading lids, gaze
-overshoot, rare asymmetry, and pupil response are procedural overlays.
+The bundled production asset still contains `kiss-idle` and
+`kiss-flirty-scan`. Home starts `kiss-idle`; `kiss-flirty-scan` remains a
+Character Study foreground clip. All production JSON and pose authorship remain
+unchanged by Neutral Living Idle V2.
 
 ## Avatar Definition v1 clean-room adapter
 

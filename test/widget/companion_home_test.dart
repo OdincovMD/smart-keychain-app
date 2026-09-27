@@ -8,6 +8,7 @@ import 'package:smart_keychain_app/app/providers.dart';
 import 'package:smart_keychain_app/core/result.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_player.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/keychain_preview.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/procedural_eyes_view.dart';
 import 'package:smart_keychain_app/infrastructure/content/built_in_scene_repository.dart';
@@ -127,6 +128,10 @@ void main() {
     expect(
       tester.widget<ProceduralEyesView>(eyes).useProductionMotionDefinition,
       isTrue,
+    );
+    expect(
+      tester.widget<ProceduralEyesView>(eyes).behaviourMode,
+      EyeMotionBehaviourMode.neutralLivingIdle,
     );
     expect(
       resolveInitialEyeMotionClip(definition),

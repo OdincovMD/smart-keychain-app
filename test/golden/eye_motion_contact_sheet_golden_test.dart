@@ -140,6 +140,125 @@ void main() {
       });
     }
   }
+
+  for (final size in [240.0, 64.0]) {
+    testWidgets('neutral living idle contact sheet at ${size.toInt()} px', (
+      tester,
+    ) async {
+      final frames = _livingFrames(production);
+      final width = size * frames.length + 12 * (frames.length + 1);
+      tester.view
+        ..physicalSize = Size(width, size + 52)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: ColoredBox(
+            key: Key('neutral_living_idle_${size.toInt()}'),
+            color: const Color(0xFF08070D),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final frame in frames)
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox.square(
+                        dimension: size,
+                        child: KissCutEyesView(
+                          state: frame.state,
+                          style: KissCutRendererStyle.v21OpticalGlint,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        frame.label,
+                        style: TextStyle(
+                          color: const Color(0xFFF7EAF3),
+                          fontFamily: 'NunitoSans',
+                          fontSize: size == 64 ? 8 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await expectLater(
+        find.byKey(Key('neutral_living_idle_${size.toInt()}')),
+        matchesGoldenFile(
+          'baselines/neutral_living_idle_contact_sheet_${size.toInt()}.png',
+        ),
+      );
+    });
+  }
+
+  testWidgets('single double slow and wink gesture sheet', (tester) async {
+    const size = 112.0;
+    final rows = _blinkGestureFrames();
+    tester.view
+      ..physicalSize = Size(
+        size * rows.first.length + 12 * (rows.first.length + 1),
+        (size + 28) * rows.length + 12,
+      )
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: ColoredBox(
+          key: const Key('blink_gesture_sheet'),
+          color: const Color(0xFF08070D),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (final row in rows)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (final frame in row)
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox.square(
+                            dimension: size,
+                            child: KissCutEyesView(
+                              state: frame.state,
+                              style: KissCutRendererStyle.v21OpticalGlint,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            frame.label,
+                            style: const TextStyle(
+                              color: Color(0xFFF7EAF3),
+                              fontFamily: 'NunitoSans',
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await expectLater(
+      find.byKey(const Key('blink_gesture_sheet')),
+      matchesGoldenFile('baselines/neutral_living_idle_blink_gestures.png'),
+    );
+  });
 }
 
 List<({String label, EyeRuntimeState state})> _frames() {
@@ -219,4 +338,57 @@ List<({String label, EyeRuntimeState state})> _productionFrames(
     (label: 'BLINK', state: blink.state),
     (label: 'LOOP', state: sample(clip.duration)),
   ];
+}
+
+List<({String label, EyeRuntimeState state})> _livingFrames(
+  EyeMotionDefinition definition,
+) {
+  final player = EyeMotionPlayer(
+    behaviourEngine: EyeBehaviourEngine(Random(4)),
+    definition: definition,
+    initialClip: ChromeKissProductionEyeClips.kissIdle,
+    behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
+  );
+  final frames = <({String label, EyeRuntimeState state})>[
+    (label: '00s', state: player.state),
+  ];
+  for (var seconds = 4; seconds <= 60; seconds += 4) {
+    player.advance(const Duration(seconds: 4));
+    frames.add((
+      label: '${seconds.toString().padLeft(2, '0')}s',
+      state: player.state,
+    ));
+  }
+  return frames;
+}
+
+List<List<({String label, EyeRuntimeState state})>> _blinkGestureFrames() {
+  const sampleTimes = <int>[16, 50, 100, 160, 260, 500, 620];
+  return [
+    for (final variant in EyeBlinkVariant.values)
+      [
+        for (final milliseconds in sampleTimes)
+          (
+            label:
+                '${_blinkLabel(variant)} ${milliseconds.toString().padLeft(3, '0')}',
+            state: _sampleBlinkGesture(variant, milliseconds),
+          ),
+      ],
+  ];
+}
+
+String _blinkLabel(EyeBlinkVariant variant) => switch (variant) {
+  EyeBlinkVariant.natural => 'N',
+  EyeBlinkVariant.doubleBlink => 'D',
+  EyeBlinkVariant.slow => 'S',
+  EyeBlinkVariant.wink => 'W',
+};
+
+EyeRuntimeState _sampleBlinkGesture(EyeBlinkVariant variant, int milliseconds) {
+  final engine = EyeBehaviourEngine(Random(0xB11A));
+  final player = EyeMotionPlayer(behaviourEngine: engine);
+  player
+    ..trigger(engine.forceBlink(variant: variant))
+    ..advance(Duration(milliseconds: milliseconds));
+  return player.state;
 }

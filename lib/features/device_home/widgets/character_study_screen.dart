@@ -7,7 +7,9 @@ import '../../../core/result.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_motion_definition.dart';
 import '../../../domain/eyes/eye_motion_library.dart';
+import '../../../domain/eyes/eye_motion_player.dart';
 import '../../../domain/eyes/eye_motion_production.dart';
+import '../../../domain/eyes/neutral_living_idle.dart';
 import '../eye_preview_controller.dart';
 import 'eye_motion_ticker.dart';
 import 'kiss_cut_eye_renderer.dart';
@@ -34,6 +36,13 @@ final class _CharacterStudyScreenState
   CharacterStudyMotionSource _motionSource = CharacterStudyMotionSource.builtIn;
   EyeMotionDefinition _definition = chromeKissEyeMotionDefinition;
   EyeMotionTicker? _runtime;
+  final _seedController = TextEditingController(text: '42');
+
+  @override
+  void dispose() {
+    _seedController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +64,7 @@ final class _CharacterStudyScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'PROPOSED · NOT PRODUCTION DEFAULT',
+                      'PRODUCTION V2 · MOTION LAB',
                       style: context.chromeKissText.status.copyWith(
                         color: colors.materialChampagne,
                       ),
@@ -70,7 +79,7 @@ final class _CharacterStudyScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Isolated renderer study on the same behaviour engine.',
+                      'Seeded living idle and authored reactions on one runtime.',
                       style: context.chromeKissText.body.copyWith(
                         color: colors.textSecondary,
                         fontSize: 14,
@@ -145,7 +154,7 @@ final class _CharacterStudyScreenState
                     ),
                     const SizedBox(height: 18),
                     _StudySection(
-                      label: 'Playback',
+                      label: 'Playback speed',
                       child: Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -169,16 +178,19 @@ final class _CharacterStudyScreenState
                             onPressed: ref
                                 .read(eyePreviewControllerProvider.notifier)
                                 .restart,
-                            child: const Text('Restart'),
+                            child: const Text('Restart clip'),
                           ),
-                          FilterChip(
-                            key: const Key('study_slow_motion'),
-                            label: const Text('0.5×'),
-                            selected: eyeState.playbackSpeed == 0.5,
-                            onSelected: (selected) => ref
-                                .read(eyePreviewControllerProvider.notifier)
-                                .setPlaybackSpeed(selected ? 0.5 : 1),
-                          ),
+                          for (final speed in const <double>[0.5, 1, 2, 4])
+                            ChoiceChip(
+                              key: Key('study_speed_${speed}x'),
+                              label: Text(
+                                '${speed.toStringAsFixed(speed == 0.5 ? 1 : 0)}×',
+                              ),
+                              selected: eyeState.playbackSpeed == speed,
+                              onSelected: (_) => ref
+                                  .read(eyePreviewControllerProvider.notifier)
+                                  .setPlaybackSpeed(speed),
+                            ),
                         ],
                       ),
                     ),
@@ -262,7 +274,72 @@ final class _CharacterStudyScreenState
                     ],
                     const SizedBox(height: 18),
                     _StudySection(
-                      label: 'Motion checks',
+                      label: 'Ambient layers',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilterChip(
+                            key: const Key('study_layer_ambient_gaze'),
+                            label: const Text('Ambient gaze'),
+                            selected:
+                                eyeState.livingIdleConfiguration.ambientGaze,
+                            onSelected: (value) => _setLivingConfiguration(
+                              eyeState.livingIdleConfiguration.copyWith(
+                                ambientGaze: value,
+                              ),
+                            ),
+                          ),
+                          FilterChip(
+                            key: const Key('study_layer_micro_saccades'),
+                            label: const Text('Micro-saccades'),
+                            selected:
+                                eyeState.livingIdleConfiguration.microSaccades,
+                            onSelected: (value) => _setLivingConfiguration(
+                              eyeState.livingIdleConfiguration.copyWith(
+                                microSaccades: value,
+                              ),
+                            ),
+                          ),
+                          FilterChip(
+                            key: const Key('study_layer_blinks'),
+                            label: const Text('Blink layer'),
+                            selected: eyeState.livingIdleConfiguration.blinks,
+                            onSelected: (value) => _setLivingConfiguration(
+                              eyeState.livingIdleConfiguration.copyWith(
+                                blinks: value,
+                              ),
+                            ),
+                          ),
+                          FilterChip(
+                            key: const Key('study_layer_pupil'),
+                            label: const Text('Pupil variation'),
+                            selected:
+                                eyeState.livingIdleConfiguration.pupilVariation,
+                            onSelected: (value) => _setLivingConfiguration(
+                              eyeState.livingIdleConfiguration.copyWith(
+                                pupilVariation: value,
+                              ),
+                            ),
+                          ),
+                          FilterChip(
+                            key: const Key('study_layer_asymmetry'),
+                            label: const Text('Asymmetry'),
+                            selected: eyeState
+                                .livingIdleConfiguration
+                                .controlledAsymmetry,
+                            onSelected: (value) => _setLivingConfiguration(
+                              eyeState.livingIdleConfiguration.copyWith(
+                                controlledAsymmetry: value,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Blink gestures',
                       child: Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -272,15 +349,39 @@ final class _CharacterStudyScreenState
                             onPressed: () => ref
                                 .read(eyePreviewControllerProvider.notifier)
                                 .requestBlink(),
-                            child: const Text('Blink'),
+                            child: const Text('Single'),
                           ),
                           OutlinedButton(
                             key: const Key('study_double_blink'),
                             onPressed: () => ref
                                 .read(eyePreviewControllerProvider.notifier)
                                 .requestDoubleBlink(),
-                            child: const Text('Double blink'),
+                            child: const Text('Double'),
                           ),
+                          OutlinedButton(
+                            key: const Key('study_slow_blink'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestSlowBlink(),
+                            child: const Text('Slow'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_wink'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestWink(),
+                            child: const Text('Wink · debug'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
+                      label: 'Forced gaze and signatures',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
                           OutlinedButton(
                             key: const Key('study_look_left'),
                             onPressed: () => ref
@@ -295,27 +396,70 @@ final class _CharacterStudyScreenState
                                 .requestLookRight(),
                             child: const Text('Look right'),
                           ),
+                          OutlinedButton(
+                            key: const Key('study_signature_curious'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestSignatureCuriousGlance(),
+                            child: const Text('Curious glance'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_signature_soft_blink'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestSignatureSoftCenterBlink(),
+                            child: const Text('Soft center blink'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_signature_side_return'),
+                            onPressed: () => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .requestSignatureSideHoldReturn(),
+                            child: const Text('Side hold return'),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 18),
                     _StudySection(
-                      label: 'Random source',
+                      label: 'Deterministic seed',
                       child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          for (final seed in <int?>[null, 7, 42])
-                            ChoiceChip(
-                              key: Key('study_seed_${seed ?? 'natural'}'),
-                              label: Text(
-                                seed == null ? 'Natural' : 'Seed $seed',
+                          SizedBox(
+                            width: 148,
+                            child: TextField(
+                              key: const Key('study_seed_field'),
+                              controller: _seedController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Seed',
                               ),
-                              selected: eyeState.randomSeed == seed,
-                              onSelected: (_) => ref
-                                  .read(eyePreviewControllerProvider.notifier)
-                                  .setRandomSeed(seed),
+                              onSubmitted: (_) => _applySeed(),
                             ),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_seed_apply'),
+                            onPressed: _applySeed,
+                            child: const Text('Apply seed'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_seed_restart'),
+                            onPressed: ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .restartWithSameSeed,
+                            child: const Text('Restart same seed'),
+                          ),
+                          ChoiceChip(
+                            key: const Key('study_seed_natural'),
+                            label: const Text('Natural'),
+                            selected: eyeState.randomSeed == null,
+                            onSelected: (_) => ref
+                                .read(eyePreviewControllerProvider.notifier)
+                                .setRandomSeed(null),
+                          ),
                         ],
                       ),
                     ),
@@ -327,6 +471,18 @@ final class _CharacterStudyScreenState
         ),
       ),
     );
+  }
+
+  void _applySeed() {
+    final seed = int.tryParse(_seedController.text.trim());
+    if (seed == null) return;
+    ref.read(eyePreviewControllerProvider.notifier).setRandomSeed(seed);
+  }
+
+  void _setLivingConfiguration(EyeLivingIdleConfiguration configuration) {
+    ref
+        .read(eyePreviewControllerProvider.notifier)
+        .setLivingIdleConfiguration(configuration);
   }
 
   void _selectMood(KissCutVisualMood mood) {
@@ -431,6 +587,7 @@ final class _CharacterPreview extends StatelessWidget {
                       renderer == EyeRendererVariant.legacy ? null : mood,
                   kissCutColourway: colourway,
                   motionDefinition: definition,
+                  behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
                   onRuntimeReady: onRuntimeReady,
                 ),
               ),
@@ -455,13 +612,17 @@ final class _MotionReadout extends StatelessWidget {
       animation: source,
       builder: (context, child) {
         final state = source.state;
+        final diagnostics = source.player.diagnostics;
         return Text(
-          'phase ${source.phase.name} · '
+          'phase ${diagnostics.motionPhase.name} · '
+          'target ${diagnostics.gazeTargetX.toStringAsFixed(2)}, '
+          '${diagnostics.gazeTargetY.toStringAsFixed(2)} · '
           'gaze ${state.gazeX.toStringAsFixed(2)}, '
           '${state.gazeY.toStringAsFixed(2)} · '
-          'lids ${state.leftEyelidOpen.toStringAsFixed(2)}/'
-          '${state.rightEyelidOpen.toStringAsFixed(2)} · '
-          'pupil ${state.pupilScale.toStringAsFixed(2)}',
+          'gesture ${diagnostics.activeGesture.name} · '
+          'blink ${diagnostics.blinkType?.name ?? 'none'} · '
+          'pupil ${diagnostics.pupilScale.toStringAsFixed(3)} · '
+          'scheduler ${diagnostics.schedulerState.name}',
           key: const Key('study_motion_readout'),
           textAlign: TextAlign.center,
           style: context.chromeKissText.status,

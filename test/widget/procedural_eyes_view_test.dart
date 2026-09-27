@@ -12,6 +12,7 @@ import 'package:smart_keychain_app/domain/device/device_snapshot.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_emotion.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_definition.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_motion_production.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_motion_player.dart';
 import 'package:smart_keychain_app/domain/eyes/eye_runtime_state.dart';
 import 'package:smart_keychain_app/features/device_home/eye_preview_controller.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
@@ -200,13 +201,19 @@ void main() {
     expect(state.gazeX.abs(), lessThan(0.12));
   });
 
-  testWidgets('disposing the view cancels pending timers and ticker', (
-    tester,
-  ) async {
-    await _pumpAnimatedEyes(tester, seed: 41);
+  testWidgets('disposing the view removes its only ticker', (tester) async {
+    late EyeMotionTicker runtime;
+    await _pumpAnimatedEyes(
+      tester,
+      seed: 41,
+      onRuntimeReady: (value) => runtime = value,
+    );
+    expect(runtime.isTicking, isTrue);
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 10));
 
+    expect(runtime.isTicking, isFalse);
     expect(tester.takeException(), isNull);
   });
 
@@ -229,6 +236,7 @@ void main() {
             child: ProceduralEyesView(
               initialEmotion: EyeEmotion.neutral,
               useProductionMotionDefinition: true,
+              behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
               onRuntimeReady: (value) => runtime = value,
             ),
           ),
@@ -345,6 +353,7 @@ void main() {
                 child: ProceduralEyesView(
                   initialEmotion: EyeEmotion.neutral,
                   useProductionMotionDefinition: true,
+                  behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
                   onRuntimeReady: (value) => runtime = value,
                 ),
               ),
@@ -360,6 +369,40 @@ void main() {
     expect(runtime.player.clipName, ChromeKissProductionEyeClips.kissIdle);
     expect(runtime.isTicking, isFalse);
     expect(runtime.state, initial);
+  });
+
+  testWidgets('leaving and returning creates one replacement ticker', (
+    tester,
+  ) async {
+    final definition = _productionDefinition();
+    late EyeMotionTicker runtime;
+    await tester.pumpWidget(
+      _productionEyesHarness(
+        definition: definition,
+        themeMode: ThemeMode.light,
+        onRuntimeReady: (value) => runtime = value,
+      ),
+    );
+    await tester.pump();
+    final first = runtime;
+    expect(first.isTicking, isTrue);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    expect(first.isTicking, isFalse);
+
+    await tester.pumpWidget(
+      _productionEyesHarness(
+        definition: definition,
+        themeMode: ThemeMode.light,
+        onRuntimeReady: (value) => runtime = value,
+      ),
+    );
+    await tester.pump();
+
+    expect(runtime, isNot(same(first)));
+    expect(first.isTicking, isFalse);
+    expect(runtime.isTicking, isTrue);
   });
 
   testWidgets('eye frames repaint without rebuilding the parent', (
@@ -398,14 +441,18 @@ void main() {
 Future<ProviderContainer> _pumpAnimatedEyes(
   WidgetTester tester, {
   required int seed,
+  ValueChanged<EyeMotionTicker>? onRuntimeReady,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [eyeRandomProvider.overrideWithValue(Random(seed))],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: SizedBox.square(
           dimension: 240,
-          child: ProceduralEyesView(initialEmotion: EyeEmotion.neutral),
+          child: ProceduralEyesView(
+            initialEmotion: EyeEmotion.neutral,
+            onRuntimeReady: onRuntimeReady,
+          ),
         ),
       ),
     ),
@@ -451,6 +498,7 @@ Widget _productionEyesHarness({
         child: ProceduralEyesView(
           initialEmotion: EyeEmotion.neutral,
           useProductionMotionDefinition: true,
+          behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
           onRuntimeReady: onRuntimeReady,
         ),
       ),
@@ -476,6 +524,7 @@ Widget _productionSheetHarness({
               child: ProceduralEyesView(
                 initialEmotion: EyeEmotion.neutral,
                 useProductionMotionDefinition: true,
+                behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
                 onRuntimeReady: onRuntimeReady,
               ),
             ),
