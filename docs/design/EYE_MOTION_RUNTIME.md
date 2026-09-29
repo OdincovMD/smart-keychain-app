@@ -62,11 +62,12 @@ Ambient gaze uses weighted center, lateral, and gentle vertical interest points.
 Targets have unequal dwell times and avoid immediate repetition. A bounded,
 slightly underdamped spring supplies travel and a small settle overshoot;
 substeps are capped at 16 ms so a long caller delta cannot destabilise it.
-Ambient gaze is bounded to `x ±0.72`, `y ±0.42`.
+The Neutral polish uses stiffness `30.0` and damping `8.25`. Ambient gaze is
+bounded to `x ±0.72`, `y ±0.42`.
 
 Micro-saccades occur as short one-to-three event bursts during dwell. They are
-independently bounded to `x ±0.055`, `y ±0.035` and can be disabled without
-changing the main gaze target.
+independently bounded to `x ±0.045`, `y ±0.035` and can be disabled without
+changing the main gaze target. Individual movements last 56–92 ms.
 
 Blink scheduling is irregular and seeded. Ambient scheduling selects only:
 
@@ -83,8 +84,10 @@ receive slower, smaller independent asymmetry noise. All composed values are
 clamped at the player boundary before reaching V2.1.
 
 Neutral has three rare authored signatures: curious glance, soft center blink,
-and side-hold-return. The initial seeded request window is 19–43 seconds; later windows are 21–49 seconds. They use the
-existing player action path and interruption rules rather than a parallel
+and side-hold-return. The initial seeded request window is 19–43 seconds; later
+windows are 21–49 seconds. A scheduled signature waits for at least 900 ms of
+settled dwell and a calm-center pose (`|x| ≤ 0.1`, `|y| ≤ 0.1`) before entering
+the existing player action/interruption path. It never creates a parallel
 scheduler or renderer.
 
 ## Determinism, lifecycle, and reduced motion
@@ -127,16 +130,51 @@ divergence, non-repeating target selection, per-layer bounds and switches,
 blink profile separation, foreground interruption/resume, a fixed 60-second
 trace summary, and a ten-simulated-minute finite/bounds run.
 
-The reference seed `4` at 16 ms steps for 60 seconds currently produces 14 gaze
-transitions, 10 micro-saccade bursts, 8 natural blinks, 1 double blink, 1 slow
-blink, and 2 signature moments. These counts are a regression fixture, not a
-product-frequency promise.
+The reference seed `4` at 16 ms steps for 60 seconds currently produces 16 gaze
+transitions, 10 micro-saccade bursts, 9 natural blinks, 1 double blink, no slow
+blink, and 1 signature moment. These counts are a regression fixture, not a
+product-frequency promise; forced capture separately covers every blink and
+signature type.
 
 Golden review uses 16 sequential frames from that seed at both 240 px and the
 64 px device-like scale, plus one natural/double/slow/wink gesture sheet. Widget
 coverage verifies Home opt-in, reduced motion, lifecycle pause/resume without
 catch-up, runtime identity across rebuild/sheet changes, seed replacement,
 ticker disposal, and one replacement ticker after return.
+
+## Offline realtime capture
+
+`tool/neutral_realtime_capture_test.dart` is an explicit, test-only recorder.
+It mounts the production V2.1 widget (and the full Obsidian Home for the Home
+capture), stops the wall-clock ticker, resumes the same `EyeMotionPlayer`, and
+advances it with rational fixed timestamps:
+
+```text
+frameTime = floor(frameIndex * 1,000,000 / FPS) microseconds
+```
+
+Each output frame follows exactly one next timestamp; no sleep, skipped runtime
+state, codec interpolation, second behaviour implementation, per-frame provider
+state, or temporary PNG sequence is used. Forced gestures enter through
+`EyePreviewController`, the same production command path used by Character
+Study. RGBA frames are read from `RepaintBoundary` and streamed into the dev
+encoder, so memory does not grow with an uncompressed frame sequence.
+
+The capture is enabled explicitly and is absent from the Flutter asset bundle:
+
+```sh
+NEUTRAL_REALTIME_CAPTURE_OUTPUT=artifacts/neutral-living-idle-v2/realtime \
+.fvm/flutter_sdk/bin/flutter test \
+tool/neutral_realtime_capture_test.dart
+```
+
+The current environment has no `ffmpeg`. Final files therefore use the allowed
+animated-GIF fallback rather than pretending a GIF is MP4: 30 FPS for close-up,
+blink, and signatures; 15 FPS for Home and the small preview. GIF centisecond
+delays use a deterministic 3/3/4 pattern at 30 FPS (and 6/7 at 15 FPS), so the
+declared frame count sums to the exact capture duration. The companion validation
+test checks container metadata, trace determinism/digest, file bounds, bundle
+separation, and absence of PNG sequences.
 
 ## Owned format
 

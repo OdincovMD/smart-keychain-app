@@ -35,12 +35,17 @@ void main() {
       }
 
       final stats = player.livingIdleStatistics;
-      expect(stats.gazeTransitions, 14);
-      expect(stats.microSaccadeBursts, 10);
-      expect(stats.naturalBlinks, 8);
-      expect(stats.doubleBlinks, 1);
-      expect(stats.slowBlinks, 1);
-      expect(stats.signatureMoments, 2);
+      expect(
+        (
+          stats.gazeTransitions,
+          stats.microSaccadeBursts,
+          stats.naturalBlinks,
+          stats.doubleBlinks,
+          stats.slowBlinks,
+          stats.signatureMoments,
+        ),
+        (16, 10, 9, 1, 0, 1),
+      );
     });
 
     test('different seeds produce distinct bounded traces', () {
@@ -224,14 +229,55 @@ void main() {
         if (gesture == EyeMotionActiveGesture.neutralCuriousGlance ||
             gesture == EyeMotionActiveGesture.neutralSoftCenterBlink ||
             gesture == EyeMotionActiveGesture.neutralSideHoldReturn) {
-          expect((player.state.gazeX - previous.gazeX).abs(), lessThan(0.08));
-          expect((player.state.gazeY - previous.gazeY).abs(), lessThan(0.08));
+          expect(
+            (player.state.gazeX - previous.gazeX).abs(),
+            lessThan(0.08),
+            reason:
+                'previous=(${previous.gazeX}, ${previous.gazeY}) '
+                'current=(${player.state.gazeX}, ${player.state.gazeY}) '
+                'target=(${player.diagnostics.gazeTargetX}, '
+                '${player.diagnostics.gazeTargetY})',
+          );
+          expect(
+            (player.state.gazeY - previous.gazeY).abs(),
+            lessThan(0.08),
+            reason:
+                'previous=(${previous.gazeX}, ${previous.gazeY}) '
+                'current=(${player.state.gazeX}, ${player.state.gazeY})',
+          );
           foundSignature = true;
           break;
         }
         previous = player.state;
       }
       expect(foundSignature, isTrue);
+    });
+
+    test('scheduled signatures wait for a calm dwell after gaze motion', () {
+      final player = _player(4);
+      var elapsed = Duration.zero;
+      Duration? lastGazeEnd;
+      var previousGesture = EyeMotionActiveGesture.none;
+      for (var frame = 0; frame < 3750; frame++) {
+        const delta = Duration(milliseconds: 16);
+        elapsed += delta;
+        player.advance(delta);
+        final gesture = player.diagnostics.activeGesture;
+        if (previousGesture == EyeMotionActiveGesture.ambientGaze &&
+            gesture != EyeMotionActiveGesture.ambientGaze) {
+          lastGazeEnd = elapsed;
+        }
+        if (_isNeutralSignature(gesture)) {
+          expect(lastGazeEnd, isNotNull);
+          expect(
+            elapsed - lastGazeEnd!,
+            greaterThanOrEqualTo(const Duration(milliseconds: 880)),
+          );
+          return;
+        }
+        previousGesture = gesture;
+      }
+      fail('Seed 4 did not schedule a signature within 60 seconds.');
     });
 
     test('signature interruption resumes from the interpolated state', () {
@@ -288,6 +334,13 @@ void main() {
     });
   });
 }
+
+bool _isNeutralSignature(EyeMotionActiveGesture gesture) => switch (gesture) {
+  EyeMotionActiveGesture.neutralCuriousGlance ||
+  EyeMotionActiveGesture.neutralSoftCenterBlink ||
+  EyeMotionActiveGesture.neutralSideHoldReturn => true,
+  _ => false,
+};
 
 EyeMotionPlayer _player(int seed) => EyeMotionPlayer(
   behaviourEngine: EyeBehaviourEngine(Random(seed)),

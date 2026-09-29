@@ -167,7 +167,7 @@ final class NeutralLivingIdlePlanner {
 
   static const maximumGazeX = 0.72;
   static const maximumGazeY = 0.42;
-  static const maximumMicroSaccade = 0.055;
+  static const maximumMicroSaccade = 0.045;
   static const minimumPupilFactor = 0.985;
   static const maximumPupilFactor = 1.015;
 
@@ -304,7 +304,7 @@ final class NeutralLivingIdlePlanner {
     }
 
     const stiffness = 30.0;
-    const damping = 7.7;
+    const damping = 8.25;
     final accelerationX =
         (_targetX - _gazeX) * stiffness - _velocityX * damping;
     final accelerationY =
@@ -432,7 +432,7 @@ final class NeutralLivingIdlePlanner {
     _microTargetX = _signed(0.018, maximumMicroSaccade);
     _microTargetY = _signed(0.01, 0.035);
     _microElapsedMicros = 0;
-    _microDurationMicros = _betweenMicros(48000, 86000);
+    _microDurationMicros = _betweenMicros(56000, 92000);
     _microPhase = _MicroPhase.moving;
   }
 
@@ -539,6 +539,9 @@ final class NeutralLivingIdlePlanner {
     _signatureWaitMicros -= micros;
     if (_signatureWaitMicros > 0 ||
         _gazeTransitioning ||
+        _sinceGazeSettledMicros < 900000 ||
+        _gazeX.abs() > 0.1 ||
+        _gazeY.abs() > 0.1 ||
         _activeBlink != null ||
         _microPhase != _MicroPhase.waiting) {
       return;
