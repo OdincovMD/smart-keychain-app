@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../app/chrome_kiss_theme.dart';
 import '../../../core/result.dart';
+import '../../../domain/eyes/eye_behaviour_engine.dart';
 import '../../../domain/eyes/eye_emotion.dart';
 import '../../../domain/eyes/eye_motion_definition.dart';
 import '../../../domain/eyes/eye_motion_library.dart';
@@ -422,6 +423,56 @@ final class _CharacterStudyScreenState
                     ),
                     const SizedBox(height: 18),
                     _StudySection(
+                      label: 'Apply Look reactions',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton(
+                            key: const Key('study_apply_waiting'),
+                            onPressed: () =>
+                                _playApplyReaction(EyeApplyReaction.applying),
+                            child: const Text('Anticipation / waiting'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_apply_success'),
+                            onPressed: () =>
+                                _playApplyReaction(EyeApplyReaction.success),
+                            child: const Text('Success'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_apply_failure'),
+                            onPressed: () =>
+                                _playApplyReaction(EyeApplyReaction.failure),
+                            child: const Text('Failure'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_apply_retry'),
+                            onPressed: () => _playApplyReaction(
+                              EyeApplyReaction.retryApplying,
+                              retry: true,
+                            ),
+                            child: const Text('Retry transition'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_apply_full_success'),
+                            onPressed: () => _playApplyReaction(
+                              EyeApplyReaction.demoApplyingSuccess,
+                            ),
+                            child: const Text('Applying → Applied'),
+                          ),
+                          OutlinedButton(
+                            key: const Key('study_apply_full_failure_retry'),
+                            onPressed: () => _playApplyReaction(
+                              EyeApplyReaction.demoApplyingFailureRetry,
+                            ),
+                            child: const Text('Applying → Failed → Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _StudySection(
                       label: 'Deterministic seed',
                       child: Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -495,6 +546,13 @@ final class _CharacterStudyScreenState
   void _captureRuntime(EyeMotionTicker runtime) {
     if (identical(_runtime, runtime)) return;
     setState(() => _runtime = runtime);
+  }
+
+  void _playApplyReaction(EyeApplyReaction reaction, {bool retry = false}) {
+    final runtime = _runtime;
+    if (runtime == null) return;
+    runtime.player.startApplyReaction(reaction, retry: retry);
+    runtime.refresh();
   }
 
   void _selectMotionSource(CharacterStudyMotionSource source) {
@@ -621,8 +679,15 @@ final class _MotionReadout extends StatelessWidget {
           '${state.gazeY.toStringAsFixed(2)} · '
           'gesture ${diagnostics.activeGesture.name} · '
           'blink ${diagnostics.blinkType?.name ?? 'none'} · '
+          'reaction ${diagnostics.activeReaction?.name ?? 'none'} / '
+          '${diagnostics.reactionPhase.name} · '
+          'priority ${diagnostics.priority.name} · '
+          'interrupt ${diagnostics.interruptionInProgress} · '
+          'ambient ${diagnostics.ambientSuspended ? 'suspended' : 'resumed'} · '
           'pupil ${diagnostics.pupilScale.toStringAsFixed(3)} · '
-          'scheduler ${diagnostics.schedulerState.name}',
+          'scheduler ${diagnostics.schedulerState.name} · '
+          'ticker ${identityHashCode(source)} / '
+          'player ${identityHashCode(source.player)}',
           key: const Key('study_motion_readout'),
           textAlign: TextAlign.center,
           style: context.chromeKissText.status,

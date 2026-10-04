@@ -17,6 +17,44 @@ enum EyeSpecialAction {
   neutralSideHoldReturn,
 }
 
+/// Semantic product reactions understood by the deterministic eye runtime.
+///
+/// Product features map their own lifecycle states onto these values; the eye
+/// domain deliberately has no dependency on Riverpod or feature status types.
+enum EyeApplyReaction {
+  applying,
+  success,
+  failure,
+  retryApplying,
+  demoApplyingSuccess,
+  demoApplyingFailureRetry,
+}
+
+enum EyeApplyReactionPhase {
+  none,
+  anticipation,
+  focus,
+  waiting,
+  confirmation,
+  blinkClosing,
+  blinkOpening,
+  glint,
+  happyHold,
+  cautiousHold,
+  settle,
+  returnToAmbient,
+}
+
+/// Foreground ownership. Larger values may interrupt smaller values.
+enum EyeReactionPriority {
+  ambient,
+  forcedDebug,
+  applyInProgress,
+  applyOutcome,
+  connectionRecovery,
+  intentionalExit,
+}
+
 sealed class EyeBehaviourAction {
   const EyeBehaviourAction({required this.delay});
 
@@ -191,6 +229,22 @@ final class SpecialEyeAction extends EyeBehaviourAction {
 
   @override
   int get hashCode => Object.hash(delay, type);
+}
+
+/// Delta-driven Apply Look choreography sampled by [EyeMotionPlayer].
+final class ApplyLookEyeAction extends EyeBehaviourAction {
+  const ApplyLookEyeAction({required this.reaction})
+    : super(delay: Duration.zero);
+
+  final EyeApplyReaction reaction;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ApplyLookEyeAction && reaction == other.reaction;
+
+  @override
+  int get hashCode => reaction.hashCode;
 }
 
 /// Chooses character actions without depending on Flutter or wall-clock APIs.

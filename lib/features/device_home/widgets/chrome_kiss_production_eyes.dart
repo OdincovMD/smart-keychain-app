@@ -27,6 +27,7 @@ final class ChromeKissProductionEyes extends StatelessWidget {
     this.colourway = KissCutColourway.orchidLilac,
     this.background = ChromeKissEyeBackground.lens,
     this.behaviourMode = EyeMotionBehaviourMode.controlled,
+    this.externalRuntime,
     this.onRuntimeReady,
     super.key,
   });
@@ -38,6 +39,7 @@ final class ChromeKissProductionEyes extends StatelessWidget {
   final KissCutColourway colourway;
   final ChromeKissEyeBackground background;
   final EyeMotionBehaviourMode behaviourMode;
+  final EyeMotionTicker? externalRuntime;
   final ValueChanged<EyeMotionTicker>? onRuntimeReady;
 
   @override
@@ -64,6 +66,7 @@ final class ChromeKissProductionEyes extends StatelessWidget {
             },
             useProductionMotionDefinition: useProductionMotion,
             behaviourMode: behaviourMode,
+            externalRuntime: externalRuntime,
             onRuntimeReady: onRuntimeReady,
           ),
         ),

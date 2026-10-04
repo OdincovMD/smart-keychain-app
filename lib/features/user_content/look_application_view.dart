@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app/chrome_kiss_theme.dart';
 import '../../domain/content/scene.dart';
 import '../device_home/widgets/chrome_kiss_eye_reaction_lens.dart';
+import '../device_home/widgets/eye_motion_ticker.dart';
 import '../device_home/widgets/jewel_button.dart';
 import '../device_home/widgets/kiss_cut_eye_renderer.dart';
 import '../device_home/widgets/wardrobe_rail.dart';
@@ -16,6 +17,7 @@ final class LookApplicationView extends StatefulWidget {
     required this.status,
     required this.onRetry,
     required this.onReturn,
+    this.eyeRuntime,
     super.key,
   });
 
@@ -23,6 +25,7 @@ final class LookApplicationView extends StatefulWidget {
   final LookApplicationStatus status;
   final VoidCallback onRetry;
   final VoidCallback onReturn;
+  final EyeMotionTicker? eyeRuntime;
 
   @override
   State<LookApplicationView> createState() => _LookApplicationViewState();
@@ -99,6 +102,7 @@ final class _LookApplicationViewState extends State<LookApplicationView>
                   scene: widget.scene,
                   status: status,
                   progress: _progress,
+                  eyeRuntime: widget.eyeRuntime,
                 ),
               ),
               const SizedBox(height: 16),
@@ -228,22 +232,26 @@ final class _ApplicationPreview extends StatelessWidget {
     required this.scene,
     required this.status,
     required this.progress,
+    required this.eyeRuntime,
   });
 
   final Scene scene;
   final LookApplicationStatus status;
   final Animation<double> progress;
+  final EyeMotionTicker? eyeRuntime;
 
   @override
   Widget build(BuildContext context) {
     final diameter = math.min(MediaQuery.sizeOf(context).width - 122, 214.0);
     final colors = context.chromeKiss;
-    final mood = switch (status) {
-      LookApplicationStatus.applying => KissCutVisualMood.curious,
-      LookApplicationStatus.applied => KissCutVisualMood.happy,
-      LookApplicationStatus.failed => KissCutVisualMood.sleepy,
-      LookApplicationStatus.ready => KissCutVisualMood.neutral,
-    };
+    final mood = eyeRuntime == null
+        ? switch (status) {
+            LookApplicationStatus.applying => KissCutVisualMood.curious,
+            LookApplicationStatus.applied => KissCutVisualMood.happy,
+            LookApplicationStatus.failed => KissCutVisualMood.sleepy,
+            LookApplicationStatus.ready => KissCutVisualMood.neutral,
+          }
+        : KissCutVisualMood.neutral;
     final semanticLabel = switch (status) {
       LookApplicationStatus.applying => 'Образ передаётся на брелок',
       LookApplicationStatus.applied => 'Брелок подтвердил новый образ',
@@ -295,8 +303,9 @@ final class _ApplicationPreview extends StatelessWidget {
                   reactionKey: const Key('look_application_character_reaction'),
                   size: ChromeKissEyeReactionLensSize.medium,
                   mood: mood,
-                  animate: false,
-                  useProductionMotion: false,
+                  animate: eyeRuntime != null,
+                  useProductionMotion: eyeRuntime != null,
+                  runtime: eyeRuntime,
                 ),
                 if (status
                     case LookApplicationStatus.applied ||

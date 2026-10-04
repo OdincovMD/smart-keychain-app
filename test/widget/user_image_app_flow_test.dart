@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_keychain_app/app/app.dart';
 import 'package:smart_keychain_app/app/providers.dart';
+import 'package:smart_keychain_app/domain/eyes/eye_behaviour_engine.dart';
 import 'package:smart_keychain_app/domain/image/image_picker_gateway.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/chrome_kiss_production_eyes.dart';
 import 'package:smart_keychain_app/features/device_home/widgets/kiss_cut_eye_renderer.dart';
@@ -176,8 +177,13 @@ void main() {
       find.byKey(const Key('look_application_character_reaction')),
     );
     expect(appliedEyes.scale, ChromeKissEyeScale.medium);
-    expect(appliedEyes.mood, KissCutVisualMood.happy);
-    expect(appliedEyes.animate, isFalse);
+    expect(appliedEyes.mood, KissCutVisualMood.neutral);
+    expect(appliedEyes.animate, isTrue);
+    expect(appliedEyes.externalRuntime, isNotNull);
+    expect(
+      appliedEyes.externalRuntime!.player.diagnostics.activeReaction,
+      EyeApplyReaction.success,
+    );
   });
 }
 

@@ -31,6 +31,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
     this.motionDefinition,
     this.useProductionMotionDefinition = false,
     this.behaviourMode = EyeMotionBehaviourMode.controlled,
+    this.externalRuntime,
     this.onRuntimeReady,
     super.key,
   });
@@ -45,6 +46,7 @@ final class ProceduralEyesView extends ConsumerStatefulWidget {
   final EyeMotionDefinition? motionDefinition;
   final bool useProductionMotionDefinition;
   final EyeMotionBehaviourMode behaviourMode;
+  final EyeMotionTicker? externalRuntime;
   final ValueChanged<EyeMotionTicker>? onRuntimeReady;
 
   @override
@@ -62,11 +64,19 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   var _lifecycleActive = true;
   var _manuallyPaused = false;
 
+  bool get _ownsRuntime => widget.externalRuntime == null;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _createRuntime();
+    final external = widget.externalRuntime;
+    if (external == null) {
+      _createRuntime();
+    } else {
+      _runtime = external;
+      _notifyRuntimeReady();
+    }
   }
 
   void _createRuntime({int? seed, EyeMood? initialMood}) {
@@ -101,6 +111,10 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
     )..setSpeed(preview?.playbackSpeed ?? 1);
     if (!widget.animate) player.stop(snapToMood: true);
     _runtime = EyeMotionTicker(vsync: this, player: player);
+    _notifyRuntimeReady();
+  }
+
+  void _notifyRuntimeReady() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.onRuntimeReady?.call(_runtime);
     });
@@ -109,6 +123,10 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_ownsRuntime) {
+      _motionEnabled = widget.animate && _runtime.isTicking;
+      return;
+    }
     final nextMotionEnabled =
         widget.animate && !MediaQuery.disableAnimationsOf(context);
     if (_motionEnabled == nextMotionEnabled) return;
@@ -123,6 +141,18 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   @override
   void didUpdateWidget(ProceduralEyesView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.externalRuntime, widget.externalRuntime)) {
+      if (oldWidget.externalRuntime == null) _runtime.dispose();
+      final external = widget.externalRuntime;
+      if (external == null) {
+        _createRuntime(initialMood: widget.initialEmotion);
+      } else {
+        _runtime = external;
+        _notifyRuntimeReady();
+      }
+      return;
+    }
+    if (!_ownsRuntime) return;
     if (oldWidget.motionDefinition != widget.motionDefinition ||
         oldWidget.useProductionMotionDefinition !=
             widget.useProductionMotionDefinition ||
@@ -146,6 +176,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_ownsRuntime) return;
     _lifecycleActive = state == AppLifecycleState.resumed;
     if (_lifecycleActive && _motionEnabled && !_manuallyPaused) {
       _runtime.start();
@@ -156,7 +187,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.animate) {
+    if (widget.animate && _ownsRuntime) {
       ref
         ..listen(
           eyePreviewControllerProvider.select((state) => state.emotion),
@@ -287,7 +318,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
             key: painterKey,
             painter: painter,
             isComplex: widget.rendererVariant != EyeRendererVariant.legacy,
-            willChange: _motionEnabled,
+            willChange: _ownsRuntime ? _motionEnabled : _runtime.isTicking,
             child: const SizedBox.expand(),
           ),
         ),
@@ -305,7 +336,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   }
 
   void _changeRandomSeed(int? seed) {
-    if (!widget.animate) return;
+    if (!widget.animate || !_ownsRuntime) return;
     final wasEnabled = _motionEnabled && _lifecycleActive;
     final mood = _runtime.player.mood;
     final retired = _runtime..stop();
@@ -371,7 +402,7 @@ final class _ProceduralEyesViewState extends ConsumerState<ProceduralEyesView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _runtime.dispose();
+    if (_ownsRuntime) _runtime.dispose();
     for (final runtime in _retiredRuntimes) {
       runtime.dispose();
     }

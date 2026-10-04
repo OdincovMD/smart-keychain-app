@@ -12,6 +12,7 @@ import '../../domain/content/scene.dart';
 import '../../infrastructure/content/built_in_scene_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../device_home/widgets/chrome_kiss_bottom_navigation.dart';
+import '../device_home/widgets/eye_motion_ticker.dart';
 import '../device_home/widgets/scene_renderer.dart';
 import '../device_home/widgets/wardrobe_rail.dart';
 import '../image_editor/image_editor_screen.dart';
@@ -27,9 +28,14 @@ import 'wardrobe_states.dart';
 enum UserContentScreenResult { addImage }
 
 final class UserContentScreen extends ConsumerStatefulWidget {
-  const UserContentScreen({this.highlightedSceneId, super.key});
+  const UserContentScreen({
+    this.highlightedSceneId,
+    this.eyeRuntime,
+    super.key,
+  });
 
   final String? highlightedSceneId;
+  final EyeMotionTicker? eyeRuntime;
 
   @override
   ConsumerState<UserContentScreen> createState() => _UserContentScreenState();
@@ -155,7 +161,8 @@ final class _UserContentScreenState extends ConsumerState<UserContentScreen> {
       context: context,
       isDismissible: false,
       enableDrag: false,
-      builder: (context) => LookDetailsSheet(scene: scene),
+      builder: (context) =>
+          LookDetailsSheet(scene: scene, eyeRuntime: widget.eyeRuntime),
     );
     if (!mounted) return;
     switch (action) {

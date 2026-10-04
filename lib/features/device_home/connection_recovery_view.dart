@@ -10,6 +10,7 @@ import '../shared/chrome_kiss_fidelity_frame.dart';
 import 'connection_recovery_controller.dart';
 import 'widgets/chrome_kiss_production_eyes.dart';
 import 'widgets/companion_stage.dart';
+import 'widgets/eye_motion_ticker.dart';
 import 'widgets/jewel_button.dart';
 import 'widgets/kiss_cut_eye_renderer.dart';
 
@@ -20,6 +21,7 @@ final class ConnectionRecoveryView extends StatefulWidget {
     required this.scene,
     required this.onRetry,
     required this.onReturnToDiscovery,
+    this.eyeRuntime,
     super.key,
   });
 
@@ -28,6 +30,7 @@ final class ConnectionRecoveryView extends StatefulWidget {
   final Scene scene;
   final VoidCallback onRetry;
   final VoidCallback onReturnToDiscovery;
+  final EyeMotionTicker? eyeRuntime;
 
   @override
   State<ConnectionRecoveryView> createState() => _ConnectionRecoveryViewState();
@@ -111,6 +114,7 @@ final class _ConnectionRecoveryViewState extends State<ConnectionRecoveryView>
                       snapshot: widget.snapshot,
                       scene: widget.scene,
                       progress: _rimController,
+                      eyeRuntime: widget.eyeRuntime,
                     ),
                     const SizedBox(height: 2),
                     _RecoveryCopy(reconnecting: reconnecting),
@@ -256,12 +260,14 @@ final class _RecoveryCompanion extends StatelessWidget {
     required this.snapshot,
     required this.scene,
     required this.progress,
+    required this.eyeRuntime,
   });
 
   final ConnectionRecoveryStatus status;
   final DeviceSnapshot snapshot;
   final Scene scene;
   final Animation<double> progress;
+  final EyeMotionTicker? eyeRuntime;
 
   @override
   Widget build(BuildContext context) {
@@ -300,6 +306,7 @@ final class _RecoveryCompanion extends StatelessWidget {
                             : KissCutVisualMood.sleepy,
                         animate: reconnecting,
                         useProductionMotion: reconnecting,
+                        externalRuntime: eyeRuntime,
                       ),
                     ),
                   ),

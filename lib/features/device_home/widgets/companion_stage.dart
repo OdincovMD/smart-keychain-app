@@ -8,6 +8,7 @@ import '../../../domain/device/device_snapshot.dart';
 import '../../../domain/device/display_profile.dart';
 import '../../../domain/eyes/eye_motion_player.dart';
 import 'chrome_kiss_production_eyes.dart';
+import 'eye_motion_ticker.dart';
 import '../../../l10n/app_localizations.dart';
 import 'kiss_cut_eye_renderer.dart';
 import 'virtual_screen.dart';
@@ -20,6 +21,7 @@ final class CompanionStage extends StatelessWidget {
     required this.diameter,
     this.visualStudyOverride,
     this.jewelryMode = false,
+    this.eyeRuntime,
     super.key,
   });
 
@@ -29,6 +31,7 @@ final class CompanionStage extends StatelessWidget {
   final double diameter;
   final Widget? visualStudyOverride;
   final bool jewelryMode;
+  final EyeMotionTicker? eyeRuntime;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +51,7 @@ final class CompanionStage extends StatelessWidget {
             visualStudyOverride: visualStudyOverride,
             confirmationEnabled: !reduceMotion,
             confirmationDuration: motion.delight.duration,
+            eyeRuntime: eyeRuntime,
           ),
         ),
       );
@@ -139,6 +143,7 @@ final class _JewelryCompanionStage extends StatelessWidget {
     required this.width,
     required this.confirmationEnabled,
     required this.confirmationDuration,
+    required this.eyeRuntime,
     this.visualStudyOverride,
   });
 
@@ -151,6 +156,7 @@ final class _JewelryCompanionStage extends StatelessWidget {
   final double width;
   final bool confirmationEnabled;
   final Duration confirmationDuration;
+  final EyeMotionTicker? eyeRuntime;
   final Widget? visualStudyOverride;
 
   @override
@@ -329,6 +335,7 @@ final class _JewelryCompanionStage extends StatelessWidget {
                 animate: true,
                 useProductionMotion: true,
                 behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
+                externalRuntime: eyeRuntime,
               ),
             ),
           ),

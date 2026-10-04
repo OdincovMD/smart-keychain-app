@@ -259,6 +259,64 @@ void main() {
       matchesGoldenFile('baselines/neutral_living_idle_blink_gestures.png'),
     );
   });
+
+  for (final size in [240.0, 64.0]) {
+    testWidgets('apply look reaction contact sheet at ${size.toInt()} px', (
+      tester,
+    ) async {
+      final frames = _applyReactionFrames(production);
+      final width = size * frames.length + 12 * (frames.length + 1);
+      tester.view
+        ..physicalSize = Size(width, size + 52)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: ColoredBox(
+            key: Key('apply_look_reaction_${size.toInt()}'),
+            color: const Color(0xFF08070D),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final frame in frames)
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox.square(
+                        dimension: size,
+                        child: KissCutEyesView(
+                          state: frame.state,
+                          style: KissCutRendererStyle.v21OpticalGlint,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        frame.label,
+                        style: TextStyle(
+                          color: const Color(0xFFF7EAF3),
+                          fontFamily: 'NunitoSans',
+                          fontSize: size == 64 ? 8 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await expectLater(
+        find.byKey(Key('apply_look_reaction_${size.toInt()}')),
+        matchesGoldenFile(
+          'baselines/apply_look_reaction_contact_sheet_${size.toInt()}.png',
+        ),
+      );
+    });
+  }
 }
 
 List<({String label, EyeRuntimeState state})> _frames() {
@@ -391,4 +449,71 @@ EyeRuntimeState _sampleBlinkGesture(EyeBlinkVariant variant, int milliseconds) {
     ..trigger(engine.forceBlink(variant: variant))
     ..advance(Duration(milliseconds: milliseconds));
   return player.state;
+}
+
+List<({String label, EyeRuntimeState state})> _applyReactionFrames(
+  EyeMotionDefinition definition,
+) {
+  EyeMotionPlayer player() => EyeMotionPlayer(
+    behaviourEngine: EyeBehaviourEngine(
+      Random(4),
+      initialMood: EyeEmotion.neutral,
+    ),
+    definition: definition,
+    initialMood: EyeEmotion.neutral,
+    initialClip: resolveInitialEyeMotionClip(definition),
+    behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
+  );
+
+  EyeRuntimeState sampleOutcome(EyeApplyReaction reaction, Duration elapsed) {
+    final runtime = player()
+      ..startApplyReaction(EyeApplyReaction.applying)
+      ..advance(const Duration(milliseconds: 700))
+      ..startApplyReaction(reaction)
+      ..advance(elapsed);
+    return runtime.state;
+  }
+
+  final waiting = player()
+    ..startApplyReaction(EyeApplyReaction.applying)
+    ..advance(const Duration(milliseconds: 700));
+  final retry = player()
+    ..startApplyReaction(EyeApplyReaction.applying)
+    ..advance(const Duration(milliseconds: 700))
+    ..startApplyReaction(EyeApplyReaction.failure)
+    ..advance(const Duration(milliseconds: 250))
+    ..startApplyReaction(EyeApplyReaction.retryApplying, retry: true)
+    ..advance(const Duration(milliseconds: 260));
+  return [
+    (label: 'WAIT', state: waiting.state),
+    (
+      label: 'CONFIRM',
+      state: sampleOutcome(
+        EyeApplyReaction.success,
+        const Duration(milliseconds: 350),
+      ),
+    ),
+    (
+      label: 'BLINK',
+      state: sampleOutcome(
+        EyeApplyReaction.success,
+        const Duration(milliseconds: 460),
+      ),
+    ),
+    (
+      label: 'SETTLE',
+      state: sampleOutcome(
+        EyeApplyReaction.success,
+        const Duration(milliseconds: 1150),
+      ),
+    ),
+    (
+      label: 'FAILURE',
+      state: sampleOutcome(
+        EyeApplyReaction.failure,
+        const Duration(milliseconds: 500),
+      ),
+    ),
+    (label: 'RETRY', state: retry.state),
+  ];
 }

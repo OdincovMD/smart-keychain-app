@@ -14,6 +14,9 @@ import '../../domain/content/scene.dart';
 import '../../domain/device/device_connection_status.dart';
 import '../../domain/device/device_snapshot.dart';
 import '../../domain/eyes/eye_emotion.dart';
+import '../../domain/eyes/eye_behaviour_engine.dart';
+import '../../domain/eyes/eye_motion_player.dart';
+import '../../domain/eyes/eye_motion_production.dart';
 import '../../domain/settings/app_appearance.dart';
 import '../appearance/appearance_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -37,6 +40,7 @@ import 'widgets/companion_home_tokens.dart';
 import 'widgets/companion_identity_header.dart';
 import 'widgets/jewel_button.dart';
 import 'widgets/wardrobe_rail.dart';
+import 'widgets/eye_motion_ticker.dart';
 
 final class DeviceHomeScreen extends ConsumerStatefulWidget {
   const DeviceHomeScreen({required this.deviceId, super.key});
@@ -47,10 +51,59 @@ final class DeviceHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<DeviceHomeScreen> createState() => _DeviceHomeScreenState();
 }
 
-final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
+final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   String? _selectedSceneId;
   String? _newLookSceneId;
   bool _photoImportSheetOpen = false;
+  late final EyeMotionTicker _eyeRuntime;
+  var _motionEnabled = false;
+  var _lifecycleActive = true;
+  ConnectionRecoveryStatus? _lastRecoveryStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final definition = ref.read(productionEyeMotionDefinitionProvider);
+    final engine = EyeBehaviourEngine(
+      ref.read(eyeRandomProvider),
+      initialMood: EyeEmotion.neutral,
+    );
+    _eyeRuntime = EyeMotionTicker(
+      vsync: this,
+      player: EyeMotionPlayer(
+        behaviourEngine: engine,
+        definition: definition,
+        initialMood: EyeEmotion.neutral,
+        initialClip: resolveInitialEyeMotionClip(definition),
+        behaviourMode: EyeMotionBehaviourMode.neutralLivingIdle,
+      ),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final enabled = !MediaQuery.disableAnimationsOf(context);
+    if (_motionEnabled == enabled) return;
+    _motionEnabled = enabled;
+    if (enabled && _lifecycleActive) {
+      _eyeRuntime.start();
+    } else {
+      _eyeRuntime.stop(snapToMood: true);
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleActive = state == AppLifecycleState.resumed;
+    if (_lifecycleActive && _motionEnabled) {
+      _eyeRuntime.start();
+    } else {
+      _eyeRuntime.pause();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +112,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
       widget.deviceId,
     );
     final recovery = ref.watch(recoveryProvider);
+    _syncRecoveryPriority(recovery.status);
     final snapshot = ref.watch(deviceSnapshotProvider);
     final command = ref.watch(deviceControllerProvider);
     final scenes = ref.watch(sceneLibraryProvider);
@@ -72,9 +126,12 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
         imageFlow is UserImagePicking || imageFlow is UserImageSaving;
 
     ref.listen(recoveryProvider, (previous, next) {
+      _syncRecoveryPriority(next.status);
       if (next.returnToDiscovery &&
           previous?.returnToDiscovery != true &&
           mounted) {
+        _eyeRuntime.player.holdForeground(EyeReactionPriority.intentionalExit);
+        _eyeRuntime.refresh();
         context.go(DeviceDiscoveryScreen.routePath);
       }
     });
@@ -137,6 +194,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
         onRetry: () => ref.read(recoveryProvider.notifier).retry(),
         onReturnToDiscovery: () =>
             ref.read(recoveryProvider.notifier).returnToDiscovery(),
+        eyeRuntime: _eyeRuntime,
       );
     } else if (scenes.hasValue && activeScene != null) {
       final contentRefreshing =
@@ -144,6 +202,7 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
       presentation = Stack(
         children: [
           _DeviceHomeContent(
+            eyeRuntime: _eyeRuntime,
             snapshot: snapshotValue,
             scenes: scenes.value!,
             activeScene: activeScene,
@@ -247,8 +306,10 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
   Future<void> _openMyContent({String? highlightedSceneId}) async {
     final result = await Navigator.of(context).push<UserContentScreenResult>(
       MaterialPageRoute(
-        builder: (context) =>
-            UserContentScreen(highlightedSceneId: highlightedSceneId),
+        builder: (context) => UserContentScreen(
+          highlightedSceneId: highlightedSceneId,
+          eyeRuntime: _eyeRuntime,
+        ),
       ),
     );
     if (!mounted || result != UserContentScreenResult.addImage) return;
@@ -295,10 +356,31 @@ final class _DeviceHomeScreenState extends ConsumerState<DeviceHomeScreen> {
       builder: (context) => const _SimulatorSettingsSheet(),
     );
   }
+
+  void _syncRecoveryPriority(ConnectionRecoveryStatus status) {
+    if (_lastRecoveryStatus == status) return;
+    _lastRecoveryStatus = status;
+    if (status == ConnectionRecoveryStatus.connected) {
+      _eyeRuntime.player.releaseForeground(
+        EyeReactionPriority.connectionRecovery,
+      );
+    } else {
+      _eyeRuntime.player.holdForeground(EyeReactionPriority.connectionRecovery);
+    }
+    _eyeRuntime.refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _eyeRuntime.dispose();
+    super.dispose();
+  }
 }
 
 final class _DeviceHomeContent extends StatelessWidget {
   const _DeviceHomeContent({
+    required this.eyeRuntime,
     required this.snapshot,
     required this.scenes,
     required this.activeScene,
@@ -313,6 +395,7 @@ final class _DeviceHomeContent extends StatelessWidget {
     required this.onOpenSimulatorSettings,
   });
 
+  final EyeMotionTicker eyeRuntime;
   final DeviceSnapshot snapshot;
   final List<Scene> scenes;
   final Scene activeScene;
@@ -374,6 +457,7 @@ final class _DeviceHomeContent extends StatelessWidget {
                       child: Transform.translate(
                         offset: const Offset(0, -14),
                         child: CompanionHomeHero(
+                          eyeRuntime: eyeRuntime,
                           scene: activeScene,
                           displayProfile: snapshot.displayProfile,
                           snapshot: snapshot,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/chrome_kiss_theme.dart';
 import 'chrome_kiss_production_eyes.dart';
+import 'eye_motion_ticker.dart';
 import 'kiss_cut_eye_renderer.dart';
 
 enum ChromeKissEyeReactionLensSize {
@@ -46,6 +47,7 @@ final class ChromeKissEyeReactionLens extends StatelessWidget {
     required this.animate,
     required this.useProductionMotion,
     this.colourway = KissCutColourway.orchidLilac,
+    this.runtime,
     this.reactionKey,
     super.key,
   });
@@ -55,6 +57,7 @@ final class ChromeKissEyeReactionLens extends StatelessWidget {
   final bool animate;
   final bool useProductionMotion;
   final KissCutColourway colourway;
+  final EyeMotionTicker? runtime;
   final Key? reactionKey;
 
   @override
@@ -122,8 +125,19 @@ final class ChromeKissEyeReactionLens extends StatelessWidget {
                       useProductionMotion: useProductionMotion,
                       colourway: colourway,
                       background: ChromeKissEyeBackground.transparent,
+                      externalRuntime: runtime,
                     ),
                   ),
+                  if (runtime case final source?)
+                    IgnorePointer(
+                      child: CustomPaint(
+                        key: const Key('apply_reaction_optical_glint'),
+                        painter: _ReactionGlintPainter(
+                          source,
+                          color: fidelity.specular,
+                        ),
+                      ),
+                    ),
                   IgnorePointer(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
@@ -148,4 +162,48 @@ final class ChromeKissEyeReactionLens extends StatelessWidget {
       ),
     );
   }
+}
+
+final class _ReactionGlintPainter extends CustomPainter {
+  _ReactionGlintPainter(this.runtime, {required this.color})
+    : super(repaint: runtime);
+
+  final EyeMotionTicker runtime;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final opacity = runtime.player.diagnostics.presentationGlint;
+    if (opacity <= 0) return;
+    final center = Offset(size.width * 0.72, size.height * 0.3);
+    final radius = size.shortestSide * 0.12;
+    final glow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          color.withValues(alpha: 0.78 * opacity),
+          color.withValues(alpha: 0.16 * opacity),
+          color.withValues(alpha: 0),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, glow);
+    final spark = Paint()
+      ..color = color.withValues(alpha: 0.9 * opacity)
+      ..strokeWidth = 1.15
+      ..strokeCap = StrokeCap.round;
+    canvas
+      ..drawLine(
+        center - Offset(radius * 0.42, 0),
+        center + Offset(radius * 0.42, 0),
+        spark,
+      )
+      ..drawLine(
+        center - Offset(0, radius * 0.42),
+        center + Offset(0, radius * 0.42),
+        spark,
+      );
+  }
+
+  @override
+  bool shouldRepaint(_ReactionGlintPainter oldDelegate) =>
+      !identical(runtime, oldDelegate.runtime) || color != oldDelegate.color;
 }

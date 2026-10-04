@@ -9,12 +9,14 @@ import '../../../domain/device/display_profile.dart';
 import '../../../l10n/app_localizations.dart';
 import 'chrome_kiss_sparkle.dart';
 import 'companion_stage.dart';
+import 'eye_motion_ticker.dart';
 
 final class CompanionHomeHero extends StatelessWidget {
   const CompanionHomeHero({
     required this.scene,
     required this.displayProfile,
     required this.snapshot,
+    required this.eyeRuntime,
     super.key,
   });
 
@@ -23,6 +25,7 @@ final class CompanionHomeHero extends StatelessWidget {
   final Scene scene;
   final DisplayProfile displayProfile;
   final DeviceSnapshot snapshot;
+  final EyeMotionTicker eyeRuntime;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +98,7 @@ final class CompanionHomeHero extends StatelessWidget {
               scene: scene,
               displayProfile: displayProfile,
               snapshot: snapshot,
+              eyeRuntime: eyeRuntime,
               diameter: 274,
               jewelryMode: true,
             ),
